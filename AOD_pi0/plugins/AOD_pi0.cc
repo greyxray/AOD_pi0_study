@@ -10,11 +10,6 @@
  Implementation:
      [Notes on implementation]
 */
-//
-// Original Author:  Hlushchenko Olena
-//         Created:  Mon, 24 Oct 2016 09:57:12 GMT
-//
-//
 
 
 // system include files
@@ -30,8 +25,6 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 // Additional include
-
-
 //error #include "RecoTauTag/RecoTau/interface/PFRecoTauClusterVariables.h"
 
 #include "DataFormats/Common/interface/ValueMap.h"
@@ -44,17 +37,20 @@
 
 using namespace std;
 
-// RASP
+// Aleksei
 //error using namespace reco;
 
-#include "DataFormats/TauReco/interface/PFTau.h"// error
+#include "DataFormats/TauReco/interface/PFTau.h"
 #include "DataFormats/TauReco/interface/PFTauFwd.h"
-#include "DataFormats/TauReco/interface/PFTauDiscriminator.h"//error 
-#include "DataFormats/TauReco/interface/PFTau.h"//error 
-#include "DataFormats/TauReco/interface/PFTauFwd.h"
+#include "DataFormats/TauReco/interface/PFTauDiscriminator.h"
 #include "DataFormats/TauReco/interface/RecoTauPiZero.h"
 #include "DataFormats/TauReco/interface/RecoTauPiZeroFwd.h"
 
+// Alex
+#include "DataFormats/PatCandidates/interface/Tau.h"
+
+
+//#include "RecoTauPiZero.h"
 /*
   #include <string>
   #include <map>
@@ -201,13 +197,46 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 
     // Tokens for the Collections 
       edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionToken_;
-      //edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> LambdaCollectionToken_;
-      //edm::EDGetTokenT<reco::PFCandidateCollection> PFCandidateCollectionToken_;
-      edm::EDGetTokenT<reco::RecoTauPiZeroCollection> TauPiZeroCollectionToken_;
+      edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> LambdaCollectionToken_;
+      edm::EDGetTokenT<reco::PFCandidateCollection> PFCandidateCollectionToken_;
+
+      edm::EDGetTokenT<reco::RecoTauPiZeroCollection> TauPiZeroCollectionToken_;//hpsPFTauProducer
+
+      edm::EDGetTokenT<reco::PFTauCollection> TauHPSCollectionToken_;
+
 
     
     Int_t v0_count; // V0s - Ks or Lambdas
     bool crecpizero;
+    bool debug;
+
+    //P0's
+    UInt_t pizero_count;
+    Float_t pizero_px[1000];
+    Float_t pizero_py[1000];
+    Float_t pizero_pz[1000];
+      Float_t pizero_pt[1000];
+      Float_t pizero_eta[1000];
+      Float_t pizero_phi[1000];
+      Float_t pizero_e[1000];
+    Float_t pizero_x[1000];
+    Float_t pizero_y[1000];
+    Float_t pizero_z[1000];
+
+    //Tau
+    Float_t tau_px[1000];
+      Float_t tau_py[1000];
+      Float_t tau_pz[1000];
+      Float_t tau_e[1000];
+      Float_t tau_pt[1000];
+      Float_t tau_eta[1000];
+      Float_t tau_phi[1000];
+      Float_t tau_x[1000];
+      Float_t tau_y[1000];
+      Float_t tau_z[1000];
+      UInt_t tau_count;
+    // Branches
+      TH1D* h_v0_count;
 };
 
 //
@@ -224,16 +253,27 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
   crecpizero(iConfig.getUntrackedParameter<bool>("RecPiZero", false))
 {
+  debug = true;
   //now do what ever initialization is needed
   usesResource("TFileService");
 
   outfile = new TFile("aod_pi0.root","RECREATE");
 
+  // Saved brunches 
+    h_v0_count = new TH1D("v0_count","v0 count",10, 0, 9);
+
   // Tokens
+    //Ks's
+    //vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Kshort"          "RECO"  
     KshortCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag"));
-    //LambdaCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("LambdaCollectionTag"));
+    LambdaCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("LambdaCollectionTag"));
+    
+    //Pi0
     TauPiZeroCollectionToken_ = consumes<reco::RecoTauPiZeroCollection>(iConfig.getParameter<edm::InputTag>("TauPiZeroCollectionTag"));
-  v0_count = 0;
+    
+    //Taus
+    TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
+
 }
 
 
@@ -252,22 +292,167 @@ void
 AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
   using namespace edm;
+    v0_count = 0 ;
+    pizero_count = 0;
+    tau_count = 0;
+  //Ks's token
+    edm::Handle<reco::VertexCompositeCandidateCollection> Vertices;
+    iEvent.getByToken( KshortCollectionToken_, Vertices);
 
-  edm::Handle<reco::VertexCompositeCandidateCollection> Vertices;
-  iEvent.getByToken( KshortCollectionToken_, Vertices);
+  //HPS Pi0's token
+    edm::Handle<reco::RecoTauPiZeroCollection> Strips;
+    iEvent.getByToken( TauPiZeroCollectionToken_, Strips);
 
-  v0_count = Vertices->size();
-  cout << "\t" << v0_count << endl;
+  //Tau's token
+    edm::Handle<reco::PFTauCollection> pf_taus;// typedef std::vector< PFTau >  PFTauCollection
+    iEvent.getByToken( TauHPSCollectionToken_, pf_taus);
+  //TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
 
-  #ifdef THIS_IS_AN_EVENT_EXAMPLE
-     Handle<ExampleData> pIn;
-     iEvent.getByLabel("example",pIn);
-  #endif
-     
-  #ifdef THIS_IS_AN_EVENTSETUP_EXAMPLE
-     ESHandle<SetupData> pSetup;
-     iSetup.get<SetupRecord>().get(pSetup);
-  #endif
+
+  /// RECO ks's
+    std::vector<reco::CandidateCollection> v_daughters;
+    if (Vertices.isValid())
+    {
+      v0_count = Vertices->size();
+      if (!debug) cout << "Size: " << v0_count << endl;
+      for(unsigned i = 0 ; i < Vertices->size() ; i++)
+      {
+        //edm::reco::CompositeCandidate::daughters 
+        int num = (*Vertices)[i].numberOfDaughters();
+        int num_moth = (*Vertices)[i].numberOfMothers();
+        if (!debug) cout << "\tdaughter Num: " << num << ";" << " moth num: " << num_moth << endl;
+        //reco::Candidate* a = (*Vertices)[i].daughter(0);//reco::CompositeCandidate::daughters
+
+        //for (std::vector<reco::Candidate* >::const_iterator iter = (*Vertices)[i].daughters.begin(); iter != (*Vertices)[i].daughters.end(); ++iter)
+        for( int j = 0; j < num; j++)
+        {
+          const reco::Candidate* a = (*Vertices)[i].daughter(j);
+          if (a->isCaloMuon()) cout << "isCaloMuon(): " << a->isCaloMuon() << endl;
+          if (a->isConvertedPhoton()) cout << "isConvertedPhoton(): " << a->isConvertedPhoton() << endl;
+          if (a->isElectron()) cout << "isElectron(): " << a->isElectron() << endl;
+          if (a->isGlobalMuon()) cout << "isGlobalMuon(): " << a->isGlobalMuon() << endl;
+          if (a->isJet()) cout << "isJet(): " << a->isJet() << endl;
+          if (a->isMuon()) cout << "isMuon(): " << a->isMuon() << endl;
+          if (a->isPhoton()) cout << "isPhoton(): " << a->isPhoton() << endl;
+          if (a->isStandAloneMuon()) cout << "isStandAloneMuon(): " << a->isStandAloneMuon() << endl;
+          if (a->isTrackerMuon()) cout << "isTrackerMuon(): " << a->isTrackerMuon() << endl;
+        }
+
+        /* or
+          for (size_t index = 0; index != vec.size(); ++index)
+            // do something with vec[index]
+
+          // as of C++11
+          for (const auto& item: vec)
+            // do something with item
+        */
+      
+        //int a = (*Vertices)[i].daughters()->size();
+        //reco::CompositeCandidate a = (*Vertices)[i].daughters;
+
+      }
+      // Fill the variables
+      h_v0_count->Fill(v0_count);
+    }
+    else 
+    {
+      cout << "UNVALID VERTICES" << endl;
+    }
+
+  /// HPS pi0's
+    if (Strips.isValid()) 
+    {
+      if (Strips->size() > 0) cout << "Number of HPS Pizeros = " << Strips->size() << std::endl;
+      for (unsigned int i = 0; i < Strips->size(); i++) 
+      {
+        cout << "\t\tPi0_" << i << " (" << (*Strips)[i].charge() <<") " <<   
+              (*Strips)[i].px() << " " <<
+              (*Strips)[i].py() << " " <<
+              (*Strips)[i].pz() << " " <<
+              (*Strips)[i].p()  << " " <<
+              endl;
+        pizero_px[pizero_count] = (*Strips)[i].px();
+        pizero_py[pizero_count] = (*Strips)[i].py();
+        pizero_pz[pizero_count] = (*Strips)[i].pz();
+        pizero_e[pizero_count]  = (*Strips)[i].p();
+        pizero_pt[pizero_count] = (*Strips)[i].pt();
+        pizero_eta[pizero_count] = (*Strips)[i].eta();
+        pizero_phi[pizero_count] = (*Strips)[i].phi();
+        pizero_x[pizero_count] = (*Strips)[i].vx();
+        pizero_y[pizero_count] = (*Strips)[i].vy();
+        pizero_z[pizero_count] = (*Strips)[i].vz();
+        pizero_count++;
+        if (!debug) cout << " PI0 " << i 
+        << "  px = " << pizero_px[pizero_count]
+        << "  py = " << pizero_py[pizero_count]
+        << "  pz = " << pizero_pz[pizero_count]
+        << "  vx = " << pizero_x[pizero_count]
+        << "  vy = " << pizero_y[pizero_count]
+        << "  vz = " << pizero_z[pizero_count] << endl;
+
+        if (pizero_count>=1000) 
+        {
+          cerr << "number of pizeros > 1000. They are missing." << endl; 
+          break;
+        }
+      }
+    } 
+
+  /// RECO Tau
+    if (pf_taus.isValid()) 
+    {
+      if (pf_taus->size() > 0)  cout << "Number of Tau = " << pf_taus->size() << std::endl;
+      for (unsigned int i = 0; i < pf_taus->size(); i++) 
+      {
+        //reco::PFTau pfTau(pf_taus, i); //same as (*pf_taus)[i]
+        //edm::AtomicPtrCache< std::vector< reco::RecoTauPiZero > >
+        //const std::vector< reco::RecoTauPiZero > a  = (*pf_taus)[i].signalPiZeroCandidates();
+        //(*reco::PFTau)pfTau->signalPiZeroCandidates();
+        //const std::vector < RecoTauPiZero > &   isolationPiZeroCandidates () const
+        //const std::vector< RecoTauPiZero > & reco::PFTau::isolationPiZeroCandidates (   ) const
+        //const std::vector < RecoTauPiZero > &   signalPiZeroCandidates () const
+        reco::PFTauRef pftauref(pf_taus, i);
+        const std::vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
+        cout << "\ttau_pizeros num:" << tau_pizeros.size() << endl;
+
+        if (tau_pizeros.size() > 0)
+          for (unsigned int j = 0; j < tau_pizeros.size(); j++)
+          {
+            cout << "\t\tPi0_" << j << " (" << tau_pizeros[j].charge() <<") " <<   
+              tau_pizeros[j].px() << " " <<
+              tau_pizeros[j].py() << " " <<
+              tau_pizeros[j].pz() << " " <<
+              tau_pizeros[j].p()  << " " <<
+              endl;
+          }
+
+        tau_px[tau_count] = (*pf_taus)[i].px();
+        tau_py[tau_count] = (*pf_taus)[i].py();
+        tau_pz[tau_count] = (*pf_taus)[i].pz();
+        tau_e[tau_count]  = (*pf_taus)[i].p();
+        tau_pt[tau_count] = (*pf_taus)[i].pt();
+        tau_eta[tau_count] = (*pf_taus)[i].eta();
+        tau_phi[tau_count] = (*pf_taus)[i].phi();
+        tau_x[tau_count] = (*pf_taus)[i].vx();
+        tau_y[tau_count] = (*pf_taus)[i].vy();
+        tau_z[tau_count] = (*pf_taus)[i].vz();
+        tau_count++;
+        if (!debug) cout << " Tau " << i 
+          << "  px = " << tau_px[tau_count]
+          << "  py = " << tau_py[tau_count]
+          << "  pz = " << tau_pz[tau_count]
+          << "  vx = " << tau_x[tau_count]
+          << "  vy = " << tau_y[tau_count]
+          << "  vz = " << tau_z[tau_count] << endl;
+
+        if (tau_count>=1000) 
+        {
+          cerr << "number of taus > 1000. They are missing." << endl; 
+          break;
+        }
+      }
+    } 
+    else cout << "not valid pf_taus"  << endl;
 }
 
 
@@ -282,6 +467,7 @@ AOD_pi0::beginJob()
 void 
 AOD_pi0::endJob() 
 {
+  h_v0_count->Write();
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------

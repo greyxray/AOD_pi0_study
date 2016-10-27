@@ -4,8 +4,10 @@ process = cms.Process("Demo")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
-
+#process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet(
+    input = cms.untracked.int32(50)
+)
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
     fileNames = cms.untracked.vstring(
@@ -38,7 +40,7 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	# BeamSpotCollectionTag =  cms.InputTag("offlineBeamSpot"),
 	# PVCollectionTag = cms.InputTag("offlinePrimaryVertices"),
 	 KshortCollectionTag = cms.InputTag("generalV0Candidates","Kshort","RECO"),
-	# LambdaCollectionTag = cms.InputTag("generalV0Candidates","Lambda","RECO"),
+	 LambdaCollectionTag = cms.InputTag("generalV0Candidates","Lambda","RECO"),
 	 TauPiZeroCollectionTag = cms.InputTag("hpsPFTauProducer","pizeros","RECO")
 	# SecVertexCollectionTag = cms.InputTag("inclusiveSecondaryVertices"),
 	# # tracks
