@@ -6,7 +6,7 @@ process.load("FWCore.MessageService.MessageLogger_cfi")
 
 #process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(-1)# -1 for all events
+    input = cms.untracked.int32(50)# -1 for all events
 )
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use

@@ -223,6 +223,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
     Int_t v0_count; // V0s - Ks or Lambdas
     bool crecpizero;
     bool debug;
+    bool mute;
     int num_pion_res;
     double max_inv_mass;
     double max_ks_daughter_pt;
@@ -274,6 +275,7 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
   num_ev_tau_pi_not_in_hps_pi = 0;
   num_pion_res = 0;
   max_inv_mass = 0;
+  mute = false;
   max_ks_daughter_pt = 0;
   //now do what ever initialization is needed
   usesResource("TFileService");
@@ -304,6 +306,7 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
     //Taus
     TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
 
+  if (mute) cout.setstate(std::ios_base::failbit);
 }
 
 
@@ -532,39 +535,40 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         //const std::vector< RecoTauPiZero > & reco::PFTau::isolationPiZeroCandidates (   ) const
         //const std::vector < RecoTauPiZero > &   signalPiZeroCandidates () const
 
-      //Pizeros list
-      // Signal pi0's
-      std::vector < reco::RecoTauPiZero > tau_pizeros_sig = pftauref->signalPiZeroCandidates();
-      //Isolation pi0's
-      const std::vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates(); // pions of the considered Tau
-        // All pi0's
-        std::vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
-          if (!debug) cout << "length of concatenated vectors before:" << tau_pizeros.size() << endl;
-          tau_pizeros.insert(tau_pizeros.end(), tau_pizeros_isol.begin(), tau_pizeros_isol.end());
-          if (!debug) cout << "length of concatenated vectors after:" << tau_pizeros.size() << endl;
-     
-      // Hadrons list
-      std::vector < reco::PFCandidatePtr  > tau_signalPFChargedHadrCands = pftauref->signalPFChargedHadrCands();//typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-      std::vector < reco::PFCandidatePtr  > tau_isolationPFChargedHadrCands = pftauref->isolationPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-        // All pi+-'s
-        std::vector < reco::PFCandidatePtr > tau_picharge = pftauref->signalPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-          if (!debug) cout << "length of concatenated vectors tau_picharge before:" << tau_picharge.size() << endl;
-          tau_picharge.insert(tau_picharge.end(), tau_isolationPFChargedHadrCands.begin(), tau_isolationPFChargedHadrCands.end());
-          if (!debug) cout << "length of concatenated vectors tau_picharge after:" << tau_picharge.size() << endl;
-      std::vector < reco::PFCandidatePtr  > tau_signalPFNeutrHadrCands    = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-      std::vector < reco::PFCandidatePtr  > tau_isolationPFNeutrHadrCands = pftauref->isolationPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-        // All pi0_had's
-        std::vector < reco::PFCandidatePtr > tau_pizeros_had = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-          if (!debug) cout << "length of concatenated vectors tau_pizeros_had before:" << tau_pizeros_had.size() << endl;
-          tau_pizeros_had.insert(tau_pizeros_had.end(), tau_isolationPFNeutrHadrCands.begin(), tau_isolationPFNeutrHadrCands.end());
-          if (!debug) cout << "length of concatenated vectors tau_pizeros_had after:" << tau_pizeros_had.size() << endl;
-      
-      //NOT USED list
-      std::vector < reco::PFRecoTauChargedHadron > tau_signalTauChargedHadronCandidates = pftauref->signalTauChargedHadronCandidates(); // gives 0 size
-      std::vector < reco::PFRecoTauChargedHadron > tau_isolationTauChargedHadronCandidates = pftauref->isolationTauChargedHadronCandidates();// gives 0 size
-      const reco::PFCandidatePtr tau_leadPFChargedHadrCand = pftauref->leadPFChargedHadrCand(); // by output eeror message // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-      float tau_leadPFChargedHadrCandsignedSipt = pftauref->leadPFChargedHadrCandsignedSipt();
-      reco::PFRecoTauChargedHadronRef tau_leadTauChargedHadronCandidate = pftauref->leadTauChargedHadronCandidate(); // can not implement
+      // Lists to be used 
+        //Pizeros list
+        // Signal pi0's
+        std::vector < reco::RecoTauPiZero > tau_pizeros_sig = pftauref->signalPiZeroCandidates();
+        //Isolation pi0's
+        const std::vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates(); // pions of the considered Tau
+          // All pi0's
+          std::vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
+            if (!debug) cout << "length of concatenated vectors before:" << tau_pizeros.size() << endl;
+            tau_pizeros.insert(tau_pizeros.end(), tau_pizeros_isol.begin(), tau_pizeros_isol.end());
+            if (!debug) cout << "length of concatenated vectors after:" << tau_pizeros.size() << endl;
+       
+        // Hadrons list
+        std::vector < reco::PFCandidatePtr  > tau_signalPFChargedHadrCands = pftauref->signalPFChargedHadrCands();//typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+        std::vector < reco::PFCandidatePtr  > tau_isolationPFChargedHadrCands = pftauref->isolationPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+          // All pi+-'s
+          std::vector < reco::PFCandidatePtr > tau_picharge = pftauref->signalPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+            if (!debug) cout << "length of concatenated vectors tau_picharge before:" << tau_picharge.size() << endl;
+            tau_picharge.insert(tau_picharge.end(), tau_isolationPFChargedHadrCands.begin(), tau_isolationPFChargedHadrCands.end());
+            if (!debug) cout << "length of concatenated vectors tau_picharge after:" << tau_picharge.size() << endl;
+        std::vector < reco::PFCandidatePtr  > tau_signalPFNeutrHadrCands    = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+        std::vector < reco::PFCandidatePtr  > tau_isolationPFNeutrHadrCands = pftauref->isolationPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+          // All pi0_had's
+          std::vector < reco::PFCandidatePtr > tau_pizeros_had = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+            if (!debug) cout << "length of concatenated vectors tau_pizeros_had before:" << tau_pizeros_had.size() << endl;
+            tau_pizeros_had.insert(tau_pizeros_had.end(), tau_isolationPFNeutrHadrCands.begin(), tau_isolationPFNeutrHadrCands.end());
+            if (!debug) cout << "length of concatenated vectors tau_pizeros_had after:" << tau_pizeros_had.size() << endl;
+        
+        //NOT USED list
+        std::vector < reco::PFRecoTauChargedHadron > tau_signalTauChargedHadronCandidates = pftauref->signalTauChargedHadronCandidates(); // gives 0 size
+        std::vector < reco::PFRecoTauChargedHadron > tau_isolationTauChargedHadronCandidates = pftauref->isolationTauChargedHadronCandidates();// gives 0 size
+        const reco::PFCandidatePtr tau_leadPFChargedHadrCand = pftauref->leadPFChargedHadrCand(); // by output eeror message // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+        float tau_leadPFChargedHadrCandsignedSipt = pftauref->leadPFChargedHadrCandsignedSipt();
+        reco::PFRecoTauChargedHadronRef tau_leadTauChargedHadronCandidate = pftauref->leadTauChargedHadronCandidate(); // can not implement
 
       // Signal pi0's
       if (tau_pizeros_sig.size() && true)
@@ -721,10 +725,8 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
           //Check the vertex position
            if (false && !debug) cout << "\t\t\tPi+_" << j_pi << " (" << tau_picharge[j_pi]->charge() <<"), vertex:  " <<   
-            tau_picharge[j_pi]->vx() << " " <<
-            tau_picharge[j_pi]->vy() << " " <<
-            tau_picharge[j_pi]->vz() << " " <<
-            endl; //all from the same vertex
+                                        tau_picharge[j_pi]->vx() << " " << tau_picharge[j_pi]->vy() << " " << tau_picharge[j_pi]->vz() << " " << 
+                                endl; //all from the same vertex
 
           //Build the inv mass
             if ( !debug) cout << "\t\t===>matching to Pi+_"<< j_pi << " from " << tau_picharge.size() << " in this tau" << endl;
@@ -740,13 +742,13 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
               if ( !debug) cout << "\t\t\tm( Pi+_" << j_pi << " + ";
               if ( !debug) cout <<  "Pi+_" << j2_pi << " ) = " << inv_M << endl;
             }
-            //cout << endl;
+            if ( !debug) cout << endl;
 
             taus_pi_charged_pt->Fill(tau_picharge[j_pi]->pt());
         }
         taus_pi_charged_pt->Fill(tau_picharge[tau_picharge.size() - 1]->pt());
         cout << "\t\t\t all tau pi+_"<< tau_picharge.size() - 1 << ": " << tau_picharge[tau_picharge.size() - 1]->vx() << " "<< tau_picharge[tau_picharge.size() - 1]->vy() << " "<< tau_picharge[tau_picharge.size() - 1]->vz() << " " << 
-                                                                  ": " << tau_picharge[tau_picharge.size() - 1]->px() << " "<< tau_picharge[tau_picharge.size() - 1]->py() << " "<< tau_picharge[tau_picharge.size() - 1]->pz() << " " << 
+                                                                   ": " << tau_picharge[tau_picharge.size() - 1]->px() << " "<< tau_picharge[tau_picharge.size() - 1]->py() << " "<< tau_picharge[tau_picharge.size() - 1]->pz() << " " << 
         endl;
       }
 
