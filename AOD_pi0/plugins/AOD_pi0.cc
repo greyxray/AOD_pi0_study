@@ -187,6 +187,14 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 
     static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
+    static void dout();
+    template <typename Head, typename... Tail>
+    static void dout(Head, Tail... );
+
+    static void dlog();
+    template <typename Head, typename... Tail>
+    static void dlog(Head, Tail... );
+
 
   private:
     virtual void beginJob() override;
@@ -257,6 +265,33 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
       unsigned int num_ev_tau_pi_not_in_hps_pi;
 };
 
+
+void AOD_pi0::dout() 
+{
+    cout << endl; 
+}
+
+template <typename Head, typename... Tail>
+void AOD_pi0::dout(Head H, Tail... T) 
+{
+  cout << H << ' ';
+  dout(T...);
+}
+
+
+void AOD_pi0::dlog() 
+{
+    clog << endl; 
+}
+
+template <typename Head, typename... Tail>
+void AOD_pi0::dlog(Head H, Tail... T) 
+{
+  clog << H << ' ';
+  dlog(T...);
+}
+
+
 //
 // constants, enums and typedefs
 //
@@ -306,7 +341,13 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
     //Taus
     TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
 
-  if (mute) cout.setstate(std::ios_base::failbit);
+  if (mute) 
+  {
+    cout.setstate(ios_base::failbit);
+    clog.setstate(ios_base::failbit);
+  }
+  if (debug)
+    cout.setstate(ios_base::failbit);
 }
 
 
@@ -335,7 +376,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     iEvent.getByToken( TauPiZeroCollectionToken_, Strips);
 
   //Tau's token
-    edm::Handle<reco::PFTauCollection> pf_taus;// typedef std::vector< PFTau >  PFTauCollection
+    edm::Handle<reco::PFTauCollection> pf_taus;// typedef vector< PFTau >  PFTauCollection
     iEvent.getByToken( TauHPSCollectionToken_, pf_taus);
   //TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
 
@@ -343,39 +384,34 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   /// RECO Ks's
   if (Vertices.isValid())
   {
-    std::vector<reco::CandidateCollection> v_daughters;
+    vector<reco::CandidateCollection> v_daughters;
     v0_count = Vertices->size();
-    if (!debug) cout << "Size: " << v0_count << endl;
+    dout("Size:", v0_count);
     for(unsigned i = 0 ; i < Vertices->size() ; i++)
     {
       //edm::reco::CompositeCandidate::daughters 
       int num = (*Vertices)[i].numberOfDaughters();
       int num_moth = (*Vertices)[i].numberOfMothers();
-      cout << "Ks_"<< i << "(" << (*Vertices)[i].charge() << ")" << endl;
-      if (debug) cout << "\tdaughters number: " << num << ";" << " moth number: " << num_moth << endl;
+      dout("Ks_", i, "(", (*Vertices)[i].charge(), ")");
+      dlog("\tdaughters number:", num, ";", " moth number:", num_moth); 
       //reco::Candidate* a = (*Vertices)[i].daughter(0);//reco::CompositeCandidate::daughters
 
-      //for (std::vector<reco::Candidate* >::const_iterator iter = (*Vertices)[i].daughters.begin(); iter != (*Vertices)[i].daughters.end(); ++iter)
-      double E = 0;
-      double p_x = 0;
-      double p_y = 0;
-      double p_z = 0;
-      double inv_M = 0;
+      //for (vector<reco::Candidate* >::const_iterator iter = (*Vertices)[i].daughters.begin(); iter != (*Vertices)[i].daughters.end(); ++iter)
+      double E = 0, p_x = 0, p_y = 0, p_z = 0, inv_M = 0;
       for( int j = 0; j < num; j++) // Loop over daughters
       {
         const reco::Candidate* daughter = (*Vertices)[i].daughter(j);
-        if (daughter->isCaloMuon()) cout << "isCaloMuon(): " << daughter->isCaloMuon() << endl;
-          else if (daughter->isConvertedPhoton()) cout << "isConvertedPhoton(): " << daughter->isConvertedPhoton() << endl;
-          else if (daughter->isElectron()) cout << "isElectron(): " << daughter->isElectron() << endl;
-          else if (daughter->isGlobalMuon()) cout << "isGlobalMuon(): " << daughter->isGlobalMuon() << endl;
-          else if (daughter->isJet()) cout << "isJet(): " << daughter->isJet() << endl;
-          else if (daughter->isMuon()) cout << "isMuon(): " << daughter->isMuon() << endl;
-          else if (daughter->isPhoton()) cout << "isPhoton(): " << daughter->isPhoton() << endl;
-          else if (daughter->isStandAloneMuon()) cout << "isStandAloneMuon(): " << daughter->isStandAloneMuon() << endl;
-          else if (daughter->isTrackerMuon()) cout << "isTrackerMuon(): " << daughter->isTrackerMuon() << endl;
-        //else cout << "daughter of unknown type" << endl;
+        if (daughter->isCaloMuon()) dout("isCaloMuon():", daughter->isCaloMuon());
+          else if (daughter->isConvertedPhoton()) dout("isConvertedPhoton():", daughter->isConvertedPhoton());
+          else if (daughter->isElectron()) dout("isElectron():", daughter->isElectron());
+          else if (daughter->isGlobalMuon()) dout("isGlobalMuon():", daughter->isGlobalMuon());
+          else if (daughter->isJet()) dout("isJet():", daughter->isJet());
+          else if (daughter->isMuon()) dout("isMuon():", daughter->isMuon());
+          else if (daughter->isPhoton()) dout("isPhoton():", daughter->isPhoton());
+          else if (daughter->isStandAloneMuon()) dout("isStandAloneMuon():", daughter->isStandAloneMuon());
+          else if (daughter->isTrackerMuon()) dout("isTrackerMuon():", daughter->isTrackerMuon());
 
-        cout << "daughter_" << j << "(" << daughter->charge() << ")" << " pt: " << daughter->pt() << endl;
+        dlog("daughter_", j, "(", daughter->charge(), ")", " pt:", daughter->pt());
         if (daughter->pt() > max_ks_daughter_pt) max_ks_daughter_pt = daughter->pt();
         ks_daughter_pt->Fill(daughter->pt());
 
@@ -386,39 +422,21 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       }
       inv_M += sqrt(pow(E, 2) - pow(p_x, 2) - pow(p_y, 2) - pow(p_z, 2));
       ks_inv_m_pi->Fill(inv_M);
-
-      /* or
-        for (size_t index = 0; index != vec.size(); ++index)
-          // do something with vec[index]
-
-        // as of C++11
-        for (const auto& item: vec)
-          // do something with item
-      */
-    
-      //int a = (*Vertices)[i].daughters()->size();
-      //reco::CompositeCandidate a = (*Vertices)[i].daughters;
-
     }
     // Fill the variables
     h_v0_count->Fill(v0_count);
   }
-  else if (!Vertices.isValid() && !debug) cout << "UNVALID VERTICES" << endl;
+  else if (!Vertices.isValid()) dout("UNVALID VERTICES");
 
   /// HPS pi0's - with loop among reco::tau
   if (Strips.isValid() && false) 
   {
-    if (Strips->size() > 0) if (!debug) cout << "Number of HPS Pizeros = " << Strips->size() << std::endl;
-    if (pf_taus->size() > 0)  if (!debug) cout << "Number of RECO Tau = " << pf_taus->size() << endl;
+    if (Strips->size() > 0) dout("Number of HPS Pizeros =", Strips->size());
+    if (pf_taus->size() > 0) dout("Number of RECO Tau =", pf_taus->size());
 
     for (unsigned int i = 0; i < Strips->size(); i++) 
     {
-      if (!debug) cout << "\tPi0_" << i << " (" << (*Strips)[i].charge() <<") " <<   
-            (*Strips)[i].px() << " " <<
-            (*Strips)[i].py() << " " <<
-            (*Strips)[i].pz() << " " <<
-            (*Strips)[i].p()  << " " <<
-            endl;
+      if (!debug) dout("\tPi0_", i, "(", (*Strips)[i].charge(), ")", (*Strips)[i].px(), (*Strips)[i].py(), (*Strips)[i].pz(), (*Strips)[i].p());
       pizero_px[pizero_count] = (*Strips)[i].px();
       pizero_py[pizero_count] = (*Strips)[i].py();
       pizero_pz[pizero_count] = (*Strips)[i].pz();
@@ -430,13 +448,8 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       pizero_y[pizero_count] = (*Strips)[i].vy();
       pizero_z[pizero_count] = (*Strips)[i].vz();
       pizero_count++;
-      if (!debug) cout << " PI0 " << i 
-                        << "  px = " << pizero_px[pizero_count]
-                        << "  py = " << pizero_py[pizero_count]
-                        << "  pz = " << pizero_pz[pizero_count]
-                        << "  vx = " << pizero_x[pizero_count]
-                        << "  vy = " << pizero_y[pizero_count]
-                        << "  vz = " << pizero_z[pizero_count] << endl;
+      if (!debug) dout(" PI0", i, "px =", pizero_px[pizero_count], "py =", pizero_py[pizero_count], "pz =", pizero_pz[pizero_count], 
+                                 "; vx =", pizero_x[pizero_count],  "vy =", pizero_y[pizero_count],  "vz =", pizero_z[pizero_count]);
 
       if (pizero_count>=1000) 
       {
@@ -452,8 +465,8 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
           reco::PFTauRef pftauref(pf_taus, i_tau);
 
           //Signal Pi0
-            const std::vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
-            if (!debug) cout << "\t\t\tsignal tau_pizeros: " << tau_pizeros.size() << endl;
+            const vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
+            dout("\t\t\tsignal tau_pizeros:", tau_pizeros.size());
             if (tau_pizeros.size() > 0)
               for (unsigned int j_pi = 0; j_pi < tau_pizeros.size(); j_pi++) //over signal pions in tau
               {
@@ -464,21 +477,14 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     pow(tau_pizeros[j_pi].energy() - (*Strips)[i].energy(), 2) < 0.001)
                 {
                   foundpi = true;
-
-                  if (!debug) cout << "\t\t\t\tPi0_" << j_pi << " (" << tau_pizeros[j_pi].charge() <<") " <<   
-                    tau_pizeros[j_pi].px() << " " <<
-                    tau_pizeros[j_pi].py() << " " <<
-                    tau_pizeros[j_pi].pz() << " " <<
-                    tau_pizeros[j_pi].energy()  << " " <<
-                    endl;
-
+                  dout("\t\t\t\tPi0_", j_pi, "(", tau_pizeros[j_pi].charge(),")", tau_pizeros[j_pi].px(), tau_pizeros[j_pi].py(), tau_pizeros[j_pi].pz(), tau_pizeros[j_pi].energy());
                   break;
                 }
               }
 
           //Isol Pi0
-            const std::vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates();
-            if (!debug) cout << "\t\t\tisolation tau_pizeros_isol :" << tau_pizeros_isol.size() << endl;
+            const vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates();
+            dout("\t\t\tisolation tau_pizeros_isol :", tau_pizeros_isol.size());
             if (tau_pizeros_isol.size() > 0 && !foundpi)
               for (unsigned int j_pi = 0; j_pi < tau_pizeros_isol.size(); j_pi++) //over isolation pions in tau
               {
@@ -489,13 +495,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     pow(tau_pizeros_isol[j_pi].energy() - (*Strips)[i].energy(), 2) < 0.001)
                 {
                   foundpi = true;
-
-                   if (!debug) cout << "\t\t\t\tPi0_" << j_pi << " (" << tau_pizeros_isol[j_pi].charge() <<") " <<   
-                    tau_pizeros_isol[j_pi].px() << " " <<
-                    tau_pizeros_isol[j_pi].py() << " " <<
-                    tau_pizeros_isol[j_pi].pz() << " " <<
-                    tau_pizeros_isol[j_pi].energy()  << " " <<
-                    endl;
+                  dout("\t\t\t\tPi0_", j_pi, "(", tau_pizeros_isol[j_pi].charge(), ")", tau_pizeros_isol[j_pi].px(), tau_pizeros_isol[j_pi].py(), tau_pizeros_isol[j_pi].pz(), tau_pizeros_isol[j_pi].energy());
                   break;
                 }
               }
@@ -516,87 +516,80 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       cerr << "===>THE NUMBER OF PIONS DON'T MATCH" << endl;
       num_ev_tau_pi_not_in_hps_pi++;
     }
-      else if (!debug) cout <<"ALL PIONS MATCHED" << endl;
+    else dout("ALL PIONS MATCHED");
   } 
 
   /// RECO Taus
   if (pf_taus.isValid() )
   {
-    if (pf_taus->size() > 0 && !debug)  cout << "Number of Tau = " << pf_taus->size() << std::endl;
+    if (pf_taus->size() > 0)  dout("Number of Tau = ", pf_taus->size());
     for (unsigned int i = 0; i < pf_taus->size(); i++) // Over Tau's
     {
       reco::PFTauRef pftauref(pf_taus, i); // one Tau instance, typedef edm::Ref<PFTauCollection> reco::PFTauRef
-      if (debug) cout << "\ttau #" << i << " from " << pf_taus->size() << " (" << pftauref->vx() << " " << pftauref->vy() << " " << pftauref->vz() << " " << ")" << endl;//<< endl;
+      dlog("\ttau #", i, "from", pf_taus->size(), "(", pftauref->vx(), pftauref->vy(), pftauref->vz(), ")");
         //reco::PFTau pfTau(pf_taus, i); //same as (*pf_taus)[i]
-        //edm::AtomicPtrCache< std::vector< reco::RecoTauPiZero > >
-        //const std::vector< reco::RecoTauPiZero > a  = (*pf_taus)[i].signalPiZeroCandidates();
+        //edm::AtomicPtrCache< vector< reco::RecoTauPiZero > >
+        //const vector< reco::RecoTauPiZero > a  = (*pf_taus)[i].signalPiZeroCandidates();
         //(*reco::PFTau)pfTau->signalPiZeroCandidates();
-        //const std::vector < RecoTauPiZero > &   isolationPiZeroCandidates () const
-        //const std::vector< RecoTauPiZero > & reco::PFTau::isolationPiZeroCandidates (   ) const
-        //const std::vector < RecoTauPiZero > &   signalPiZeroCandidates () const
+        //const vector < RecoTauPiZero > &   isolationPiZeroCandidates () const
+        //const vector< RecoTauPiZero > & reco::PFTau::isolationPiZeroCandidates (   ) const
+        //const vector < RecoTauPiZero > &   signalPiZeroCandidates () const
 
       // Lists to be used 
         //Pizeros list
         // Signal pi0's
-        std::vector < reco::RecoTauPiZero > tau_pizeros_sig = pftauref->signalPiZeroCandidates();
+        vector < reco::RecoTauPiZero > tau_pizeros_sig = pftauref->signalPiZeroCandidates();
         //Isolation pi0's
-        const std::vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates(); // pions of the considered Tau
+        const vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates(); // pions of the considered Tau
           // All pi0's
-          std::vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
-            if (!debug) cout << "length of concatenated vectors before:" << tau_pizeros.size() << endl;
+          vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
+            dout("length of concatenated vectors before:", tau_pizeros.size());
             tau_pizeros.insert(tau_pizeros.end(), tau_pizeros_isol.begin(), tau_pizeros_isol.end());
-            if (!debug) cout << "length of concatenated vectors after:" << tau_pizeros.size() << endl;
+            dout("length of concatenated vectors after:", tau_pizeros.size());
        
         // Hadrons list
-        std::vector < reco::PFCandidatePtr  > tau_signalPFChargedHadrCands = pftauref->signalPFChargedHadrCands();//typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-        std::vector < reco::PFCandidatePtr  > tau_isolationPFChargedHadrCands = pftauref->isolationPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+        vector < reco::PFCandidatePtr  > tau_signalPFChargedHadrCands = pftauref->signalPFChargedHadrCands();//typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+        vector < reco::PFCandidatePtr  > tau_isolationPFChargedHadrCands = pftauref->isolationPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
           // All pi+-'s
-          std::vector < reco::PFCandidatePtr > tau_picharge = pftauref->signalPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-            if (!debug) cout << "length of concatenated vectors tau_picharge before:" << tau_picharge.size() << endl;
+          vector < reco::PFCandidatePtr > tau_picharge = pftauref->signalPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+            dout("length of concatenated vectors tau_picharge before:", tau_picharge.size());
             tau_picharge.insert(tau_picharge.end(), tau_isolationPFChargedHadrCands.begin(), tau_isolationPFChargedHadrCands.end());
-            if (!debug) cout << "length of concatenated vectors tau_picharge after:" << tau_picharge.size() << endl;
-        std::vector < reco::PFCandidatePtr  > tau_signalPFNeutrHadrCands    = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-        std::vector < reco::PFCandidatePtr  > tau_isolationPFNeutrHadrCands = pftauref->isolationPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+            dout("length of concatenated vectors tau_picharge after:", tau_picharge.size());
+        vector < reco::PFCandidatePtr  > tau_signalPFNeutrHadrCands    = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+        vector < reco::PFCandidatePtr  > tau_isolationPFNeutrHadrCands = pftauref->isolationPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
           // All pi0_had's
-          std::vector < reco::PFCandidatePtr > tau_pizeros_had = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-            if (!debug) cout << "length of concatenated vectors tau_pizeros_had before:" << tau_pizeros_had.size() << endl;
+          vector < reco::PFCandidatePtr > tau_pizeros_had = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+            dout("length of concatenated vectors tau_pizeros_had before:", tau_pizeros_had.size());
             tau_pizeros_had.insert(tau_pizeros_had.end(), tau_isolationPFNeutrHadrCands.begin(), tau_isolationPFNeutrHadrCands.end());
-            if (!debug) cout << "length of concatenated vectors tau_pizeros_had after:" << tau_pizeros_had.size() << endl;
+            dout("length of concatenated vectors tau_pizeros_had after:", tau_pizeros_had.size());
         
         //NOT USED list
-        std::vector < reco::PFRecoTauChargedHadron > tau_signalTauChargedHadronCandidates = pftauref->signalTauChargedHadronCandidates(); // gives 0 size
-        std::vector < reco::PFRecoTauChargedHadron > tau_isolationTauChargedHadronCandidates = pftauref->isolationTauChargedHadronCandidates();// gives 0 size
-        const reco::PFCandidatePtr tau_leadPFChargedHadrCand = pftauref->leadPFChargedHadrCand(); // by output eeror message // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-        float tau_leadPFChargedHadrCandsignedSipt = pftauref->leadPFChargedHadrCandsignedSipt();
-        reco::PFRecoTauChargedHadronRef tau_leadTauChargedHadronCandidate = pftauref->leadTauChargedHadronCandidate(); // can not implement
+          vector < reco::PFRecoTauChargedHadron > tau_signalTauChargedHadronCandidates = pftauref->signalTauChargedHadronCandidates(); // gives 0 size
+          vector < reco::PFRecoTauChargedHadron > tau_isolationTauChargedHadronCandidates = pftauref->isolationTauChargedHadronCandidates();// gives 0 size
+          const reco::PFCandidatePtr tau_leadPFChargedHadrCand = pftauref->leadPFChargedHadrCand(); // by output eeror message // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+          float tau_leadPFChargedHadrCandsignedSipt = pftauref->leadPFChargedHadrCandsignedSipt();
+          reco::PFRecoTauChargedHadronRef tau_leadTauChargedHadronCandidate = pftauref->leadTauChargedHadronCandidate(); // can not implement
 
       // Signal pi0's
       if (tau_pizeros_sig.size() && true)
       {
-        if (debug) cout << "\t\t signal tau pi0's number:" << tau_pizeros_sig.size() << endl;
+        dlog("\t\t signal tau pi0's number:", tau_pizeros_sig.size());
         num_pions->Fill(tau_pizeros_sig.size());
-        double inv_M = 0;
-        double p_x(0), p_y(0), p_z(0), E(0);
+        double inv_M = 0, p_x(0), p_y(0), p_z(0), E(0);
         if (tau_pizeros_sig.size() > 0)
           for (unsigned int j = 0; j < tau_pizeros_sig.size(); j++)
           {
-            if (!debug) cout << "\t\t\tPi0_" << j << " (" << tau_pizeros_sig[j].charge() <<") " <<   
-              tau_pizeros_sig[j].px() << " " <<
-              tau_pizeros_sig[j].py() << " " <<
-              tau_pizeros_sig[j].pz() << " " <<
-              tau_pizeros_sig[j].energy()  << " " <<
-              endl;
-              p_x += tau_pizeros_sig[j].px();
-              p_y += tau_pizeros_sig[j].py();
-              p_z += tau_pizeros_sig[j].pz();
-              E += tau_pizeros_sig[j].energy();
+            dout("\t\t\tPi0_", j, "(", tau_pizeros_sig[j].charge(), ")", tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz(), tau_pizeros_sig[j].energy());
+            p_x += tau_pizeros_sig[j].px();
+            p_y += tau_pizeros_sig[j].py();
+            p_z += tau_pizeros_sig[j].pz();
+            E += tau_pizeros_sig[j].energy();
 
-              cout << "\t\t\t signal tau pi0_"<< j << ": " << tau_pizeros_sig[j].vx() << " "<< tau_pizeros_sig[j].vy() << " "<< tau_pizeros_sig[j].vz() << " " << 
-                                                      ": " << tau_pizeros_sig[j].px() << " "<< tau_pizeros_sig[j].py() << " "<< tau_pizeros_sig[j].pz() << " " << 
-              endl;
+              dlog("\t\t\t signal tau pi0_", j, ":", tau_pizeros_sig[j].vx(), tau_pizeros_sig[j].vy(), tau_pizeros_sig[j].vz(), 
+                                                ":", tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz());
           }
         inv_M = sqrt(pow(E, 2) - pow(p_x, 2) - pow(p_y, 2) - pow(p_z, 2));
-        if (!debug) cout << "TAU_" << i << " WITH INVARIANT MASS OF PIONS:" <<  inv_M << endl;
+        dout("TAU_", i, " WITH INVARIANT MASS OF PIONS:", inv_M);
 
         // Fill arrays with tau's properties
         {
@@ -612,39 +605,28 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
           tau_z[tau_count] = (*pf_taus)[i].vz();
           tau_count++;
 
-          if (!debug) cout << " Tau " << i 
-            << "  px = " << tau_px[tau_count]
-            << "  py = " << tau_py[tau_count]
-            << "  pz = " << tau_pz[tau_count]
-            << "  vx = " << tau_x[tau_count]
-            << "  vy = " << tau_y[tau_count]
-            << "  vz = " << tau_z[tau_count] << endl;
+          dout(" Tau", i, "px =", tau_px[tau_count], "py =", tau_py[tau_count], "pz =", tau_pz[tau_count], "vx =", tau_x[tau_count], "vy =", tau_y[tau_count], "vz =", tau_z[tau_count]);
         }
       }
-      else if (!debug) cout << "\t\t\tto few pions in signal pions " << endl;
+      else dout("\t\t\tto few pions in signal pions ");
 
 
       //Isolation pi0's
       if (tau_pizeros_isol.size() > 1)
       {
-        cout << endl;
-        if (debug) cout << "\t\t isolat tau pi0's number:" << tau_pizeros_isol.size() << endl;
+        dlog();
+        dlog("\t\t isolat tau pi0's number:", tau_pizeros_isol.size());
 
         for (unsigned int j_pi = 0; j_pi < tau_pizeros_isol.size() - 1; j_pi++) //over isolation pions in Tau
         {
-          cout << "\t\t\t isolat tau pi0_"<< j_pi << ": " << tau_pizeros_isol[j_pi].vx() << " "<< tau_pizeros_isol[j_pi].vy() << " "<< tau_pizeros_isol[j_pi].vz() << " " << 
-                                                     ": " << tau_pizeros_isol[j_pi].px() << " "<< tau_pizeros_isol[j_pi].py() << " "<< tau_pizeros_isol[j_pi].pz() << " " << 
-          endl;
+          dlog("\t\t\t isolat tau pi0_", j_pi, ":", tau_pizeros_isol[j_pi].vx(), tau_pizeros_isol[j_pi].vy(), tau_pizeros_isol[j_pi].vz(), 
+                                               ":", tau_pizeros_isol[j_pi].px(), tau_pizeros_isol[j_pi].py(), tau_pizeros_isol[j_pi].pz());
 
           //Check the vertex position
-           if (false && !debug) cout << "\t\t\tPi0_" << j_pi << " (" << tau_pizeros_isol[j_pi].charge() <<"), vertex:  " <<   
-            tau_pizeros_isol[j_pi].vx() << " " <<
-            tau_pizeros_isol[j_pi].vy() << " " <<
-            tau_pizeros_isol[j_pi].vz() << " " <<
-            endl; //all from the same vertex
+           if (false) dout("\t\t\tPi0_", j_pi, "(", tau_pizeros_isol[j_pi].charge(), "), vertex:", tau_pizeros_isol[j_pi].vx(), tau_pizeros_isol[j_pi].vy(), tau_pizeros_isol[j_pi].vz()); //all from the same vertex
 
           //Build the inv mass
-            if ( !debug) cout << "\t\t===>matching to Pi0_"<< j_pi << " from " << tau_pizeros_isol.size() << " in this tau" << endl;
+            dout("\t\t===>matching to Pi0_", j_pi, " from ", tau_pizeros_isol.size(), " in this tau");
             for (unsigned int j2_pi = j_pi + 1; j2_pi < tau_pizeros_isol.size(); j2_pi++)
             {
               double E = tau_pizeros_isol[j_pi].energy() +  tau_pizeros_isol[j2_pi].energy();
@@ -654,41 +636,34 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
               double inv_M = sqrt(pow(E, 2) - pow(p_x, 2) - pow(p_y, 2) - pow(p_z, 2));
               if (inv_M > max_inv_mass) max_inv_mass = inv_M;
               taus_isol_pi0_inv_m_to_ks->Fill(inv_M);
-              if ( !debug) cout << "\t\t\tm( Pi0_" << j_pi << " + ";
-              if ( !debug) cout <<  "Pi0_" << j2_pi << " ) = " << inv_M << endl;
+              dout("\t\t\tm( Pi0_", j_pi, "+ Pi0_", j2_pi, " ) =", inv_M);
             }
             //cout << endl;
 
             taus_isol_pi0_pt->Fill(tau_pizeros_isol[j_pi].pt());
         }
         taus_isol_pi0_pt->Fill(tau_pizeros_isol[tau_pizeros_isol.size() - 1].pt());
-        cout << "\t\t\t isolat tau pi0_"<< tau_pizeros_isol.size() - 1 << ": " << tau_pizeros_isol[tau_pizeros_isol.size() - 1].vx() << " "<< tau_pizeros_isol[tau_pizeros_isol.size() - 1].vy() << " "<< tau_pizeros_isol[tau_pizeros_isol.size() - 1].vz() << " " << 
-                                                                          ": " << tau_pizeros_isol[tau_pizeros_isol.size() - 1].px() << " "<< tau_pizeros_isol[tau_pizeros_isol.size() - 1].py() << " "<< tau_pizeros_isol[tau_pizeros_isol.size() - 1].pz() << " " << 
-        endl;
+        dlog("\t\t\t isolat tau pi0_", tau_pizeros_isol.size() - 1, ":", tau_pizeros_isol[tau_pizeros_isol.size() - 1].vx(), tau_pizeros_isol[tau_pizeros_isol.size() - 1].vy(), tau_pizeros_isol[tau_pizeros_isol.size() - 1].vz(),    
+                                                                     ":", tau_pizeros_isol[tau_pizeros_isol.size() - 1].px(), tau_pizeros_isol[tau_pizeros_isol.size() - 1].py(), tau_pizeros_isol[tau_pizeros_isol.size() - 1].pz());
       }
-      else if (!debug) cout << "\t\t\tto few pions in isolation pions " << endl;
+      else dout("\t\t\tto few pions in isolation pions");
 
       //All pi0's loop
       if (tau_pizeros.size() > 1)
       {
-        cout << endl;
-        if (debug) cout << "\t\t all tau pi0's number:" << tau_pizeros.size() << endl;
+        dlog();
+        dlog("\t\t all tau pi0's number:", tau_pizeros.size());
 
         for (unsigned int j_pi = 0; j_pi < tau_pizeros.size() - 1; j_pi++) //over isolation pions in Tau
         {
-          cout << "\t\t\t all tau pi0_"<< j_pi << ": " << tau_pizeros[j_pi].vx() << " "<< tau_pizeros[j_pi].vy() << " "<< tau_pizeros[j_pi].vz() << " " << 
-                                                  ": " << tau_pizeros[j_pi].px() << " "<< tau_pizeros[j_pi].py() << " "<< tau_pizeros[j_pi].pz() << " " << 
-          endl;
+          dlog("\t\t\t all tau pi0_", j_pi, ":", tau_pizeros[j_pi].vx(), tau_pizeros[j_pi].vy(), tau_pizeros[j_pi].vz(),    
+                                            ":", tau_pizeros[j_pi].px(), tau_pizeros[j_pi].py(), tau_pizeros[j_pi].pz());
 
           //Check the vertex position
-           if (false && !debug) cout << "\t\t\tPi0_" << j_pi << " (" << tau_pizeros[j_pi].charge() <<"), vertex:  " <<   
-            tau_pizeros[j_pi].vx() << " " <<
-            tau_pizeros[j_pi].vy() << " " <<
-            tau_pizeros[j_pi].vz() << " " <<
-            endl; //all from the same vertex
+           if (false) dout("\t\t\tPi0_", j_pi, "(", tau_pizeros[j_pi].charge(), "), vertex:", tau_pizeros[j_pi].vx(), tau_pizeros[j_pi].vy(), tau_pizeros[j_pi].vz()); //all from the same vertex
 
           //Build the inv mass
-            if ( !debug) cout << "\t\t===>matching to Pi0_"<< j_pi << " from " << tau_pizeros.size() << " in this tau" << endl;
+            dout("\t\t===>matching to Pi0_", j_pi, "from", tau_pizeros.size(), "in this tau");
             for (unsigned int j2_pi = j_pi + 1; j2_pi < tau_pizeros.size(); j2_pi++)
             {
               double E   = tau_pizeros[j_pi].energy() +  tau_pizeros[j2_pi].energy();
@@ -698,38 +673,33 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
               double inv_M = sqrt(pow(E, 2) - pow(p_x, 2) - pow(p_y, 2) - pow(p_z, 2));
               
               taus_pi0_inv_m_to_ks->Fill(inv_M);
-              if ( !debug) cout << "\t\t\tm( Pi0_" << j_pi << " + ";
-              if ( !debug) cout <<  "Pi0_" << j2_pi << " ) = " << inv_M << endl;
+              dout("\t\t\tm( Pi0_", j_pi, "+ Pi0_", j2_pi, ") =", inv_M);
             }
-            //cout << endl;
+            //cout,  endl;
 
             taus_pi0_pt->Fill(tau_pizeros[j_pi].pt());
         }
         taus_pi0_pt->Fill(tau_pizeros[tau_pizeros.size() - 1].pt());
-        cout << "\t\t\t all tau pi0_"<< tau_pizeros.size() - 1 << ": " << tau_pizeros[tau_pizeros.size() - 1].vx() << " "<< tau_pizeros[tau_pizeros.size() - 1].vy() << " "<< tau_pizeros[tau_pizeros.size() - 1].vz() << " " << 
-                                                                  ": " << tau_pizeros[tau_pizeros.size() - 1].px() << " "<< tau_pizeros[tau_pizeros.size() - 1].py() << " "<< tau_pizeros[tau_pizeros.size() - 1].pz() << " " << 
-        endl;
+        dlog("\t\t\t all tau pi0_", tau_pizeros.size() - 1, ":", tau_pizeros[tau_pizeros.size() - 1].vx(), tau_pizeros[tau_pizeros.size() - 1].vy(), tau_pizeros[tau_pizeros.size() - 1].vz(), 
+                                                            ":", tau_pizeros[tau_pizeros.size() - 1].px(), tau_pizeros[tau_pizeros.size() - 1].py(), tau_pizeros[tau_pizeros.size() - 1].pz());
       }
-      else if (!debug) cout << "\t\t\tto few pions in all pions " << endl;
+      else dout("\t\t\tto few pions in all pions");
 
       //Charged hadrons of PFRecoTau - all
       if (tau_picharge.size() > 1)
       {
-        if (debug) cout << "\t\t all tau pi+'s number:" << tau_picharge.size() << endl;
+        dlog("\t\t all tau pi+'s number:", tau_picharge.size());
 
         for (unsigned int j_pi = 0; j_pi < tau_picharge.size() - 1; j_pi++) //over isolation pions in Tau
         {
-          cout << "\t\t\t all tau pi+_"<< j_pi << ": " << tau_picharge[j_pi]->vx()<< " "<< tau_picharge[j_pi]->vy() << " "<< tau_picharge[j_pi]->vz() << " " << 
-                                                  ": " << tau_picharge[j_pi]->px() << " "<< tau_picharge[j_pi]->py() << " "<< tau_picharge[j_pi]->pz() << " " << 
-          endl;
+          dlog("\t\t\t all tau pi+_", j_pi, ":", tau_picharge[j_pi]->vx(), tau_picharge[j_pi]->vy(), tau_picharge[j_pi]->vz(),  
+                                            ":", tau_picharge[j_pi]->px(), tau_picharge[j_pi]->py(), tau_picharge[j_pi]->pz());
 
           //Check the vertex position
-           if (false && !debug) cout << "\t\t\tPi+_" << j_pi << " (" << tau_picharge[j_pi]->charge() <<"), vertex:  " <<   
-                                        tau_picharge[j_pi]->vx() << " " << tau_picharge[j_pi]->vy() << " " << tau_picharge[j_pi]->vz() << " " << 
-                                endl; //all from the same vertex
+           if (false ) dout("\t\t\tPi+_", j_pi, "(", tau_picharge[j_pi]->charge(), "), vertex:", tau_picharge[j_pi]->vx(), tau_picharge[j_pi]->vy(), tau_picharge[j_pi]->vz());//all from the same vertex
 
           //Build the inv mass
-            if ( !debug) cout << "\t\t===>matching to Pi+_"<< j_pi << " from " << tau_picharge.size() << " in this tau" << endl;
+            dout("\t\t===>matching to Pi+_", j_pi, "from", tau_picharge.size(), "in this tau");
             for (unsigned int j2_pi = j_pi + 1; j2_pi < tau_picharge.size(); j2_pi++)
             {
               double E   = tau_picharge[j_pi]->energy() +  tau_picharge[j2_pi]->energy();
@@ -739,20 +709,16 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
               double inv_M = sqrt(pow(E, 2) - pow(p_x, 2) - pow(p_y, 2) - pow(p_z, 2));
               
               taus_pi_charged_inv_m_to_ks->Fill(inv_M);
-              if ( !debug) cout << "\t\t\tm( Pi+_" << j_pi << " + ";
-              if ( !debug) cout <<  "Pi+_" << j2_pi << " ) = " << inv_M << endl;
+              dout("\t\t\tm( Pi+_", j_pi, "+ Pi+_", j2_pi, ") =", inv_M);
             }
-            if ( !debug) cout << endl;
+            dout();
 
             taus_pi_charged_pt->Fill(tau_picharge[j_pi]->pt());
         }
         taus_pi_charged_pt->Fill(tau_picharge[tau_picharge.size() - 1]->pt());
-        cout << "\t\t\t all tau pi+_"<< tau_picharge.size() - 1 << ": " << tau_picharge[tau_picharge.size() - 1]->vx() << " "<< tau_picharge[tau_picharge.size() - 1]->vy() << " "<< tau_picharge[tau_picharge.size() - 1]->vz() << " " << 
-                                                                   ": " << tau_picharge[tau_picharge.size() - 1]->px() << " "<< tau_picharge[tau_picharge.size() - 1]->py() << " "<< tau_picharge[tau_picharge.size() - 1]->pz() << " " << 
-        endl;
+        dlog("\t\t\t all tau pi+_", tau_picharge.size() - 1, ":", tau_picharge[tau_picharge.size() - 1]->vx(), tau_picharge[tau_picharge.size() - 1]->vy(), tau_picharge[tau_picharge.size() - 1]->vz(), 
+                                                             ":", tau_picharge[tau_picharge.size() - 1]->px(), tau_picharge[tau_picharge.size() - 1]->py(), tau_picharge[tau_picharge.size() - 1]->pz());
       }
-
-
 
       if (tau_count >= 1000) 
       {
@@ -761,8 +727,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       }
     }
   } 
-  else if (!pf_taus.isValid() && !debug ) cout << "no valid pf_taus"  << endl;
-
+  else if (!pf_taus.isValid()) dout("no valid pf_taus");
 }
 
 
@@ -792,10 +757,10 @@ AOD_pi0::endJob()
 
 AOD_pi0::~AOD_pi0()
 {
-  cout << "Total num of not-matched events:" << num_ev_tau_pi_not_in_hps_pi << endl;
-  cout << "num_pion_res: " << num_pion_res << endl;
-  cout << "max_inv_mass: " << max_inv_mass << endl;
-  cout << "max_ks_daughter_pt: " << max_ks_daughter_pt << endl;
+  dlog("Total num of not-matched events:", num_ev_tau_pi_not_in_hps_pi);
+  dlog("num_pion_res: ", num_pion_res);
+  dlog("max_inv_mass: ", max_inv_mass);
+  dlog("max_ks_daughter_pt: ", max_ks_daughter_pt);
   outfile->Close();
 }
 
@@ -836,6 +801,6 @@ DEFINE_FWK_MODULE(AOD_pi0);
   const PFCandidatePtr & leadPFChargedHadrCand() const reco::PFTau 
   
 float  leadPFChargedHadrCandsignedSipt() const reco::PFTau 
- PFRecoTauChargedHadronRef =>typedef edm::Ref<PFRecoTauChargedHadronCollection> =>typedef std::vector<PFRecoTauChargedHadron> with #include <PFRecoTauChargedHadron.h>  leadTauChargedHadronCandidate() const reco::PFTau 
+ PFRecoTauChargedHadronRef =>typedef edm::Ref<PFRecoTauChargedHadronCollection> =>typedef vector<PFRecoTauChargedHadron> with #include <PFRecoTauChargedHadron.h>  leadTauChargedHadronCandidate() const reco::PFTau 
 
 */
