@@ -191,6 +191,13 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
                                     TString typeOfConstituences, 
                                     TH1 * hist_inv_m, 
                                     TH1 * hist_pt=0);
+    template  <typename VectoreType >
+    void CombinatoricOfTwoInvM(vector<VectoreType> collection/*reco::RecoTauPiZero */, 
+                                    TString typeOfCollection, 
+                                    TString typeOfObjects,
+                                    TString typeOfConstituences, 
+                                    TH1 * hist_inv_m, 
+                                    TH1 * hist_pt=0);
     template <typename T>
     vector <T*> TransformToPointers(vector <T> a, vector <T*> b);
 
@@ -227,6 +234,8 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
       TH1D* ks_inv_m_pi;
       TH1D* taus_pi_charged_inv_m_to_ks ;
       TH1D* taus_pi_charged_pt;
+      TH1D* taus_pi0_had_inv_m_to_ks ;
+      TH1D* taus_pi0_had_pt;
 
     // Tokens for the Collections 
       edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionToken_;
@@ -304,26 +313,28 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 
   // Saved histograms 
     outfile = new TFile("aod_pi0.root","RECREATE");
-    hist_directory[0]  = outfile->mkdir("Taus_pions_coll", "Taus_pions_collections");
-    hist_directory[1]  = outfile->mkdir("ks_coll", "ks_collection");
-    hist_directory[2]  = outfile->mkdir("Taus_charged_had_coll", "Taus_charged_had_coll");
-    hist_directory[3]  = outfile->mkdir("Taus_neutral_had_coll", "Taus_neutral_had_coll");
     outfile->cd();  
       h_v0_count = new TH1D("v0_count","v0 count", 10, 0, 9);
       pions_inv_m  = new TH1D("pions_inv_m","inv mass of pions in taus", 100, 0, 1);
       num_pions = new TH1D("num_of_pios","num of pions", 10, 0, 9);
+    hist_directory[1]  = outfile->mkdir("ks_coll", "ks_collection");
     hist_directory[1]->cd();  //= outfile->mkdir("ks_coll", "ks_collection");
       ks_daughter_pt = new TH1D("ks_daughter_pt","ks daughters pt", 1000, 0, 10);
       ks_inv_m_pi = new TH1D("ks_inv_m_pi","ks daughters inv mass", 1000, 0, 10);
+    hist_directory[0]  = outfile->mkdir("Taus_pions_coll", "Taus_pions_collections");
     hist_directory[0]->cd();  //= outfile->mkdir("Taus_pions_coll", "Taus_pions_collections");
       taus_isol_pi0_inv_m_to_ks = new TH1D("taus_isol_pi0_inv_m_to_ks","all pairs of tau isolation pions inv mass", 1000, 0, 17);
       taus_isol_pi0_pt = new TH1D("taus_isol_pi0_pt","all pairs of tau isolation pionspt", 1000, 0, 10);
       taus_pi0_inv_m_to_ks = new TH1D("taus_pi0_inv_m_to_ks","all pairs of tau pions inv mass", 1000, 0, 17);
       taus_pi0_pt = new TH1D("taus_pi0_pt","all pairs of tau pions pt", 1000, 0, 10);
+    hist_directory[2]  = outfile->mkdir("Taus_charged_had_coll", "Taus_charged_had_coll");
     hist_directory[2]->cd();  //= outfile->mkdir("Taus_charged_had_coll", "Taus_charged_had_coll");
       taus_pi_charged_inv_m_to_ks = new TH1D("taus_pi_charged_inv_m_to_ks","all pairs of tau charged pions inv mass", 1000, 0, 17);
       taus_pi_charged_pt = new TH1D("taus_pi_charged_pt","all pairs of tau charged pions pt", 1000, 0, 10);
+    hist_directory[3]  = outfile->mkdir("Taus_neutral_had_coll", "Taus_neutral_had_coll");
     hist_directory[3]->cd();  //= outfile->mkdir("Taus_neutral_had_coll", "Taus_neutral_had_coll");
+      taus_pi0_had_inv_m_to_ks = new TH1D("taus_pi0_had_inv_m_to_ks","all pairs of tau pions 0 had inv mass", 1000, 0, 17);
+      taus_pi0_had_pt = new TH1D("taus_pi0_had_pt","all pairs of tau pions 0 had pt", 1000, 0, 10);
 
   // Tokens
     //Ks's
@@ -513,7 +524,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     for (unsigned int i = 0; i < pf_taus->size(); i++) // Over Tau's
     {
       reco::PFTauRef pftauref(pf_taus, i); // one Tau instance, typedef edm::Ref<PFTauCollection> reco::PFTauRef
-      dlog("\ttau #", i, "from", pf_taus->size(), "(", pftauref->vx(), pftauref->vy(), pftauref->vz(), ")");
+      dlog("tau #", i, "from", pf_taus->size(), "(", pftauref->vx(), pftauref->vy(), pftauref->vz(), ")");
         //reco::PFTau pfTau(pf_taus, i); //same as (*pf_taus)[i]
         //edm::AtomicPtrCache< vector< reco::RecoTauPiZero > >
         //const vector< reco::RecoTauPiZero > a  = (*pf_taus)[i].signalPiZeroCandidates();
@@ -524,35 +535,30 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       // Lists to be used 
         //Pizeros list
-        // Signal pi0's
-        vector < reco::RecoTauPiZero > tau_pizeros_sig = pftauref->signalPiZeroCandidates();
-        //Isolation pi0's
-        const vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates(); // pions of the considered Tau
-        vector < reco::RecoTauPiZero *> point_tau_pizeros_isol;
+          // Signal pi0's
+            vector < reco::RecoTauPiZero > tau_pizeros_sig = pftauref->signalPiZeroCandidates();
+          //Isolation pi0's
+            const vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates(); // pions of the considered Tau
+            vector < reco::RecoTauPiZero *> point_tau_pizeros_isol;
           // All pi0's
-          vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
-            dout("length of concatenated vectors before:", tau_pizeros.size());
-            tau_pizeros.insert(tau_pizeros.end(), tau_pizeros_isol.begin(), tau_pizeros_isol.end());
-            dout("length of concatenated vectors after:", tau_pizeros.size());
+            vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
+                                           tau_pizeros.insert(tau_pizeros.end(), tau_pizeros_isol.begin(), tau_pizeros_isol.end());
             vector < reco::RecoTauPiZero* > point_tau_pizeros;
        
         // Hadrons list
-        vector < reco::PFCandidatePtr  > tau_signalPFChargedHadrCands = pftauref->signalPFChargedHadrCands();//typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-        vector < reco::PFCandidatePtr  > tau_isolationPFChargedHadrCands = pftauref->isolationPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-          // All pi+-'s
-          vector < reco::PFCandidatePtr > tau_picharge = pftauref->signalPFChargedHadrCands(); // vector < edm::Ptr<PFCandidate> >
-            dout("length of concatenated vectors tau_picharge before:", tau_picharge.size());
-            tau_picharge.insert(tau_picharge.end(), tau_isolationPFChargedHadrCands.begin(), tau_isolationPFChargedHadrCands.end());
-            dout("length of concatenated vectors tau_picharge after:", tau_picharge.size());
+          vector < reco::PFCandidatePtr  > tau_signalPFChargedHadrCands    = pftauref->signalPFChargedHadrCands();//typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+          vector < reco::PFCandidatePtr  > tau_isolationPFChargedHadrCands = pftauref->isolationPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+            // All pi+-'s
+            vector < reco::PFCandidatePtr > tau_picharge = pftauref->signalPFChargedHadrCands(); // vector < edm::Ptr<PFCandidate> > 
+                                            tau_picharge.insert(tau_picharge.end(), tau_isolationPFChargedHadrCands.begin(), tau_isolationPFChargedHadrCands.end());
             std::vector<reco::PFCandidatePtr * > point_tau_picharge;
 
-        vector < reco::PFCandidatePtr  > tau_signalPFNeutrHadrCands    = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-        vector < reco::PFCandidatePtr  > tau_isolationPFNeutrHadrCands = pftauref->isolationPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-          // All pi0_had's
-          vector < reco::PFCandidatePtr > tau_pizeros_had = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-            dout("length of concatenated vectors tau_pizeros_had before:", tau_pizeros_had.size());
-            tau_pizeros_had.insert(tau_pizeros_had.end(), tau_isolationPFNeutrHadrCands.begin(), tau_isolationPFNeutrHadrCands.end());
-            dout("length of concatenated vectors tau_pizeros_had after:", tau_pizeros_had.size());
+          vector < reco::PFCandidatePtr  > tau_signalPFNeutrHadrCands    = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+          vector < reco::PFCandidatePtr  > tau_isolationPFNeutrHadrCands = pftauref->isolationPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+            // All pi0_had's
+            vector < reco::PFCandidatePtr > tau_pizeros_had = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+                                            tau_pizeros_had.insert(tau_pizeros_had.end(), tau_isolationPFNeutrHadrCands.begin(), tau_isolationPFNeutrHadrCands.end());
+            std::vector<reco::PFCandidatePtr *> point_tau_pizeros_had;
         
         //NOT USED list
           vector < reco::PFRecoTauChargedHadron > tau_signalTauChargedHadronCandidates = pftauref->signalTauChargedHadronCandidates(); // gives 0 size
@@ -561,104 +567,112 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
           float tau_leadPFChargedHadrCandsignedSipt = pftauref->leadPFChargedHadrCandsignedSipt();
           reco::PFRecoTauChargedHadronRef tau_leadTauChargedHadronCandidate = pftauref->leadTauChargedHadronCandidate(); // can not implement
 
-      // Signal pi0's
-      if (tau_pizeros_sig.size() && true)
-      {
-        dlog("\t\t signal tau pi0's number:", tau_pizeros_sig.size());
-        num_pions->Fill(tau_pizeros_sig.size());
-        double inv_M = 0;
-        if (tau_pizeros_sig.size() > 0)
+      // Pions of PFRecoTau - all RecoTauPiZero
+      dlog("\t-----------------------------------------");
+      dlog("\tPions of RecoTauPiZero of PFRecoTau");
+        // Signal pi0's
+        if (tau_pizeros_sig.size() && true)
         {
-          TLorentzVector first(0, 0, 0, 0);
-          for (unsigned int j = 0; j < tau_pizeros_sig.size(); j++)
+          dlog("\t\t signal tau pi0's number:", tau_pizeros_sig.size());
+          num_pions->Fill(tau_pizeros_sig.size());
+          double inv_M = 0;
+          if (tau_pizeros_sig.size() > 0)
           {
-            dout("\t\t\tPi0_", j, "(", tau_pizeros_sig[j].charge(), ")", tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz(), tau_pizeros_sig[j].energy());
-            TLorentzVector second(tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz(), tau_pizeros_sig[j].energy());
-            first = (first + second);
-            
-            dlog("\t\t\t signal tau pi0_", j, ":", tau_pizeros_sig[j].vx(), tau_pizeros_sig[j].vy(), tau_pizeros_sig[j].vz(), 
-                                              ":", tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz());
+            TLorentzVector first(0, 0, 0, 0);
+            for (unsigned int j = 0; j < tau_pizeros_sig.size(); j++)
+            {
+              dout("\t\t\tPi0_", j, "(", tau_pizeros_sig[j].charge(), ")", tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz(), tau_pizeros_sig[j].energy());
+              TLorentzVector second(tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz(), tau_pizeros_sig[j].energy());
+              first = (first + second);
+              
+              dlog("\t\t\t signal tau pi0_", j, ":", tau_pizeros_sig[j].vx(), tau_pizeros_sig[j].vy(), tau_pizeros_sig[j].vz(), 
+                                                ":", tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz());
+            }
+            inv_M = first.M();
           }
-          inv_M = first.M();
+          dout("TAU_", i, " WITH TOTAL INVARIANT MASS OF PIONS:", inv_M);
         }
-        dout("TAU_", i, " WITH TOTAL INVARIANT MASS OF PIONS:", inv_M);
-      }
-      else dout("\t\t\tto few pions in signal pions ");
+        else dlog("\t\t\tto few pions in signal pions ");
 
-      //Isolation pi0's
-      point_tau_pizeros_isol = TransformToPointers(tau_pizeros_isol, point_tau_pizeros_isol);
-      CombinatoricOfTwoInvM(point_tau_pizeros_isol, "isolat tau pi0", "tau", "pi0", taus_isol_pi0_inv_m_to_ks, taus_isol_pi0_pt);
-      /*if (tau_pizeros_isol.size() > 1)
-      {
-        dlog();
-        dlog("\t\t isolat tau pi0's number:", tau_pizeros_isol.size());
+        //Isolation pi0's
+        point_tau_pizeros_isol = TransformToPointers(tau_pizeros_isol, point_tau_pizeros_isol);
+        CombinatoricOfTwoInvM(point_tau_pizeros_isol, "isolat tau pi0", "tau", "pi0", taus_isol_pi0_inv_m_to_ks, taus_isol_pi0_pt);
+        
+        //All pi0's loop
+        point_tau_pizeros = TransformToPointers(tau_pizeros, point_tau_pizeros);
+        CombinatoricOfTwoInvM(point_tau_pizeros, "all tau pi0", "tau", "pi0", taus_pi0_inv_m_to_ks, taus_pi0_pt);
 
-        for (unsigned int j_pi = 0; j_pi < tau_pizeros_isol.size() - 1; j_pi++) //over isolation pions in Tau
-        {
-          dlog("\t\t\t isolat tau pi0_", j_pi, ":", tau_pizeros_isol[j_pi].vx(), tau_pizeros_isol[j_pi].vy(), tau_pizeros_isol[j_pi].vz(), 
-                                               ":", tau_pizeros_isol[j_pi].px(), tau_pizeros_isol[j_pi].py(), tau_pizeros_isol[j_pi].pz());
+      //Charged hadrons of PFRecoTau - all PFCandidatePtr
+      dlog("\t-----------------------------------------");
+      dlog("\tCharged hadrons of PFRecoTau ");
+      point_tau_picharge = TransformToPointers(tau_picharge, point_tau_picharge);
+      CombinatoricOfTwoInvM(tau_picharge, "all tau pi+-", "tau", "pi+-", taus_pi_charged_inv_m_to_ks, taus_pi_charged_pt);
+      // if (tau_picharge.size() > 1)
+      // {
+      //   dlog("\t\t all tau pi+-'s number:", tau_picharge.size());
 
-          //Check the vertex position
-            if (false) dout("\t\t\tPi0_", j_pi, "(", tau_pizeros_isol[j_pi].charge(), "), vertex:", tau_pizeros_isol[j_pi].vx(), tau_pizeros_isol[j_pi].vy(), tau_pizeros_isol[j_pi].vz()); //all from the same vertex
+      //   for (unsigned int j_pi = 0; j_pi < tau_picharge.size() - 1; j_pi++) //over isolation pions in Tau
+      //   {
+      //     dlog("\t\t\t all tau pi+_", j_pi, ":", tau_picharge[j_pi]->vx(), tau_picharge[j_pi]->vy(), tau_picharge[j_pi]->vz(),  
+      //                                       ":", tau_picharge[j_pi]->px(), tau_picharge[j_pi]->py(), tau_picharge[j_pi]->pz());
 
-          //Build the inv mass
-            TLorentzVector first(tau_pizeros_isol[j_pi]->px(), tau_pizeros_isol[j_pi]->py(), tau_pizeros_isol[j_pi]->pz(), tau_pizeros_isol[j_pi]->energy());
-            dout("\t\t===>matching to Pi0_", j_pi, " from ", tau_pizeros_isol.size(), " in this tau");
-            for (unsigned int j2_pi = j_pi + 1; j2_pi < tau_pizeros_isol.size(); j2_pi++)
-            {
-              TLorentzVector second(tau_pizeros_isol[j2_pi]->px(), tau_pizeros_isol[j2_pi]->py(), tau_pizeros_isol[j2_pi]->pz(), tau_pizeros_isol[j2_pi]->energy());
-              double inv_M = (first + second).M();
-              if (inv_M > max_inv_mass) max_inv_mass = inv_M;
-              taus_isol_pi0_inv_m_to_ks->Fill(inv_M);
+      //     //Check the vertex position
+      //      if (false ) dout("\t\t\tPi+_", j_pi, "(", tau_picharge[j_pi]->charge(), "), vertex:", tau_picharge[j_pi]->vx(), tau_picharge[j_pi]->vy(), tau_picharge[j_pi]->vz());//all from the same vertex
+      //       TLorentzVector first(tau_picharge[j_pi]->px(), tau_picharge[j_pi]->py(), tau_picharge[j_pi]->pz(), tau_picharge[j_pi]->energy());
+      //     //Build the inv mass
+      //       dout("\t\t===>matching to Pi+_", j_pi, "from", tau_picharge.size(), "in this tau");
+      //       for (unsigned int j2_pi = j_pi + 1; j2_pi < tau_picharge.size(); j2_pi++)
+      //       {
+      //         TLorentzVector second(tau_picharge[j2_pi]->px(), tau_picharge[j2_pi]->py(), tau_picharge[j2_pi]->pz(), tau_picharge[j2_pi]->energy());
+      //         double inv_M = (first + second).M();//(*(tau_picharge[j_pi].get()) + *(tau_picharge[j2_pi].get()))->mass();// 
               
-              dout("\t\t\tm( Pi0_", j_pi, "+ Pi0_", j2_pi, " ) =", inv_M);
-            }
+      //         taus_pi_charged_inv_m_to_ks->Fill(inv_M);
+      //         dout("\t\t\tm( Pi+_", j_pi, "+ Pi+_", j2_pi, ") =", inv_M);
+      //       }
+      //       dout();
 
-            taus_isol_pi0_pt->Fill(tau_pizeros_isol[j_pi].pt());
-        }
-        taus_isol_pi0_pt->Fill(tau_pizeros_isol[tau_pizeros_isol.size() - 1].pt());
-        dlog("\t\t\t isolat tau pi0_", tau_pizeros_isol.size() - 1, ":", tau_pizeros_isol[tau_pizeros_isol.size() - 1].vx(), tau_pizeros_isol[tau_pizeros_isol.size() - 1].vy(), tau_pizeros_isol[tau_pizeros_isol.size() - 1].vz(),    
-                                                                    ":", tau_pizeros_isol[tau_pizeros_isol.size() - 1].px(), tau_pizeros_isol[tau_pizeros_isol.size() - 1].py(), tau_pizeros_isol[tau_pizeros_isol.size() - 1].pz());
-      }
-      else dout("\t\t\tto few pions in isolation pions");
-      */
-      //All pi0's loop
-      point_tau_pizeros = TransformToPointers(tau_pizeros, point_tau_pizeros);
-      CombinatoricOfTwoInvM(point_tau_pizeros, "all tau pi0", "tau", "pi0", taus_pi0_inv_m_to_ks, taus_pi0_pt);
+      //       taus_pi_charged_pt->Fill(tau_picharge[j_pi]->pt());
+      //   }
+      //   taus_pi_charged_pt->Fill(tau_picharge[tau_picharge.size() - 1]->pt());
+      //   dlog("\t\t\t all tau pi+_", tau_picharge.size() - 1, ":", tau_picharge[tau_picharge.size() - 1]->vx(), tau_picharge[tau_picharge.size() - 1]->vy(), tau_picharge[tau_picharge.size() - 1]->vz(), 
+      //                                                        ":", tau_picharge[tau_picharge.size() - 1]->px(), tau_picharge[tau_picharge.size() - 1]->py(), tau_picharge[tau_picharge.size() - 1]->pz());
+      // }
 
-      //Charged hadrons of PFRecoTau - all
-      //point_tau_picharge = TransformToPointers(tau_picharge, point_tau_picharge);
-      //CombinatoricOfTwoInvM(tau_picharge, "all tau pi+-", "tau", "pi+-", taus_pi_charged_inv_m_to_ks, taus_pi_charged_pt);
-      if (tau_picharge.size() > 1)
-      {
-        dlog("\t\t all tau pi+-'s number:", tau_picharge.size());
+      //Neutral hadrons of PFRecoTau - all PFCandidatePtr
+      dlog("\t-----------------------------------------");
+      dlog("\tNeutral hadrons of PFRecoTau ");
+      point_tau_pizeros_had = TransformToPointers(tau_pizeros_had, point_tau_pizeros_had);
+      CombinatoricOfTwoInvM(tau_pizeros_had, "all tau pi0_had", "tau", "pi0_had", taus_pi0_had_inv_m_to_ks, taus_pi0_had_pt);
+      // if (tau_pizeros_had.size() > 1)
+      // {
+      //   dlog("\t\t all tau pi0_had's number:", tau_pizeros_had.size());
 
-        for (unsigned int j_pi = 0; j_pi < tau_picharge.size() - 1; j_pi++) //over isolation pions in Tau
-        {
-          dlog("\t\t\t all tau pi+_", j_pi, ":", tau_picharge[j_pi]->vx(), tau_picharge[j_pi]->vy(), tau_picharge[j_pi]->vz(),  
-                                            ":", tau_picharge[j_pi]->px(), tau_picharge[j_pi]->py(), tau_picharge[j_pi]->pz());
+      //   for (unsigned int j_pi = 0; j_pi < tau_pizeros_had.size() - 1; j_pi++) //over isolation pions in Tau
+      //   {
+      //     dlog("\t\t\t all tau pi0_had", j_pi, ":", tau_pizeros_had[j_pi]->vx(), tau_pizeros_had[j_pi]->vy(), tau_pizeros_had[j_pi]->vz(),  
+      //                                       ":", tau_pizeros_had[j_pi]->px(), tau_pizeros_had[j_pi]->py(), tau_pizeros_had[j_pi]->pz());
 
-          //Check the vertex position
-           if (false ) dout("\t\t\tPi+_", j_pi, "(", tau_picharge[j_pi]->charge(), "), vertex:", tau_picharge[j_pi]->vx(), tau_picharge[j_pi]->vy(), tau_picharge[j_pi]->vz());//all from the same vertex
-            TLorentzVector first(tau_picharge[j_pi]->px(), tau_picharge[j_pi]->py(), tau_picharge[j_pi]->pz(), tau_picharge[j_pi]->energy());
-          //Build the inv mass
-            dout("\t\t===>matching to Pi+_", j_pi, "from", tau_picharge.size(), "in this tau");
-            for (unsigned int j2_pi = j_pi + 1; j2_pi < tau_picharge.size(); j2_pi++)
-            {
-              TLorentzVector second(tau_picharge[j2_pi]->px(), tau_picharge[j2_pi]->py(), tau_picharge[j2_pi]->pz(), tau_picharge[j2_pi]->energy());
-              double inv_M = (first + second).M();//(*(tau_picharge[j_pi].get()) + *(tau_picharge[j2_pi].get()))->mass();// 
+      //     //Check the vertex position
+      //      if (false ) dout("\t\t\tPi0_had", j_pi, "(", tau_pizeros_had[j_pi]->charge(), "), vertex:", tau_pizeros_had[j_pi]->vx(), tau_pizeros_had[j_pi]->vy(), tau_pizeros_had[j_pi]->vz());//all from the same vertex
+      //       TLorentzVector first(tau_pizeros_had[j_pi]->px(), tau_pizeros_had[j_pi]->py(), tau_pizeros_had[j_pi]->pz(), tau_pizeros_had[j_pi]->energy());
+      //     //Build the inv mass
+      //       dout("\t\t===>matching to Pi0_had", j_pi, "from", tau_pizeros_had.size(), "in this tau");
+      //       for (unsigned int j2_pi = j_pi + 1; j2_pi < tau_pizeros_had.size(); j2_pi++)
+      //       {
+      //         TLorentzVector second(tau_pizeros_had[j2_pi]->px(), tau_pizeros_had[j2_pi]->py(), tau_pizeros_had[j2_pi]->pz(), tau_pizeros_had[j2_pi]->energy());
+      //         double inv_M = (first + second).M();//(*(tau_pizeros_had[j_pi].get()) + *(tau_pizeros_had[j2_pi].get()))->mass();// 
               
-              taus_pi_charged_inv_m_to_ks->Fill(inv_M);
-              dout("\t\t\tm( Pi+_", j_pi, "+ Pi+_", j2_pi, ") =", inv_M);
-            }
-            dout();
+      //         taus_pi0_had_inv_m_to_ks->Fill(inv_M);
+      //         dout("\t\t\tm( Pi0_had_", j_pi, "+ Pi0_had_", j2_pi, ") =", inv_M);
+      //       }
+      //       dout();
 
-            taus_pi_charged_pt->Fill(tau_picharge[j_pi]->pt());
-        }
-        taus_pi_charged_pt->Fill(tau_picharge[tau_picharge.size() - 1]->pt());
-        dlog("\t\t\t all tau pi+_", tau_picharge.size() - 1, ":", tau_picharge[tau_picharge.size() - 1]->vx(), tau_picharge[tau_picharge.size() - 1]->vy(), tau_picharge[tau_picharge.size() - 1]->vz(), 
-                                                             ":", tau_picharge[tau_picharge.size() - 1]->px(), tau_picharge[tau_picharge.size() - 1]->py(), tau_picharge[tau_picharge.size() - 1]->pz());
-      }
+      //       taus_pi0_had_pt->Fill(tau_pizeros_had[j_pi]->pt());
+      //   }
+      //   taus_pi0_had_pt->Fill(tau_pizeros_had[tau_pizeros_had.size() - 1]->pt());
+      //   dlog("\t\t\t all tau pi0_had_", tau_pizeros_had.size() - 1, ":", tau_pizeros_had[tau_pizeros_had.size() - 1]->vx(), tau_pizeros_had[tau_pizeros_had.size() - 1]->vy(), tau_pizeros_had[tau_pizeros_had.size() - 1]->vz(), 
+      //                                                               ":", tau_pizeros_had[tau_pizeros_had.size() - 1]->px(), tau_pizeros_had[tau_pizeros_had.size() - 1]->py(), tau_pizeros_had[tau_pizeros_had.size() - 1]->pz());
+      // }
     }
   } 
   else if (!pf_taus.isValid()) dout("no valid pf_taus");
@@ -668,7 +682,7 @@ template <typename T>
 vector <T*> AOD_pi0::TransformToPointers(vector <T> a, vector <T*> b)
 {
   // if b is empty (this will append to the end of b)
-  if (a.size() > 1)
+  if (a.size() > 0)
   {
     b.reserve(a.size()); // optional, but a good habit
     std::transform(a.begin(), a.end(), std::back_inserter(b), [](T& o){ return &o; });
@@ -684,11 +698,10 @@ void AOD_pi0::CombinatoricOfTwoInvM(vector <VectoreType *> collection,
                                     TH1 * hist_inv_m, 
                                     TH1 * hist_pt)
 {
+  dlog();
+  dlog("\t\t", typeOfCollection, "'s number:", collection.size());
   if (collection.size() > 1)
   {
-    dlog();
-    dlog("\t\t", typeOfCollection, "'s number:", collection.size());
-
     for (unsigned int i = 0; i < collection.size() - 1; i++) //over isolation pions in Tau
     {
       dlog("\t\t\t", typeOfCollection, i, ":", collection[i]->vx(), collection[i]->vy(), collection[i]->vz(),    
@@ -713,10 +726,51 @@ void AOD_pi0::CombinatoricOfTwoInvM(vector <VectoreType *> collection,
     dlog("\t\t\t", typeOfCollection, collection.size() - 1, ":", collection[collection.size() - 1]->vx(), collection[collection.size() - 1]->vy(), collection[collection.size() - 1]->vz(), 
                                                             ":", collection[collection.size() - 1]->px(), collection[collection.size() - 1]->py(), collection[collection.size() - 1]->pz());
   }
-  else dout("\t\t\tto few", typeOfConstituences, "in vector with", typeOfCollection);
+  else if (collection.size() == 1) dlog("\t\t\t", typeOfCollection, 0, ":", collection[0]->vx(), collection[0]->vy(), collection[0]->vz(), 
+                                           ":", collection[0]->px(), collection[0]->py(), collection[0]->pz());
 }
       
 
+template  <typename VectoreType >
+void AOD_pi0::CombinatoricOfTwoInvM(vector <VectoreType> collection, 
+                                    TString typeOfCollection, 
+                                    TString typeOfObjects,
+                                    TString typeOfConstituences, 
+                                    TH1 * hist_inv_m, 
+                                    TH1 * hist_pt)
+{
+  dlog();
+  dlog("\t\t", typeOfCollection, "'s number:", collection.size());
+  if (collection.size() > 1)
+  {
+    for (unsigned int i = 0; i < collection.size() - 1; i++) //over isolation pions in Tau
+    {
+      dlog("\t\t\t", typeOfCollection, i, ":", collection[i]->vx(), collection[i]->vy(), collection[i]->vz(),    
+                                          ":", collection[i]->px(), collection[i]->py(), collection[i]->pz());
+
+      //Check the vertex position
+       if (false) dout("\t\t\t", typeOfConstituences, i, "(", collection[i]->charge(), "), vertex:", collection[i]->vx(), collection[i]->vy(), collection[i]->vz()); //all from the same vertex
+       TLorentzVector first(collection[i]->px(), collection[i]->py(), collection[i]->pz(), collection[i]->energy());
+      //Build the inv mass
+        dout("\t\t===>matching to", typeOfConstituences , i, "from", collection.size(), "in this", typeOfObjects);
+        for (unsigned int j = i + 1; j < collection.size(); j++)
+        {
+          TLorentzVector second(collection[j]->px(), collection[j]->py(), collection[j]->pz(), collection[j]->energy());
+          double inv_M = (first + second).M();
+          hist_inv_m->Fill(inv_M);
+          dout("\t\t\tm(", typeOfConstituences, i, "+", typeOfConstituences, j, ") =", inv_M);
+        }
+        //cout,  endl;
+        if (hist_pt != 0) hist_pt->Fill(collection[i]->pt());
+    }
+    if (hist_pt != 0) hist_pt->Fill(collection[collection.size() - 1]->pt());
+    dlog("\t\t\t", typeOfCollection, collection.size() - 1, ":", collection[collection.size() - 1]->vx(), collection[collection.size() - 1]->vy(), collection[collection.size() - 1]->vz(), 
+                                                            ":", collection[collection.size() - 1]->px(), collection[collection.size() - 1]->py(), collection[collection.size() - 1]->pz());
+  }
+  else if (collection.size() == 1) dlog("\t\t\t", typeOfCollection, 0, ":", collection[0]->vx(), collection[0]->vy(), collection[0]->vz(), 
+                                        ":", collection[0]->px(), collection[0]->py(), collection[0]->pz());
+}
+   
 // ------------ method called once each job just before starting event loop  ------------
 void 
 AOD_pi0::beginJob()
