@@ -1,2 +1,2 @@
-scramb -j16
+scramb -j16;
 cmsRun AOD_pi0/python/ConfFile_cfg.py
