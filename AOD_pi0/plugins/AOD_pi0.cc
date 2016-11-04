@@ -781,30 +781,3 @@ AOD_pi0::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(AOD_pi0);
-/*FYI
-  isolationPFChargedHadrCands() const reco::PFTau 
-  isolationTauChargedHadronCandidates() const reco::PFTau 
-  //isolationPFChargedHadrCandsPtSum() const  reco::PFTau 
-    isolationPFNeutrHadrCands() const reco::PFTau 
-
-
-  signalPFChargedHadrCands() const  reco::PFTau 
-  signalTauChargedHadronCandidates() const  reco::PFTau 
-    signalPFNeutrHadrCands() const  reco::PFTau 
-
-
-  leadPFChargedHadrCand() const reco::PFTau 
-  leadPFChargedHadrCandsignedSipt() const reco::PFTau 
-  leadTauChargedHadronCandidate() const reco::PFTau 
-========
-   PFCandidatePtr   isolationPFChargedHadrCands() const reco::PFTau 
-  PFRecoTauChargedHadron  isolationTauChargedHadronCandidates() const reco::PFTau 
-  //isolationPFChargedHadrCandsPtSum() const  reco::PFTau 
-  PFCandidatePtr  isolationPFNeutrHadrCands() const reco::PFTau 
-
-  const PFCandidatePtr & leadPFChargedHadrCand() const reco::PFTau 
-  
-float  leadPFChargedHadrCandsignedSipt() const reco::PFTau 
- PFRecoTauChargedHadronRef =>typedef edm::Ref<PFRecoTauChargedHadronCollection> =>typedef vector<PFRecoTauChargedHadron> with #include <PFRecoTauChargedHadron.h>  leadTauChargedHadronCandidate() const reco::PFTau 
-
-*/
