@@ -631,72 +631,12 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       dlog("\tCharged hadrons of PFRecoTau ");
       point_tau_picharge = TransformToPointers(tau_picharge, point_tau_picharge);
       CombinatoricOfTwoInvM(tau_picharge, "all tau pi+-", "tau", "pi+-", taus_pi_charged_inv_m_to_ks, taus_pi_charged_pt);
-      // if (tau_picharge.size() > 1)
-      // {
-      //   dlog("\t\t all tau pi+-'s number:", tau_picharge.size());
-
-      //   for (unsigned int j_pi = 0; j_pi < tau_picharge.size() - 1; j_pi++) //over isolation pions in Tau
-      //   {
-      //     dlog("\t\t\t all tau pi+_", j_pi, ":", tau_picharge[j_pi]->vx(), tau_picharge[j_pi]->vy(), tau_picharge[j_pi]->vz(),  
-      //                                       ":", tau_picharge[j_pi]->px(), tau_picharge[j_pi]->py(), tau_picharge[j_pi]->pz());
-
-      //     //Check the vertex position
-      //      if (false ) dout("\t\t\tPi+_", j_pi, "(", tau_picharge[j_pi]->charge(), "), vertex:", tau_picharge[j_pi]->vx(), tau_picharge[j_pi]->vy(), tau_picharge[j_pi]->vz());//all from the same vertex
-      //       TLorentzVector first(tau_picharge[j_pi]->px(), tau_picharge[j_pi]->py(), tau_picharge[j_pi]->pz(), tau_picharge[j_pi]->energy());
-      //     //Build the inv mass
-      //       dout("\t\t===>matching to Pi+_", j_pi, "from", tau_picharge.size(), "in this tau");
-      //       for (unsigned int j2_pi = j_pi + 1; j2_pi < tau_picharge.size(); j2_pi++)
-      //       {
-      //         TLorentzVector second(tau_picharge[j2_pi]->px(), tau_picharge[j2_pi]->py(), tau_picharge[j2_pi]->pz(), tau_picharge[j2_pi]->energy());
-      //         double inv_M = (first + second).M();//(*(tau_picharge[j_pi].get()) + *(tau_picharge[j2_pi].get()))->mass();// 
-              
-      //         taus_pi_charged_inv_m_to_ks->Fill(inv_M);
-      //         dout("\t\t\tm( Pi+_", j_pi, "+ Pi+_", j2_pi, ") =", inv_M);
-      //       }
-      //       dout();
-
-      //       taus_pi_charged_pt->Fill(tau_picharge[j_pi]->pt());
-      //   }
-      //   taus_pi_charged_pt->Fill(tau_picharge[tau_picharge.size() - 1]->pt());
-      //   dlog("\t\t\t all tau pi+_", tau_picharge.size() - 1, ":", tau_picharge[tau_picharge.size() - 1]->vx(), tau_picharge[tau_picharge.size() - 1]->vy(), tau_picharge[tau_picharge.size() - 1]->vz(), 
-      //                                                        ":", tau_picharge[tau_picharge.size() - 1]->px(), tau_picharge[tau_picharge.size() - 1]->py(), tau_picharge[tau_picharge.size() - 1]->pz());
-      // }
 
       //Neutral hadrons of PFRecoTau - all PFCandidatePtr
       dlog("\t-----------------------------------------");
       dlog("\tNeutral hadrons of PFRecoTau ");
       point_tau_pizeros_had = TransformToPointers(tau_pizeros_had, point_tau_pizeros_had);
       CombinatoricOfTwoInvM(tau_pizeros_had, "all tau pi0_had", "tau", "pi0_had", taus_pi0_had_inv_m_to_ks, taus_pi0_had_pt);
-      // if (tau_pizeros_had.size() > 1)
-      // {
-      //   dlog("\t\t all tau pi0_had's number:", tau_pizeros_had.size());
-
-      //   for (unsigned int j_pi = 0; j_pi < tau_pizeros_had.size() - 1; j_pi++) //over isolation pions in Tau
-      //   {
-      //     dlog("\t\t\t all tau pi0_had", j_pi, ":", tau_pizeros_had[j_pi]->vx(), tau_pizeros_had[j_pi]->vy(), tau_pizeros_had[j_pi]->vz(),  
-      //                                       ":", tau_pizeros_had[j_pi]->px(), tau_pizeros_had[j_pi]->py(), tau_pizeros_had[j_pi]->pz());
-
-      //     //Check the vertex position
-      //      if (false ) dout("\t\t\tPi0_had", j_pi, "(", tau_pizeros_had[j_pi]->charge(), "), vertex:", tau_pizeros_had[j_pi]->vx(), tau_pizeros_had[j_pi]->vy(), tau_pizeros_had[j_pi]->vz());//all from the same vertex
-      //       TLorentzVector first(tau_pizeros_had[j_pi]->px(), tau_pizeros_had[j_pi]->py(), tau_pizeros_had[j_pi]->pz(), tau_pizeros_had[j_pi]->energy());
-      //     //Build the inv mass
-      //       dout("\t\t===>matching to Pi0_had", j_pi, "from", tau_pizeros_had.size(), "in this tau");
-      //       for (unsigned int j2_pi = j_pi + 1; j2_pi < tau_pizeros_had.size(); j2_pi++)
-      //       {
-      //         TLorentzVector second(tau_pizeros_had[j2_pi]->px(), tau_pizeros_had[j2_pi]->py(), tau_pizeros_had[j2_pi]->pz(), tau_pizeros_had[j2_pi]->energy());
-      //         double inv_M = (first + second).M();//(*(tau_pizeros_had[j_pi].get()) + *(tau_pizeros_had[j2_pi].get()))->mass();// 
-              
-      //         taus_pi0_had_inv_m_to_ks->Fill(inv_M);
-      //         dout("\t\t\tm( Pi0_had_", j_pi, "+ Pi0_had_", j2_pi, ") =", inv_M);
-      //       }
-      //       dout();
-
-      //       taus_pi0_had_pt->Fill(tau_pizeros_had[j_pi]->pt());
-      //   }
-      //   taus_pi0_had_pt->Fill(tau_pizeros_had[tau_pizeros_had.size() - 1]->pt());
-      //   dlog("\t\t\t all tau pi0_had_", tau_pizeros_had.size() - 1, ":", tau_pizeros_had[tau_pizeros_had.size() - 1]->vx(), tau_pizeros_had[tau_pizeros_had.size() - 1]->vy(), tau_pizeros_had[tau_pizeros_had.size() - 1]->vz(), 
-      //                                                               ":", tau_pizeros_had[tau_pizeros_had.size() - 1]->px(), tau_pizeros_had[tau_pizeros_had.size() - 1]->py(), tau_pizeros_had[tau_pizeros_had.size() - 1]->pz());
-      // }
     }
   } 
   else if (!PF_taus.isValid()) dout("no valid PF_taus");
