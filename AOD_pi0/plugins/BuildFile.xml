@@ -10,4 +10,5 @@
 <use   name="RecoTauTag/RecoTau"/>
 <use name="root"/>
 <use name="clhep"/>
+<use nem="DataFormats/GenParticleFwd"/>
 <flags EDM_PLUGIN="1"/>

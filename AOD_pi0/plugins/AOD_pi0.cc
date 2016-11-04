@@ -31,10 +31,12 @@
 #include "FWCore/Utilities/interface/EDGetToken.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 
+//ROOT
 #include "TFile.h"
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TLorentzVector.h"
+#include "TString.h"
 
 using namespace std;
 
@@ -52,6 +54,7 @@ using namespace std;
 
 //new
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 //#include "RecoTauPiZero.h"
 /*
   #include <string>
@@ -241,10 +244,17 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
       edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionToken_;
       edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> LambdaCollectionToken_;
       edm::EDGetTokenT<reco::PFCandidateCollection> PFCandidateCollectionToken_;
-
       edm::EDGetTokenT<reco::RecoTauPiZeroCollection> TauPiZeroCollectionToken_;//hpsPFTauProducer
-
       edm::EDGetTokenT<reco::PFTauCollection> TauHPSCollectionToken_;
+      // vector<int>                           "genParticles"              ""                "HLT"     
+      // vector<reco::GenJet>                  "ak4GenJets"                ""                "HLT"     
+      // vector<reco::GenJet>                  "ak4GenJetsNoNu"            ""                "HLT"     
+      // vector<reco::GenJet>                  "ak8GenJets"                ""                "HLT"     
+      // vector<reco::GenJet>                  "ak8GenJetsNoNu"            ""                "HLT"     
+      // vector<reco::GenMET>                  "genMetCalo"                ""                "HLT"     
+      // vector<reco::GenMET>                  "genMetTrue"                ""                "HLT"     
+      // vector<reco::GenParticle>             "genParticles"              ""     
+      edm::EDGetTokenT<reco::GenParticleCollection>  GenParticlesToken_;
 
     //P0's
     UInt_t pizero_count;
@@ -261,6 +271,10 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 
 
     Int_t v0_count; // V0s - Ks or Lambdas
+
+    //Parameters initialised by default
+    bool IsData;
+    TString OutFileName;
     bool crecpizero;
     bool debug;
     bool mute;
@@ -301,6 +315,10 @@ void AOD_pi0::dlog(Head H, Tail... T)
 //
 
 AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
+  //the one passed from python configure file
+  IsData(iConfig.getUntrackedParameter<bool>("IsData", false)),
+  OutFileName("aod_pi0.root"),
+  //other
   crecpizero(iConfig.getUntrackedParameter<bool>("RecPiZero", false)),
   debug(true),
   mute(false),
@@ -312,7 +330,8 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
   usesResource("TFileService");
 
   // Saved histograms 
-    outfile = new TFile("aod_pi0.root","RECREATE");
+    if (!IsData) OutFileName = "simaod_pi0.root";
+    outfile = new TFile(OutFileName,"RECREATE");
     outfile->cd();  
       h_v0_count = new TH1D("v0_count","v0 count", 10, 0, 9);
       pions_inv_m  = new TH1D("pions_inv_m","inv mass of pions in taus", 100, 0, 1);
@@ -344,6 +363,8 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
     TauPiZeroCollectionToken_ = consumes<reco::RecoTauPiZeroCollection>(iConfig.getParameter<edm::InputTag>("TauPiZeroCollectionTag"));
     //Taus
     TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
+    //SIMAOD
+    if (!IsData) GenParticlesToken_ = consumes<reco::GenParticleCollection>(edm::InputTag("genParticles","","RECO")); //typedef std::vector<GenParticle> reco::GenParticleCollection
 
   if (mute) 
   {
@@ -383,10 +404,13 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     iEvent.getByToken( TauPiZeroCollectionToken_, Strips);
 
   //Tau's token
-    edm::Handle<reco::PFTauCollection> pf_taus;// typedef vector< PFTau >  PFTauCollection
-    iEvent.getByToken( TauHPSCollectionToken_, pf_taus);
+    edm::Handle<reco::PFTauCollection> PF_taus;// typedef vector< PFTau >  PFTauCollection
+    iEvent.getByToken( TauHPSCollectionToken_, PF_taus);
   //TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
 
+  //SIMAOD's token
+    edm::Handle<reco::GenParticleCollection> GenPart;
+    iEvent.getByToken( GenParticlesToken_, GenPart);
 
   /// RECO Ks's
   if (Vertices.isValid())
@@ -430,7 +454,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   {
     unsigned int matched_pi = 0;
     if (Strips->size() > 0) dout("Number of HPS Pizeros =", Strips->size());
-    if (pf_taus->size() > 0) dout("Number of RECO Tau =", pf_taus->size());
+    if (PF_taus->size() > 0) dout("Number of RECO Tau =", PF_taus->size());
 
     for (unsigned int i = 0; i < Strips->size(); i++) 
     {
@@ -457,10 +481,10 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       // RECO Taus
         bool foundpi = false;
-        for (unsigned int i_tau = 0; i_tau < pf_taus->size(); i_tau++) //over all taus
+        for (unsigned int i_tau = 0; i_tau < PF_taus->size(); i_tau++) //over all taus
         {
           cout << "\t\tTau_" << i_tau << endl;
-          reco::PFTauRef pftauref(pf_taus, i_tau);
+          reco::PFTauRef pftauref(PF_taus, i_tau);
 
           //Signal Pi0
             const vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
@@ -518,16 +542,16 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   } 
 
   /// RECO Taus
-  if (pf_taus.isValid() )
+  if (PF_taus.isValid() )
   {
-    if (pf_taus->size() > 0)  dout("Number of Tau = ", pf_taus->size());
-    for (unsigned int i = 0; i < pf_taus->size(); i++) // Over Tau's
+    if (PF_taus->size() > 0)  dout("Number of Tau = ", PF_taus->size());
+    for (unsigned int i = 0; i < PF_taus->size(); i++) // Over Tau's
     {
-      reco::PFTauRef pftauref(pf_taus, i); // one Tau instance, typedef edm::Ref<PFTauCollection> reco::PFTauRef
-      dlog("tau #", i, "from", pf_taus->size(), "(", pftauref->vx(), pftauref->vy(), pftauref->vz(), ")");
-        //reco::PFTau pfTau(pf_taus, i); //same as (*pf_taus)[i]
+      reco::PFTauRef pftauref(PF_taus, i); // one Tau instance, typedef edm::Ref<PFTauCollection> reco::PFTauRef
+      dlog("tau #", i, "from", PF_taus->size(), "(", pftauref->vx(), pftauref->vy(), pftauref->vz(), ")");
+        //reco::PFTau pfTau(PF_taus, i); //same as (*PF_taus)[i]
         //edm::AtomicPtrCache< vector< reco::RecoTauPiZero > >
-        //const vector< reco::RecoTauPiZero > a  = (*pf_taus)[i].signalPiZeroCandidates();
+        //const vector< reco::RecoTauPiZero > a  = (*PF_taus)[i].signalPiZeroCandidates();
         //(*reco::PFTau)pfTau->signalPiZeroCandidates();
         //const vector < RecoTauPiZero > &   isolationPiZeroCandidates () const
         //const vector< RecoTauPiZero > & reco::PFTau::isolationPiZeroCandidates (   ) const
@@ -675,7 +699,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       // }
     }
   } 
-  else if (!pf_taus.isValid()) dout("no valid pf_taus");
+  else if (!PF_taus.isValid()) dout("no valid PF_taus");
 }
 
 template <typename T>
