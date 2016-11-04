@@ -56,6 +56,8 @@ using namespace std;
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "PhysicsTools/HepMCCandAlgos/plugins/MCTruthDeltaRMatcherNew.cc"
+//#include "PhysicsTools/HepMCCandAlgos/interface/MCTruthCompositeMatcher.h" // includes missed files 
 //#include "RecoTauPiZero.h"
 /*
   #include <string>
@@ -204,6 +206,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
                                     TH1 * hist_pt=0);
     template <typename T>
     vector <T*> TransformToPointers(vector <T> a, vector <T*> b);
+    void GenEvolution(const reco::Candidate * , int);
 
     template<typename T>
     struct is_pointer { static const bool value = false; };
@@ -283,6 +286,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
     double max_inv_mass;
     double max_ks_daughter_pt;
     unsigned int num_ev_tau_pi_not_in_hps_pi;
+    bool outputGenEvolution;
 };
 
 
@@ -326,12 +330,14 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
   num_pion_res(0),
   max_inv_mass(0),
   max_ks_daughter_pt(0),
-  num_ev_tau_pi_not_in_hps_pi(0)
+  num_ev_tau_pi_not_in_hps_pi(0),
+  outputGenEvolution(false)
 {
   usesResource("TFileService");
 
   // Saved histograms 
     if (!IsData) OutFileName = "simaod_pi0.root";
+    else outputGenEvolution = false;
     outfile = new TFile(OutFileName,"RECREATE");
     outfile->cd();  
       h_v0_count = new TH1D("v0_count","v0 count", 10, 0, 9);
@@ -405,7 +411,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::Handle<reco::RecoTauPiZeroCollection> Strips;
     iEvent.getByToken( TauPiZeroCollectionToken_, Strips);
 
-  //Tau's token
+  //Tau's token based hps
     edm::Handle<reco::PFTauCollection> PF_taus;// typedef vector< PFTau >  PFTauCollection
     iEvent.getByToken( TauHPSCollectionToken_, PF_taus);
   //TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
@@ -414,8 +420,9 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     edm::Handle<reco::GenParticleCollection> GenPart;
     if (!IsData) iEvent.getByToken( GenParticlesToken_, GenPart);
 
-  /// RECO Ks's
-  if (Vertices.isValid())
+  /// RECO Ks's - all are charged
+  dlog("Ks's Particles");
+  if (false && Vertices.isValid())
   {
     vector<reco::CandidateCollection> v_daughters;
     v0_count = Vertices->size();
@@ -424,17 +431,17 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     {
       int num = (*Vertices)[i].numberOfDaughters();//edm::reco::CompositeCandidate::daughters 
       int num_moth = (*Vertices)[i].numberOfMothers();
-      dout("Ks_", i, "(", (*Vertices)[i].charge(), ")");
-      dlog("\tdaughters number:", num, ";", " moth number:", num_moth); 
+      dlog("Ks_", i, "(", (*Vertices)[i].charge(), ")");
+      dlog("\tdaughters tot number:", num, ";", " moth number:", num_moth); 
 
       //for (vector<reco::Candidate* >::const_iterator iter = (*Vertices)[i].daughters.begin(); iter != (*Vertices)[i].daughters.end(); ++iter)
       double E = 0, p_x = 0, p_y = 0, p_z = 0, inv_M = 0;
       for( int j = 0; j < num; j++) // Loop over daughters
       {
         const reco::Candidate* daughter = (*Vertices)[i].daughter(j);
-        RecO_Cand_type(daughter);
-
-        dlog("daughter_", j, "(", daughter->charge(), ")", " pt:", daughter->pt());
+        //RecO_Cand_type(daughter); is unknown
+        TLorentzVector temp(daughter->px(),daughter->py(),daughter->pz(),daughter->energy());
+        dlog("\t\tdaughter_", j, "(", daughter->charge(), ")", " mass:", temp.M());
         if (daughter->pt() > max_ks_daughter_pt) max_ks_daughter_pt = daughter->pt();
         ks_daughter_pt->Fill(daughter->pt());
 
@@ -449,10 +456,10 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     // Fill the variables
     h_v0_count->Fill(v0_count);
   }
-  else if (!Vertices.isValid()) dout("UNVALID VERTICES");
-
-  /// HPS pi0's - with loop among reco::tau
-  if (Strips.isValid() && false) 
+  else if (!Vertices.isValid()) dlog("UNVALID Ks's");
+  
+  /// HPS pi0's and taus - with loop among reco::tau
+  if (false && Strips.isValid() && false) 
   {
     unsigned int matched_pi = 0;
     if (Strips->size() > 0) dout("Number of HPS Pizeros =", Strips->size());
@@ -543,8 +550,8 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     else dout("ALL PIONS MATCHED");
   } 
 
-  /// RECO Taus
-  if (PF_taus.isValid() )
+  /// Only hps reco Taus
+  if (false && PF_taus.isValid() )
   {
     if (PF_taus->size() > 0)  dout("Number of Tau = ", PF_taus->size());
     for (unsigned int i = 0; i < PF_taus->size(); i++) // Over Tau's
@@ -636,7 +643,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
       //Neutral hadrons of PFRecoTau - all PFCandidatePtr
       dlog("\t-----------------------------------------");
-      dlog("\tNeutral hadrons of PFRecoTau ");
+      dlog("\tNeutral hadrons of PFRecoTau "); // this is empty
       point_tau_pizeros_had = TransformToPointers(tau_pizeros_had, point_tau_pizeros_had);
       CombinatoricOfTwoInvM(tau_pizeros_had, "all tau pi0_had", "tau", "pi0_had", taus_pi0_had_inv_m_to_ks, taus_pi0_had_pt);
     }
@@ -650,15 +657,32 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     //vector<reco::GenParticleCollection> gen_daughters;
     int gen_count = GenPart->size();
     dlog("Size:", gen_count);
-    for(unsigned i = 0 ; i < 10/*GenPart->size()*/ ; i++)
+    if (outputGenEvolution)
     {
-      //dlog("paritcle", i, "(", (*GenPart)[i].charge(), ")");
-      dlog((*GenPart)[i].pdgId());
-      //RecO_Cand_type(&((*GenPart)[i]));//AOD_pi0::RecO_Cand_type(const value_type&)
+      for(unsigned i = 0 ; i < GenPart->size() ; i++)
+      {
+        const reco::GenParticle & gen_prt = (*GenPart)[i];
+        dlog("paritcle", i, "(", (*GenPart)[i].charge(), ")");
+        dlog("\t", gen_prt.pdgId(), gen_prt.status());
+        GenEvolution(&gen_prt, 2);
+      } 
     }
+    //reco::CandMatchMap map = MCTruthDeltaRMatcher("pions and pizeros")
   }
   else if (!IsData) dlog("\tno GenPart.isValid()");
   else dlog("no GenPart in data");
+}
+
+void AOD_pi0::GenEvolution(const reco::Candidate * mom, int num_of_tabs = 2)
+{
+    int n = mom->numberOfDaughters();
+    for(int i = 0; i < n; i++) 
+    {
+      const reco::Candidate * daughter = mom->daughter(i);
+      //if (abs(daughter->pdgId()) == 311/*(abs(daughter->pdgId()) % 1000 == 311 || abs(daughter->pdgId()) % 1000 == 321)*/ && daughter->numberOfDaughters() == 0 ) {dlog(string(num_of_tabs, '\t'), i, ") is Kaon", daughter->pdgId(), daughter->status(), daughter->numberOfDaughters());exit(1);}
+      dlog(string(num_of_tabs, '\t'), i, ") ", daughter->pdgId(), daughter->status(), daughter->numberOfDaughters());
+      GenEvolution(daughter, num_of_tabs + 1);
+    }
 }
 
 template <typename T>

@@ -12,4 +12,5 @@
 <use name="clhep"/>
 <use nem="DataFormats/GenParticleFwd"/>
 <use nem="DataFormats/GenParticle"/>
+<use nem="PhysicsTools/MCTruthDeltaRMatcherNew"/>
 <flags EDM_PLUGIN="1"/>
