@@ -6,17 +6,17 @@ process.load("FWCore.MessageService.MessageLogger_cfi")
 
 #process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(1)# -1 for all events
+    input = cms.untracked.int32(50)# -1 for all events
 )
 
-isData = False
+isData = True
 process.source = cms.Source("PoolSource",
     # replace 'myfile.root' with the source file you want to use
     fileNames = cms.untracked.vstring(
     	#'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/miniAOD-prod_PAT.root'#data, file contains 50 ev
-        #'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root'#data, 
+        'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root'#data, 
         #'file:/nfs/dust/cms/user/glusheno/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root'        #data, 
-        'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/AOD_pi0_study/0E2AE912-1C0E-E611-86FB-002590743042.root'#MC
+        #'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/AOD_pi0_study/0E2AE912-1C0E-E611-86FB-002590743042.root'#MC
     )
 )
 
