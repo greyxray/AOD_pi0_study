@@ -55,6 +55,7 @@ using namespace std;
 //new
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 //#include "RecoTauPiZero.h"
 /*
   #include <string>
@@ -364,7 +365,7 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
     //Taus
     TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
     //SIMAOD
-    if (!IsData) GenParticlesToken_ = consumes<reco::GenParticleCollection>(edm::InputTag("genParticles","","RECO")); //typedef std::vector<GenParticle> reco::GenParticleCollection
+    if (!IsData) GenParticlesToken_ = consumes<reco::GenParticleCollection>(edm::InputTag("genParticles","","")); //typedef std::vector<GenParticle> reco::GenParticleCollection
 
   if (mute) 
   {
@@ -386,6 +387,7 @@ void AOD_pi0::RecO_Cand_type(const reco::Candidate* cand)
   else if (cand->isPhoton()) dout("isPhoton():", cand->isPhoton());
   else if (cand->isStandAloneMuon()) dout("isStandAloneMuon():", cand->isStandAloneMuon());
   else if (cand->isTrackerMuon()) dout("isTrackerMuon():", cand->isTrackerMuon());
+  else dlog("unknown type of particles");
 }
 
 // ------------ method called for each event  ------------
@@ -410,7 +412,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   //SIMAOD's token
     edm::Handle<reco::GenParticleCollection> GenPart;
-    iEvent.getByToken( GenParticlesToken_, GenPart);
+    if (!IsData) iEvent.getByToken( GenParticlesToken_, GenPart);
 
   /// RECO Ks's
   if (Vertices.isValid())
@@ -640,6 +642,23 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     }
   } 
   else if (!PF_taus.isValid()) dout("no valid PF_taus");
+
+  /// GEN Particles
+  dlog("GEN Particles");
+  if (!IsData && GenPart.isValid())
+  {
+    //vector<reco::GenParticleCollection> gen_daughters;
+    int gen_count = GenPart->size();
+    dlog("Size:", gen_count);
+    for(unsigned i = 0 ; i < 10/*GenPart->size()*/ ; i++)
+    {
+      //dlog("paritcle", i, "(", (*GenPart)[i].charge(), ")");
+      dlog((*GenPart)[i].pdgId());
+      //RecO_Cand_type(&((*GenPart)[i]));//AOD_pi0::RecO_Cand_type(const value_type&)
+    }
+  }
+  else if (!IsData) dlog("\tno GenPart.isValid()");
+  else dlog("no GenPart in data");
 }
 
 template <typename T>
