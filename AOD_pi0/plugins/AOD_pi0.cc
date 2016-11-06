@@ -207,6 +207,10 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
     template <typename T>
     vector <T*> TransformToPointers(vector <T> a, vector <T*> b);
     void GenEvolution(const reco::Candidate * , int);
+    void BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart, TH1 *hist, vector< vector <const reco::Candidate *>> &daughters, int mom_pdgid, int num_daugh, int daugh_pdgid);
+    void BuildTo(const reco::Candidate *mom, TH1 *hist, vector< vector <const reco::Candidate *>> &daughters, int mom_pdgid, int num_daugh, int daugh_pdgid);
+    void FindFinalPrt(vector<const reco::Candidate *> *d, const reco::Candidate *mom , int num_of_final_daughters, int daug_pdgid);
+    bool NoRadiating(const reco::Candidate * mom, int daug_pdgid);
 
     template<typename T>
     struct is_pointer { static const bool value = false; };
@@ -243,6 +247,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
       TH1D* taus_pi_charged_inv_pt;
       TH1D* taus_pi0_had_inv_m_to_ks ;
       TH1D* taus_pi0_had_inv_pt;
+      TH1D* h_gen_k0_all_to_pi0;
 
     // Tokens for the Collections 
       edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionToken_;
@@ -276,6 +281,9 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 
     Int_t v0_count; // V0s - Ks or Lambdas
 
+    vector< vector <const reco::Candidate *>> v_daughters_k0s_to_pi0;
+    vector< vector <const reco::Candidate *>> v_daughters_k0l_to_pi0;
+    vector< vector <const reco::Candidate *>> v_daughters_k0_to_pi0;
     //Parameters initialised by default
     bool IsData;
     TString OutFileName;
@@ -344,24 +352,24 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
       pions_inv_m  = new TH1D("pions_inv_m","inv mass of pions in taus", 100, 0, 1);
       num_pions = new TH1D("num_of_pios","num of pions", 10, 0, 9);
     hist_directory[1]  = outfile->mkdir("ks_coll", "ks_collection");
-    hist_directory[1]->cd();  //= outfile->mkdir("ks_coll", "ks_collection");
+    //hist_directory[1]->cd();  //= outfile->mkdir("ks_coll", "ks_collection");
       ks_daughter_pt = new TH1D("ks_daughter_pt","ks daughters pt", 1000, 0, 10);
       ks_inv_m_pi = new TH1D("ks_inv_m_pi","ks daughters inv mass", 1000, 0, 10);
     hist_directory[0]  = outfile->mkdir("Taus_pions_coll", "Taus_pions_collections");
-    hist_directory[0]->cd();  //= outfile->mkdir("Taus_pions_coll", "Taus_pions_collections");
+    //hist_directory[0]->cd();  //= outfile->mkdir("Taus_pions_coll", "Taus_pions_collections");
       taus_isol_pi0_inv_m_to_ks = new TH1D("taus_isol_pi0_inv_m_to_ks","all Pairs of tau isolation pions inv mass", 1000, 0, 17);
       taus_isol_pi0_inv_pt = new TH1D("taus_isol_pi0_inv_pt","all Pairs of tau isolation pions int pt", 1000, 0, 10);
       taus_pi0_inv_m_to_ks = new TH1D("taus_pi0_inv_m_to_ks","all Pairs of tau pions inv mass", 1000, 0, 17);
       taus_pi0_inv_pt = new TH1D("taus_pi0_inv_pt","all Pairs of tau pions inv pt", 1000, 0, 10);
     hist_directory[2]  = outfile->mkdir("Taus_charged_had_coll", "Taus_charged_had_coll");
-    hist_directory[2]->cd();  //= outfile->mkdir("Taus_charged_had_coll", "Taus_charged_had_coll");
+    //hist_directory[2]->cd();  //= outfile->mkdir("Taus_charged_had_coll", "Taus_charged_had_coll");
       taus_pi_charged_inv_m_to_ks = new TH1D("taus_pi_charged_inv_m_to_ks","all Pairs of tau pions from Charged had coll inv mass", 1000, 0, 17);
       taus_pi_charged_inv_pt = new TH1D("taus_pi_charged_inv_pt","all Pairs of tau pions from Charged had coll inv pt", 1000, 0, 10);
     hist_directory[3]  = outfile->mkdir("Taus_neutral_had_coll", "Taus_neutral_had_coll");
-    hist_directory[3]->cd();  //= outfile->mkdir("Taus_neutral_had_coll", "Taus_neutral_had_coll");
-      taus_pi0_had_inv_m_to_ks = new TH1D("taus_pi0_had_inv_m_to_ks","all Pairs of tau pions from Neutal had coll inv mass", 1000, 0, 17);
-      taus_pi0_had_inv_pt = new TH1D("taus_pi0_had_inv_pt","all Pairs of tau pions from Neutal had coll inv pt", 1000, 0, 10);
-
+    //hist_directory[3]->cd();  //= outfile->mkdir("Taus_neutral_had_coll", "Taus_neutral_had_coll");
+      taus_pi0_had_inv_m_to_ks = new TH1D("taus_pi0_had_inv_m_to_ks", "all Pairs of tau pions from Neutal had coll inv mass", 1000, 0, 17);
+      taus_pi0_had_inv_pt = new TH1D("taus_pi0_had_inv_pt", "all Pairs of tau pions from Neutal had coll inv pt", 1000, 0, 10);
+    h_gen_k0_all_to_pi0 = new TH1D("h_gen_k0_all_to_pi0", "gen. all k0's decaying to p0", 1000, 0, 10);
   // Tokens
     //Ks's
     KshortCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag"));//vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Kshort"          "RECO"  
@@ -551,7 +559,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   } 
 
   /// Only hps reco Taus
-  if (true && PF_taus.isValid() )
+  if (false && PF_taus.isValid() )
   {
     if (PF_taus->size() > 0)  dout("Number of Tau = ", PF_taus->size());
     for (unsigned int i = 0; i < PF_taus->size(); i++) // Over Tau's
@@ -652,7 +660,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
   /// GEN Particles
   dlog("GEN Particles");
-  if (false && !IsData && GenPart.isValid())
+  if (!IsData && GenPart.isValid())
   {
     //vector<reco::GenParticleCollection> gen_daughters;
     int gen_count = GenPart->size();
@@ -667,12 +675,105 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         GenEvolution(&gen_prt, 2);
       } 
     }
+    v_daughters_k0s_to_pi0.clear();
+    //v_daughters_k0s_to_pi0.push_back(vector <const reco::Candidate *>());
+     BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0s_to_pi0, 310, 2, 111);// k0s 310 
+    // v_daughters_k0l_to_pi0.clear();
+    // BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0l_to_pi0, 130, 2, 111);// k0l 130
+    // v_daughters_k0_to_pi0.clear();
+    // BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0_to_pi0, 311, 2, 111);// k0 311 
+
     //reco::CandMatchMap map = MCTruthDeltaRMatcher("pions and pizeros")
   }
   else if (!IsData) dlog("\tno GenPart.isValid()");
   else dlog("no GenPart in data");
 }
 
+void AOD_pi0::BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart, 
+                      TH1 *hist, 
+                      vector< vector <const reco::Candidate *>>& daughters, 
+                      int mom_pdgid, 
+                      int num_daugh, 
+                      int daugh_pdgid)
+{
+  for(unsigned i = 0; i < genPart->size(); i++)
+  {
+    const reco::GenParticle & gen_prt = (*genPart)[i];
+    BuildTo(&gen_prt, hist, daughters,  mom_pdgid,  num_daugh, daugh_pdgid);
+  } 
+  dlog("Found K", mom_pdgid, ":", daughters.size());
+  //for(std::vector<vector <const reco::Candidate *>>::iterator it = daughters.begin(); it != daughters.end(); ++it) 
+  for(unsigned i = 0; i < daughters.size(); i++)
+  {
+    //dlog("\t\tFound pi", ":", daughters[i].size());
+    TLorentzVector temp;//reco::Candidate::LorentzVector
+    for(std::vector<const reco::Candidate *>::iterator jt = daughters[i].begin(); jt != daughters[i].end(); ++jt) 
+      temp += TLorentzVector((*jt)->px(), (*jt)->py(), (*jt)->pz(), (*jt)->energy());
+    //dlog("temp:", temp.Px(), temp.Py(), temp.Pz(), temp.E(), temp.M());
+    hist->Fill(temp.M());
+  }
+
+}
+void AOD_pi0::BuildTo(const reco::Candidate *mom, 
+                      TH1 *hist, 
+                      vector< vector <const reco::Candidate *>> & daughters, 
+                      int mom_pdgid, int num_daugh, int daugh_pdgid)
+{
+  int n = mom->numberOfDaughters();
+    for(int i = 0; i < n; i++) 
+    {
+      const reco::Candidate * prt = mom->daughter(i);
+      if (abs(prt->pdgId()) == mom_pdgid && prt->numberOfDaughters() > 0 ) 
+      {
+        dlog("K found");
+        daughters.push_back(vector <const reco::Candidate *>());
+        FindFinalPrt(&daughters.back(), prt, num_daugh, daugh_pdgid);//(*daughters)[daughters.size() - 1]
+        if ( (daughters.back()).size() == 0 ) daughters.erase(daughters.end() - 1);
+      }
+      else if (prt->numberOfDaughters() > 0) BuildTo(prt, hist, daughters,  mom_pdgid,  num_daugh, daugh_pdgid);
+    }
+
+}
+
+//pi0 111 ;100111 9010111 ...
+//pi+ 211 ;100211 9010211 ...
+//k0l 130 k0s 310 k0 311...
+void AOD_pi0::FindFinalPrt(vector<const reco::Candidate *> *d = 0, 
+                            const reco::Candidate *mom = 0 , 
+                            int num_of_final_daughters = 2, 
+                            int daug_pdgid = 111)// if charged - of opposite charge
+{
+  if (d == 0 || mom == 0)
+  {
+    dlog("AOD_pi0::FindFinalPrt: wrong parameter");
+    return;
+  }
+
+  int n = mom->numberOfDaughters();
+  for(int i = 0; i < n; i++) 
+  {
+    if (num_of_final_daughters == 0) break;
+    const reco::Candidate * prt = mom->daughter(i);
+    if (abs(prt->pdgId()) == daug_pdgid && NoRadiating(prt, daug_pdgid))// prt->numberOfDaughters() == 0
+    {
+      dlog("\t\tfound one", prt->pdgId());
+      d->push_back(prt);
+      num_of_final_daughters--;
+    }
+    else if (prt->numberOfDaughters() > 0) FindFinalPrt(d, prt, num_of_final_daughters, daug_pdgid);
+  }
+  //dlog("\t\t\tFor this cand not found:", num_of_final_daughters);
+  //if (num_of_tabs)dlog{"not all final products are of the expected type"};
+}
+bool AOD_pi0::NoRadiating(const reco::Candidate * mom, int daug_pdgid)
+{
+  for(unsigned i = 0; i < mom->numberOfDaughters(); i++)
+  {
+    const reco::Candidate * prt = mom->daughter(i);
+    if (abs(prt->pdgId()) == daug_pdgid) return false;
+  }
+  return true;
+}
 void AOD_pi0::GenEvolution(const reco::Candidate * mom, int num_of_tabs = 2)
 {
     int n = mom->numberOfDaughters();
@@ -804,6 +905,7 @@ AOD_pi0::endJob()
   taus_pi0_inv_pt->Write();
   taus_pi_charged_inv_m_to_ks->Write();
   taus_pi_charged_inv_pt->Write();
+  h_gen_k0_all_to_pi0->Write();
 }
 
 AOD_pi0::~AOD_pi0()
@@ -813,6 +915,9 @@ AOD_pi0::~AOD_pi0()
   dlog("max_inv_mass: ", max_inv_mass);
   dlog("max_ks_daughter_pt: ", max_ks_daughter_pt);
   outfile->Close();
+  //delete v_daughters_k0s_to_pi0;
+  //delete v_daughters_k0l_to_pi0;
+  //delete v_daughters_k0_to_pi0;
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
