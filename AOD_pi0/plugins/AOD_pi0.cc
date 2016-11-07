@@ -14,6 +14,8 @@
 
 // system include files
 #include <memory>
+#include <map>
+#include <fstream>      // std::ofstream
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -207,11 +209,11 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
     template <typename T>
     vector <T*> TransformToPointers(vector <T> a, vector <T*> b);
     void GenEvolution(const reco::Candidate * , int);
-    void BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart, TH1 *hist, vector< vector <const reco::Candidate *>> &daughters, int mom_pdgid, int num_daugh, int daugh_pdgid);
-    void BuildTo(const reco::Candidate *mom, TH1 *hist, vector< vector <const reco::Candidate *>> &daughters, int mom_pdgid, int num_daugh, int daugh_pdgid);
+    void BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart, TH1 *hist, vector< vector <const reco::Candidate *>> &daughters, int mom_pdgid, map <long, string>& , int num_daugh, int daugh_pdgid, map <long, string>& );
+    void BuildTo(const reco::Candidate *mom, TH1 *hist, vector< vector <const reco::Candidate *>> &daughters, int mom_pdgid, map <long, string>& , int num_daugh, int daugh_pdgid, map <long, string>& );
     void FindFinalPrt(vector<const reco::Candidate *> *d, const reco::Candidate *mom , int num_of_final_daughters, int daug_pdgid);
     bool NoRadiating(const reco::Candidate * mom, int daug_pdgid);
-
+    bool NoRadiating(const reco::Candidate * mom, map <long, string>& map_daug_pdgid);
     template<typename T>
     struct is_pointer { static const bool value = false; };
     template<typename T>
@@ -230,6 +232,8 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
     virtual void endJob() override;
 
     // ----------member data ---------------------------
+    std::ofstream ofs;
+    
     TFile* outfile;
     TDirectory* hist_directory[4];
 
@@ -284,6 +288,8 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
     vector< vector <const reco::Candidate *>> v_daughters_k0s_to_pi0;
     vector< vector <const reco::Candidate *>> v_daughters_k0l_to_pi0;
     vector< vector <const reco::Candidate *>> v_daughters_k0_to_pi0;
+    /*static*/ std::map <long, string> map_kaons;
+    /*static*/ std::map <long, string> map_pions;
     //Parameters initialised by default
     bool IsData;
     TString OutFileName;
@@ -326,6 +332,9 @@ void AOD_pi0::dlog(Head H, Tail... T)
 
 // static data member definitions
 //
+  
+  
+  
 
 AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
   //the one passed from python configure file
@@ -342,7 +351,13 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
   outputGenEvolution(false)
 {
   usesResource("TFileService");
+  map_kaons[311] = "K0";
+  map_kaons[310] = "K0s";
+  map_kaons[130] = "K0l";
 
+  map_pions[111] = "pi0";
+  map_pions[211] = "pic";
+  ofs.open ("geninfo.txt", std::ofstream::out /*| std::ofstream::app*/);
   // Saved histograms 
     if (!IsData) OutFileName = "simaod_pi0.root";
     else outputGenEvolution = false;
@@ -370,6 +385,7 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
       taus_pi0_had_inv_m_to_ks = new TH1D("taus_pi0_had_inv_m_to_ks", "all Pairs of tau pions from Neutal had coll inv mass", 1000, 0, 17);
       taus_pi0_had_inv_pt = new TH1D("taus_pi0_had_inv_pt", "all Pairs of tau pions from Neutal had coll inv pt", 1000, 0, 10);
     h_gen_k0_all_to_pi0 = new TH1D("h_gen_k0_all_to_pi0", "gen. all k0's decaying to p0", 1000, 0, 10);
+  
   // Tokens
     //Ks's
     KshortCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag"));//vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Kshort"          "RECO"  
@@ -429,9 +445,9 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     if (!IsData) iEvent.getByToken( GenParticlesToken_, GenPart);
 
   /// RECO Ks's - all are charged
-  dlog("Ks's Particles");
   if (false && Vertices.isValid())
   {
+    dlog("RECO Ks's Particles");
     vector<reco::CandidateCollection> v_daughters;
     v0_count = Vertices->size();
     dout("Size:", v0_count);
@@ -667,21 +683,22 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     dlog("Size:", gen_count);
     if (outputGenEvolution)
     {
+      ofs << string(10, '=') << "Size:" << gen_count << endl;
       for(unsigned i = 0 ; i < GenPart->size() ; i++)
       {
         const reco::GenParticle & gen_prt = (*GenPart)[i];
-        dlog("paritcle", i, "(", (*GenPart)[i].charge(), ")");
-        dlog("\t", gen_prt.pdgId(), gen_prt.status());
+        ofs << "paritcle # " << i << " (" << (*GenPart)[i].charge() << ") " << endl;//dlog("paritcle #", i, "(", (*GenPart)[i].charge(), ")"); 
+        ofs << "\t" << gen_prt.pdgId() << " " <<  gen_prt.status() << endl;//dlog("\t", gen_prt.pdgId(), gen_prt.status()); 
         GenEvolution(&gen_prt, 2);
       } 
     }
+    
     v_daughters_k0s_to_pi0.clear();
-    //v_daughters_k0s_to_pi0.push_back(vector <const reco::Candidate *>());
-     BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0s_to_pi0, 310, 2, 111);// k0s 310 
-    // v_daughters_k0l_to_pi0.clear();
-    // BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0l_to_pi0, 130, 2, 111);// k0l 130
-    // v_daughters_k0_to_pi0.clear();
-    // BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0_to_pi0, 311, 2, 111);// k0 311 
+    BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0s_to_pi0, 310, map_kaons, 2, 111, map_pions);// k0s 310 
+    v_daughters_k0l_to_pi0.clear();
+    BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0l_to_pi0, 130, map_kaons, 2, 111, map_pions);// k0l 130
+    //v_daughters_k0_to_pi0.clear();
+    //BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0_to_pi0, 311, map_kaons, 2, 111, map_pions);// k0 311 - is empty by definition 
 
     //reco::CandMatchMap map = MCTruthDeltaRMatcher("pions and pizeros")
   }
@@ -692,14 +709,14 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 void AOD_pi0::BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart, 
                       TH1 *hist, 
                       vector< vector <const reco::Candidate *>>& daughters, 
-                      int mom_pdgid, 
+                      int mom_pdgid, map <long, string>& map_mom, 
                       int num_daugh, 
-                      int daugh_pdgid)
+                      int daugh_pdgid, map <long, string>& map_daugh)
 {
   for(unsigned i = 0; i < genPart->size(); i++)
   {
     const reco::GenParticle & gen_prt = (*genPart)[i];
-    BuildTo(&gen_prt, hist, daughters,  mom_pdgid,  num_daugh, daugh_pdgid);
+    BuildTo(&gen_prt, hist, daughters,  mom_pdgid, map_mom,  num_daugh, daugh_pdgid, map_daugh);
   } 
   dlog("Found K", mom_pdgid, ":", daughters.size());
   //for(std::vector<vector <const reco::Candidate *>>::iterator it = daughters.begin(); it != daughters.end(); ++it) 
@@ -712,27 +729,30 @@ void AOD_pi0::BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart,
     //dlog("temp:", temp.Px(), temp.Py(), temp.Pz(), temp.E(), temp.M());
     hist->Fill(temp.M());
   }
-
 }
 void AOD_pi0::BuildTo(const reco::Candidate *mom, 
                       TH1 *hist, 
                       vector< vector <const reco::Candidate *>> & daughters, 
-                      int mom_pdgid, int num_daugh, int daugh_pdgid)
+                      int mom_pdgid, map <long, string>& map_mom, 
+                      int num_daugh, 
+                      int daugh_pdgid, map <long, string>& map_daugh )
 {
-  int n = mom->numberOfDaughters();
-    for(int i = 0; i < n; i++) 
+  for(unsigned i = 0; i < mom->numberOfDaughters(); i++) 
+  {
+    const reco::Candidate * prt = mom->daughter(i);
+    if (abs(prt->pdgId()) == mom_pdgid && prt->numberOfDaughters() > 0 && NoRadiating(prt, map_mom)) 
     {
-      const reco::Candidate * prt = mom->daughter(i);
-      if (abs(prt->pdgId()) == mom_pdgid && prt->numberOfDaughters() > 0 ) 
-      {
-        dlog("K found");
-        daughters.push_back(vector <const reco::Candidate *>());
-        FindFinalPrt(&daughters.back(), prt, num_daugh, daugh_pdgid);//(*daughters)[daughters.size() - 1]
-        if ( (daughters.back()).size() == 0 ) daughters.erase(daughters.end() - 1);
+      dout("K found");
+      daughters.push_back(vector <const reco::Candidate *>());
+      FindFinalPrt(&daughters.back(), prt, num_daugh, daugh_pdgid);//(*daughters)[daughters.size() - 1]
+      if ( (daughters.back()).size() == 0 ) 
+      { 
+        dout("but no daughers which would fit");
+        daughters.erase(daughters.end() - 1);
       }
-      else if (prt->numberOfDaughters() > 0) BuildTo(prt, hist, daughters,  mom_pdgid,  num_daugh, daugh_pdgid);
     }
-
+    else if (prt->numberOfDaughters() > 0) BuildTo(prt, hist, daughters,  mom_pdgid, map_mom, num_daugh, daugh_pdgid, map_daugh);
+  }
 }
 
 //pi0 111 ;100111 9010111 ...
@@ -756,16 +776,16 @@ void AOD_pi0::FindFinalPrt(vector<const reco::Candidate *> *d = 0,
     const reco::Candidate * prt = mom->daughter(i);
     if (abs(prt->pdgId()) == daug_pdgid && NoRadiating(prt, daug_pdgid))// prt->numberOfDaughters() == 0
     {
-      dlog("\t\tfound one", prt->pdgId());
+      dout("\t\tfound one", prt->pdgId());
       d->push_back(prt);
       num_of_final_daughters--;
     }
     else if (prt->numberOfDaughters() > 0) FindFinalPrt(d, prt, num_of_final_daughters, daug_pdgid);
   }
   //dlog("\t\t\tFor this cand not found:", num_of_final_daughters);
-  //if (num_of_tabs)dlog{"not all final products are of the expected type"};
 }
-bool AOD_pi0::NoRadiating(const reco::Candidate * mom, int daug_pdgid)
+
+bool AOD_pi0::NoRadiating(const reco::Candidate * mom, int daug_pdgid)//map_kaons
 {
   for(unsigned i = 0; i < mom->numberOfDaughters(); i++)
   {
@@ -774,6 +794,22 @@ bool AOD_pi0::NoRadiating(const reco::Candidate * mom, int daug_pdgid)
   }
   return true;
 }
+bool AOD_pi0::NoRadiating(const reco::Candidate * mom, map <long, string> &map_daug_pdgid)//map_kaons
+{
+  dout("mom:",mom->pdgId(), "has", mom->numberOfDaughters(), "daughters");
+  for(unsigned i = 0; i < mom->numberOfDaughters(); i++)
+  {
+    const reco::Candidate * prt = mom->daughter(i);
+    dout("\tdaughter", i, "is of type", abs(prt->pdgId()));
+    if (map_daug_pdgid.find(abs(prt->pdgId())) != map_daug_pdgid.end()) 
+    {
+      dout("\t\tfound that daughter", i, "of type", abs(prt->pdgId()), "is in map", map_daug_pdgid.find(abs(prt->pdgId()))->second );
+      return false;
+    }
+  }
+  return true;
+}
+
 void AOD_pi0::GenEvolution(const reco::Candidate * mom, int num_of_tabs = 2)
 {
     int n = mom->numberOfDaughters();
@@ -781,7 +817,7 @@ void AOD_pi0::GenEvolution(const reco::Candidate * mom, int num_of_tabs = 2)
     {
       const reco::Candidate * daughter = mom->daughter(i);
       //if (abs(daughter->pdgId()) == 311/*(abs(daughter->pdgId()) % 1000 == 311 || abs(daughter->pdgId()) % 1000 == 321)*/ && daughter->numberOfDaughters() == 0 ) {dlog(string(num_of_tabs, '\t'), i, ") is Kaon", daughter->pdgId(), daughter->status(), daughter->numberOfDaughters());exit(1);}
-      dlog(string(num_of_tabs, '\t'), i, ") ", daughter->pdgId(), daughter->status(), daughter->numberOfDaughters());
+      ofs << string(num_of_tabs, '\t') << i << ") " << daughter->pdgId() << " " << daughter->status() << " " << daughter->numberOfDaughters() << endl;//dlog(string(num_of_tabs, '\t'), i, ") ", daughter->pdgId(), daughter->status(), daughter->numberOfDaughters()); 
       GenEvolution(daughter, num_of_tabs + 1);
     }
 }
@@ -839,8 +875,6 @@ void AOD_pi0::CombinatoricOfTwoToNeutralInvM(vector <VectoreType *> collection,
   else if (collection.size() == 1) dlog("\t\t\t", typeOfCollection, 0, ":", collection[0]->vx(), collection[0]->vy(), collection[0]->vz(), 
                                            ":", collection[0]->px(), collection[0]->py(), collection[0]->pz());
 }
-      
-
 template  <typename VectoreType >
 void AOD_pi0::CombinatoricOfTwoToNeutralInvM(vector <VectoreType> collection, 
                                     TString typeOfCollection, 
@@ -915,6 +949,7 @@ AOD_pi0::~AOD_pi0()
   dlog("max_inv_mass: ", max_inv_mass);
   dlog("max_ks_daughter_pt: ", max_ks_daughter_pt);
   outfile->Close();
+  ofs.close();
   //delete v_daughters_k0s_to_pi0;
   //delete v_daughters_k0l_to_pi0;
   //delete v_daughters_k0_to_pi0;
