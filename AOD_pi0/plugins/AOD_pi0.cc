@@ -16,6 +16,11 @@
 #include <memory>
 #include <map>
 #include <fstream>      // std::ofstream
+#include <iostream>
+#include <set>
+#include <vector>
+#include <string>
+#include <utility>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -209,11 +214,25 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
     template <typename T>
     vector <T*> TransformToPointers(vector <T> a, vector <T*> b);
     void GenEvolution(const reco::Candidate * , int);
+
     void BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart, TH1 *hist, vector< vector <const reco::Candidate *>> &daughters, int mom_pdgid, map <long, string>& , int num_daugh, int daugh_pdgid, map <long, string>& );
     void BuildTo(const reco::Candidate *mom, TH1 *hist, vector< vector <const reco::Candidate *>> &daughters, int mom_pdgid, map <long, string>& , int num_daugh, int daugh_pdgid, map <long, string>& );
     void FindFinalPrt(vector<const reco::Candidate *> *d, const reco::Candidate *mom , int num_of_final_daughters, int daug_pdgid);
     bool NoRadiating(const reco::Candidate * mom, int daug_pdgid);
     bool NoRadiating(const reco::Candidate * mom, map <long, string>& map_daug_pdgid);
+
+    template <typename T>
+    void Match(vector< vector <const reco::Candidate *>>& From, 
+                    vector < T *> & To,
+                    vector < vector< vector <T *>>>& SimToReco,
+                    vector < vector< const reco::Candidate *>>& RecoToSim
+                    //multiset < pair< int*, vector <string*> > >
+                    );
+    template <typename Ta, typename Tb>
+    bool Incone(Ta& A, Tb& B, double cone_size);
+    template <typename Tc, typename Tr>// T - collection   reco::PFTauRef pftauref(PF_taus, i);
+    void MakeVectorofRef(edm::Handle< Tc > Collection, vector< Tr* > v_of_ref);
+
     template<typename T>
     struct is_pointer { static const bool value = false; };
     template<typename T>
@@ -252,6 +271,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
       TH1D* taus_pi0_had_inv_m_to_ks ;
       TH1D* taus_pi0_had_inv_pt;
       TH1D* h_gen_k0_all_to_pi0;
+      TH1D* h_gen_k0_all_to_pic;
 
     // Tokens for the Collections 
       edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionToken_;
@@ -288,7 +308,12 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
     vector< vector <const reco::Candidate *>> v_daughters_k0s_to_pi0;
     vector< vector <const reco::Candidate *>> v_daughters_k0l_to_pi0;
     vector< vector <const reco::Candidate *>> v_daughters_k0_to_pi0;
-    /*static*/ std::map <long, string> map_kaons;
+    vector< vector <const reco::Candidate *>> v_daughters_k0s_to_pic;
+    vector< vector <const reco::Candidate *>> v_daughters_k0l_to_pic;
+    vector <reco::RecoTauPiZero *> v_strips_ref;
+    vector < vector< vector <reco::RecoTauPiZero *>>> v_daughters_k0s_to_pi0_SimToStrips;
+    vector < vector< const reco::Candidate *>> v_daughters_k0s_to_pi0_StipsToSim;
+    /*static*/ std::map <long, string> map_kaons; //could also be a std::set
     /*static*/ std::map <long, string> map_pions;
     //Parameters initialised by default
     bool IsData;
@@ -384,7 +409,8 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
     //hist_directory[3]->cd();  //= outfile->mkdir("Taus_neutral_had_coll", "Taus_neutral_had_coll");
       taus_pi0_had_inv_m_to_ks = new TH1D("taus_pi0_had_inv_m_to_ks", "all Pairs of tau pions from Neutal had coll inv mass", 1000, 0, 17);
       taus_pi0_had_inv_pt = new TH1D("taus_pi0_had_inv_pt", "all Pairs of tau pions from Neutal had coll inv pt", 1000, 0, 10);
-    h_gen_k0_all_to_pi0 = new TH1D("h_gen_k0_all_to_pi0", "gen. all k0's decaying to p0", 1000, 0, 10);
+    h_gen_k0_all_to_pi0 = new TH1D("h_gen_k0_all_to_pi0", "gen. all k0's decaying to pi0", 1000, 0, 10);
+    h_gen_k0_all_to_pic = new TH1D("h_gen_k0_all_to_pic", "gen. all k0's decaying to pi+-", 1000, 0, 10);
   
   // Tokens
     //Ks's
@@ -486,26 +512,17 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
   if (false && Strips.isValid() && false) 
   {
     unsigned int matched_pi = 0;
-    if (Strips->size() > 0) dout("Number of HPS Pizeros =", Strips->size());
+    if (Strips->size() > 0) dout("Number of HPS piz0's =", Strips->size());
     if (PF_taus->size() > 0) dout("Number of RECO Tau =", PF_taus->size());
 
     for (unsigned int i = 0; i < Strips->size(); i++) 
     {
-      if (!debug) dout("\tPi0_", i, "(", (*Strips)[i].charge(), ")", (*Strips)[i].px(), (*Strips)[i].py(), (*Strips)[i].pz(), (*Strips)[i].p());
-      pizero_px[pizero_count] = (*Strips)[i].px();
-      pizero_py[pizero_count] = (*Strips)[i].py();
-      pizero_pz[pizero_count] = (*Strips)[i].pz();
-      pizero_e[pizero_count]  = (*Strips)[i].p();
-      pizero_pt[pizero_count] = (*Strips)[i].pt();
-      pizero_eta[pizero_count] = (*Strips)[i].eta();
-      pizero_phi[pizero_count] = (*Strips)[i].phi();
-      pizero_x[pizero_count] = (*Strips)[i].vx();
-      pizero_y[pizero_count] = (*Strips)[i].vy();
-      pizero_z[pizero_count] = (*Strips)[i].vz();
+      if (!debug) 
+      {
+        dout("\tPi0_", i, "(", (*Strips)[i].charge(), ")", (*Strips)[i].px(), (*Strips)[i].py(), (*Strips)[i].pz(), (*Strips)[i].p());
+        dout(" PI0", i, "px =", (*Strips)[i].px(), "py =", (*Strips)[i].py(), "pz =", (*Strips)[i].pz(), "e =", (*Strips)[i].p(), "pt =", (*Strips)[i].pt(), "; vx =", (*Strips)[i].vx(),  "vy =", (*Strips)[i].vy(),  "vz =", (*Strips)[i].vz());
+      }
       pizero_count++;
-      if (!debug) dout(" PI0", i, "px =", pizero_px[pizero_count], "py =", pizero_py[pizero_count], "pz =", pizero_pz[pizero_count], 
-                                 "; vx =", pizero_x[pizero_count],  "vy =", pizero_y[pizero_count],  "vz =", pizero_z[pizero_count]);
-
       if (pizero_count>=1000) 
       {
         cerr << "number of pizeros > 1000. They are missing." << endl; 
@@ -692,18 +709,86 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         GenEvolution(&gen_prt, 2);
       } 
     }
-    
+
     v_daughters_k0s_to_pi0.clear();
     BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0s_to_pi0, 310, map_kaons, 2, 111, map_pions);// k0s 310 
-    v_daughters_k0l_to_pi0.clear();
-    BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0l_to_pi0, 130, map_kaons, 2, 111, map_pions);// k0l 130
-    //v_daughters_k0_to_pi0.clear();
-    //BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0_to_pi0, 311, map_kaons, 2, 111, map_pions);// k0 311 - is empty by definition 
+    if (false)//temp
+    {
+      v_daughters_k0l_to_pi0.clear();
+      BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0l_to_pi0, 130, map_kaons, 2, 111, map_pions);// k0l 130
+      //v_daughters_k0_to_pi0.clear();
+      //BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0_to_pi0, 311, map_kaons, 2, 111, map_pions);// k0 311 - is empty by definition of converting to 310 or 130
+      v_daughters_k0s_to_pic.clear();
+      BuildTo(GenPart, h_gen_k0_all_to_pic, v_daughters_k0s_to_pic, 310, map_kaons, 2, 211, map_pions);// k0s 310 
+      v_daughters_k0l_to_pic.clear();
+      BuildTo(GenPart, h_gen_k0_all_to_pic, v_daughters_k0l_to_pic, 130, map_kaons, 2, 211, map_pions);// k0l 130
+    }
 
+    v_daughters_k0s_to_pi0_SimToStrips.clear();//vector< vector <const reco::Candidate *>>
+    v_daughters_k0s_to_pi0_StipsToSim.clear();//vector< vector <const reco::Candidate *>>
+    MakeVectorofRef(Strips, v_strips_ref);//typedef edm::Ref< RecoTauPiZeroCollection >   RecoTauPiZeroRef
+    Match(v_daughters_k0s_to_pi0, v_strips_ref, v_daughters_k0s_to_pi0_SimToStrips, v_daughters_k0s_to_pi0_StipsToSim);//Gen to Reco, resulting vactor
     //reco::CandMatchMap map = MCTruthDeltaRMatcher("pions and pizeros")
   }
   else if (!IsData) dlog("\tno GenPart.isValid()");
   else dlog("no GenPart in data");
+}
+
+template <typename Tc, typename Tr>// T - collection   reco::PFTauRef pftauref(PF_taus, i);
+void AOD_pi0::MakeVectorofRef(edm::Handle< Tc > Collection, vector< Tr* > v_of_ref)
+{
+
+}
+
+template <typename T>
+void AOD_pi0::Match(vector < vector <const reco::Candidate *>> & From, 
+                    vector < T *> & To, //e.g. Strips
+                    vector < vector< vector <T *>>> & SimToReco,
+                    vector < vector <const reco::Candidate *>> & RecoToSim
+                    //multiset < pair< int*, vector <string*> > >
+                    )
+{
+  dlog("in the beg To.size()", To.size());
+  if (RecoToSim.size() < To.size())
+    for(unsigned i = 0; i < To.size(); i++)
+      RecoToSim.push_back(vector <const reco::Candidate *> ());
+
+  for(unsigned i = 0; i < From.size(); i++) //Loop on K
+  {
+    SimToReco.push_back(vector< vector <T *>> ());
+    for(unsigned ii = 0; ii < From[i].size(); ii++ ) //Loop on Pions in K
+    {
+      SimToReco[SimToReco.size() - 1].push_back( vector <T *> ());
+      bool found = false;
+      dlog("To.size()", To.size());
+      for(unsigned j = 0; j < To.size(); j++)
+      {
+        cout << "\tfrom Kaon num" << i << ", pion number" << ii;
+        if (Incone(*To[j], *From[i][ii], 0.2)) 
+        {
+          vector< vector <T *>> * K = &(SimToReco[SimToReco.size() - 1]);
+          vector <T *> *Pi = &((*K)[K->size() - 1]);
+          //SimToReco[SimToReco.back() - 1][last].push_back(& To[j])
+          Pi->push_back(To[j]);
+          RecoToSim[j].push_back(From[i][ii]);
+          cout << "matched to Strip number " << j << " ";
+          found = true;
+        }
+      }
+      if (!found) dlog("was not matched");
+      else dlog();
+    }
+  }
+}
+
+template <typename Ta, typename Tb>
+bool AOD_pi0::Incone(Ta& A, Tb& B, double cone_size)
+{
+  TLorentzVector a(A.px(), A.py(), A.pz(), A.energy());
+  TLorentzVector b(B.px(), B.py(), B.pz(), B.energy());
+  double dR = a.DeltaR(b);
+  if (dR <= cone_size) return true;
+  else return false;
 }
 
 void AOD_pi0::BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart, 
@@ -718,7 +803,7 @@ void AOD_pi0::BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart,
     const reco::GenParticle & gen_prt = (*genPart)[i];
     BuildTo(&gen_prt, hist, daughters,  mom_pdgid, map_mom,  num_daugh, daugh_pdgid, map_daugh);
   } 
-  dlog("Found K", mom_pdgid, ":", daughters.size());
+  dlog("Found K", mom_pdgid, "to", daugh_pdgid, ":", daughters.size());
   //for(std::vector<vector <const reco::Candidate *>>::iterator it = daughters.begin(); it != daughters.end(); ++it) 
   for(unsigned i = 0; i < daughters.size(); i++)
   {
@@ -940,6 +1025,7 @@ AOD_pi0::endJob()
   taus_pi_charged_inv_m_to_ks->Write();
   taus_pi_charged_inv_pt->Write();
   h_gen_k0_all_to_pi0->Write();
+  h_gen_k0_all_to_pic->Write();
 }
 
 AOD_pi0::~AOD_pi0()
@@ -950,9 +1036,6 @@ AOD_pi0::~AOD_pi0()
   dlog("max_ks_daughter_pt: ", max_ks_daughter_pt);
   outfile->Close();
   ofs.close();
-  //delete v_daughters_k0s_to_pi0;
-  //delete v_daughters_k0l_to_pi0;
-  //delete v_daughters_k0_to_pi0;
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
