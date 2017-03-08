@@ -3,6 +3,7 @@
 <use name="FWCore/ParameterSet"/>
 <use name="DataFormats/Common"/>
 <use name="DataFormats/TauReco"/>
+<use name="DataFormats/VertexReco"/>
 <use   name="RecoVertex/KalmanVertexFit"/>
 <use   name="RecoVertex/VertexPrimitives"/>
 <use   name="RecoVertex/KinematicFitPrimitives"/>
@@ -13,4 +14,3 @@
 <use nem="DataFormats/GenParticleFwd"/>
 <use nem="DataFormats/GenParticle"/>
 <use nem="PhysicsTools/MCTruthDeltaRMatcherNew"/>
-<flags EDM_PLUGIN="1"/>

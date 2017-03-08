@@ -7,3 +7,4 @@
 *.tar.gz
 *.gz
 *.pyc
+geninfo.txt

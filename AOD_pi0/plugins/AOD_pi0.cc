@@ -2,746 +2,680 @@
 //
 // Package:    AOD_pi0_study/AOD_pi0
 // Class:      AOD_pi0
-// 
+//
 /**\class AOD_pi0 AOD_pi0.cc AOD_pi0_study/AOD_pi0/plugins/AOD_pi0.cc
 
- Description: [one line class summary]
+ Description: build a ks resonan
 
  Implementation:
      [Notes on implementation]
 */
-
-
-// system include files
-#include <memory>
-#include <map>
-#include <fstream>      // std::ofstream
-#include <iostream>
-#include <set>
-#include <vector>
-#include <string>
-#include <utility>
-
-// user include files
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/one/EDAnalyzer.h"
-
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
-
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-
-// Additional include
-//error #include "RecoTauTag/RecoTau/interface/PFRecoTauClusterVariables.h"
-
-#include "DataFormats/Common/interface/ValueMap.h"
-#include "FWCore/Utilities/interface/EDGetToken.h"
-#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
-
-//ROOT
-#include "TFile.h"
-#include "TH1D.h"
-#include "TH2D.h"
-#include "TLorentzVector.h"
-#include "TString.h"
-
-using namespace std;
-
-// Aleksei
-//error using namespace reco;
-
-#include "DataFormats/TauReco/interface/PFTau.h"
-#include "DataFormats/TauReco/interface/PFTauFwd.h"
-#include "DataFormats/TauReco/interface/PFTauDiscriminator.h"
-#include "DataFormats/TauReco/interface/RecoTauPiZero.h"
-#include "DataFormats/TauReco/interface/RecoTauPiZeroFwd.h"
-
-// Alex
-#include "DataFormats/PatCandidates/interface/Tau.h"
-
-//new
-#include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
-#include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
-#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
-#include "PhysicsTools/HepMCCandAlgos/plugins/MCTruthDeltaRMatcherNew.cc"
-//#include "PhysicsTools/HepMCCandAlgos/interface/MCTruthCompositeMatcher.h" // includes missed files 
-//#include "RecoTauPiZero.h"
-/*
-  #include <string>
-  #include <map>
-  #include <vector>
-  #include <cstdlib>
-  #include <algorithm>
-
-  #include <Math/Vector3D.h>
-  #include "Math/LorentzVector.h"
-  #include "Math/Point3D.h"
-
-  #include <boost/regex.hpp>
-  #include <boost/algorithm/string.hpp>
-
-  #include "FWCore/Utilities/interface/InputTag.h"
-
-  #include "FWCore/Framework/interface/LuminosityBlock.h"
-  #include "DataFormats/Luminosity/interface/LumiSummary.h"
-
-  #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
-  #include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
-  #include "DataFormats/Common/interface/TriggerResults.h"
-  #include "DataFormats/HLTReco/interface/TriggerEvent.h"
-  #include "FWCore/Common/interface/TriggerNames.h"
-
-  #include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerReadoutRecord.h"
-  #include "CondFormats/L1TObjects/interface/L1GtPrescaleFactors.h"
-  #include "CondFormats/DataRecord/interface/L1GtPrescaleFactorsAlgoTrigRcd.h"
-  #include "CondFormats/DataRecord/interface/L1GtPrescaleFactorsTechTrigRcd.h"
-
-  #include "DataFormats/CaloRecHit/interface/CaloCluster.h" 
-  #include "DataFormats/CaloRecHit/interface/CaloClusterFwd.h" 
-  //error #include "DataFormats/TrackReco/interface/Track.h"
-  #include "DataFormats/TrackReco/interface/TrackFwd.h"
-  //error #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
-  #include "DataFormats/EgammaReco/interface/SuperCluster.h"
-  #include "DataFormats/EgammaReco/interface/SuperClusterFwd.h"
-  #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
-  #include "DataFormats/EgammaCandidates/interface/GsfElectronFwd.h"
-  //error #include "DataFormats/EgammaCandidates/interface/Photon.h"
-  #include "DataFormats/EgammaCandidates/interface/PhotonFwd.h"
-  //error #include "DataFormats/EgammaCandidates/interface/Conversion.h"
-  #include "DataFormats/EgammaCandidates/interface/ConversionFwd.h"
-  //error #include "DataFormats/MuonReco/interface/Muon.h"
-  #include "DataFormats/MuonReco/interface/MuonFwd.h"
-  //error #include "DataFormats/MuonReco/interface/MuonSelectors.h"
-
-  //#include "DataFormats/METReco/interface/MET.h"
-  //error #include "DataFormats/PatCandidates/interface/MET.h"
-  #include "DataFormats/METReco/interface/METFwd.h"
-  #include "DataFormats/METReco/interface/CaloMET.h"
-  #include "DataFormats/METReco/interface/CaloMETFwd.h"
-  #include "DataFormats/METReco/interface/PFMET.h"
-  #include "DataFormats/METReco/interface/PFMETFwd.h"
-  #include "DataFormats/JetReco/interface/CaloJet.h"
-  #include "DataFormats/JetReco/interface/CaloJetCollection.h"
-  #include "DataFormats/JetReco/interface/PFJet.h"
-  #include "DataFormats/JetReco/interface/PFJetCollection.h"
-  #include "DataFormats/JetReco/interface/Jet.h"
-  #include "DataFormats/JetReco/interface/JetCollection.h"
-  #include "JetMETCorrections/Objects/interface/JetCorrector.h"
-  //error #include "DataFormats/VertexReco/interface/Vertex.h"
-  #include "DataFormats/VertexReco/interface/VertexFwd.h"
-  #include "DataFormats/Candidate/interface/VertexCompositeCandidate.h"
-  #include "DataFormats/Candidate/interface/VertexCompositeCandidateFwd.h"
-  #include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
-
-  #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
-  #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
-  #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
-  #include "DataFormats/METReco/interface/GenMET.h"
-  #include "DataFormats/METReco/interface/GenMETFwd.h"
-  #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
-
-  #include "TrackingTools/Records/interface/TransientTrackRecord.h"
-  //error #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
-  //error #include <DataFormats/MuonReco/interface/Muon.h>
-  #include <DataFormats/MuonReco/interface/MuonFwd.h>
-  #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
-  #include "DataFormats/EgammaCandidates/interface/GsfElectronFwd.h"
-
-
-  #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
-  #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
-  #include "Geometry/Records/interface/CaloGeometryRecord.h"
-
-  #include "RecoEgamma/EgammaTools/interface/ConversionInfo.h"
-  //error #include "RecoEgamma/EgammaTools/interface/ConversionFinder.h"
-
-  #include "TMath.h"
-  #include "TTree.h"
-  #include "TLorentzVector.h"
-  #include <Math/Functions.h>
-  #include <Math/SVector.h>
-  #include <Math/SMatrix.h>
-
-  #include "FWCore/ServiceRegistry/interface/Service.h"
-  #include "CommonTools/UtilAlgos/interface/TFileService.h"
-
-  #include "DataFormats/GeometrySurface/interface/SimpleCylinderBounds.h"
-  #include "DataFormats/GeometrySurface/interface/SimpleDiskBounds.h"
-  #include "DataFormats/GeometrySurface/interface/Cylinder.h"
-  #include "DataFormats/GeometrySurface/interface/Plane.h"
-  #include "DataFormats/GeometrySurface/interface/BoundCylinder.h"
-  #include "DataFormats/GeometrySurface/interface/BoundDisk.h"
-  #include "TrackingTools/TrajectoryState/interface/TrajectoryStateOnSurface.h"
-  //error #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
-  #include "TrackingTools/MaterialEffects/interface/PropagatorWithMaterial.h"
-  #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
-  //error #include "RecoVertex/AdaptiveVertexFit/interface/AdaptiveVertexFitter.h"
-  //error #include "RecoVertex/KalmanVertexFit/interface/KalmanVertexFitter.h"
-  //error #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
-  #include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
-
-  //error #include "EgammaAnalysis/ElectronTools/interface/EGammaMvaEleEstimatorCSA14.h"
-*/
-
-// If the analyzer does not use TFileService, please remove
-// the template argument to the base class so the class inherits
-// from  edm::one::EDAnalyzer<> and also remove the line from
-// constructor "usesResource("TFileService");"
-// This will improve performance in multithreaded jobs.
-
-class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>  
-{
-  public:
-    explicit AOD_pi0(const edm::ParameterSet&);
-    ~AOD_pi0();
-
-    static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
-    static void RecO_Cand_type(const reco::Candidate* cand);
-    template  <typename VectoreType >
-    void CombinatoricOfTwoToNeutralInvM(vector<VectoreType*> collection/*reco::RecoTauPiZero */, 
-                                    TString typeOfCollection, 
-                                    TString typeOfObjects,
-                                    TString typeOfConstituences, 
-                                    TH1 * hist_inv_m, 
-                                    TH1 * hist_pt=0);
-    template  <typename VectoreType >
-    void CombinatoricOfTwoToNeutralInvM(vector<VectoreType> collection/*reco::RecoTauPiZero */, 
-                                    TString typeOfCollection, 
-                                    TString typeOfObjects,
-                                    TString typeOfConstituences, 
-                                    TH1 * hist_inv_m, 
-                                    TH1 * hist_pt=0);
-    template <typename T>
-    vector <T*> TransformToPointers(vector <T> a, vector <T*> b);
-    void GenEvolution(const reco::Candidate * , int);
-
-    void BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart, TH1 *hist, vector< vector <const reco::Candidate *>> &daughters, int mom_pdgid, map <long, string>& , int num_daugh, int daugh_pdgid, map <long, string>& );
-    void BuildTo(const reco::Candidate *mom, TH1 *hist, vector< vector <const reco::Candidate *>> &daughters, int mom_pdgid, map <long, string>& , int num_daugh, int daugh_pdgid, map <long, string>& );
-    void FindFinalPrt(vector<const reco::Candidate *> *d, const reco::Candidate *mom , int num_of_final_daughters, int daug_pdgid);
-    bool NoRadiating(const reco::Candidate * mom, int daug_pdgid);
-    bool NoRadiating(const reco::Candidate * mom, map <long, string>& map_daug_pdgid);
-
-    template <typename T>
-    void Match(vector< vector <const reco::Candidate *>>& From, 
-                    vector < T *> & To,
-                    vector < vector< vector <T *>>>& SimToReco,
-                    vector < vector< const reco::Candidate *>>& RecoToSim
-                    //multiset < pair< int*, vector <string*> > >
-                    );
-    template <typename Ta, typename Tb>
-    bool Incone(Ta& A, Tb& B, double cone_size);
-    template <typename Tc, typename Tr>// T - collection   reco::PFTauRef pftauref(PF_taus, i);
-    void MakeVectorofRef(edm::Handle< Tc > Collection, vector< Tr* > v_of_ref);
-
-    template<typename T>
-    struct is_pointer { static const bool value = false; };
-    template<typename T>
-    struct is_pointer<T*> { static const bool value = true; };
-
-    static void dout();
-    template <typename Head, typename... Tail>
-    static void dout(Head, Tail... );
-    static void dlog();
-    template <typename Head, typename... Tail>
-    static void dlog(Head, Tail... );
-
-  private:
-    virtual void beginJob() override;
-    virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
-    virtual void endJob() override;
-
-    // ----------member data ---------------------------
-    std::ofstream ofs;
-    
-    TFile* outfile;
-    TDirectory* hist_directory[4];
-
-    // Histograms
-      TH1D* h_v0_count;
-      TH1D* pions_inv_m;
-      TH1D* num_pions;
-      TH1D* taus_isol_pi0_inv_m_to_ks;
-      TH1D* taus_isol_pi0_inv_pt;
-      TH1D* taus_pi0_inv_m_to_ks;
-      TH1D* taus_pi0_inv_pt;
-      TH1D* ks_daughter_pt;
-      TH1D* ks_inv_m_pi;
-      TH1D* taus_pi_charged_inv_m_to_ks ;
-      TH1D* taus_pi_charged_inv_pt;
-      TH1D* taus_pi0_had_inv_m_to_ks ;
-      TH1D* taus_pi0_had_inv_pt;
-      TH1D* h_gen_k0_all_to_pi0;
-      TH1D* h_gen_k0_all_to_pic;
-
-    // Tokens for the Collections 
-      edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionToken_;
-      edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> LambdaCollectionToken_;
-      edm::EDGetTokenT<reco::PFCandidateCollection> PFCandidateCollectionToken_;
-      edm::EDGetTokenT<reco::RecoTauPiZeroCollection> TauPiZeroCollectionToken_;//hpsPFTauProducer
-      edm::EDGetTokenT<reco::PFTauCollection> TauHPSCollectionToken_;
-      // vector<int>                           "genParticles"              ""                "HLT"     
-      // vector<reco::GenJet>                  "ak4GenJets"                ""                "HLT"     
-      // vector<reco::GenJet>                  "ak4GenJetsNoNu"            ""                "HLT"     
-      // vector<reco::GenJet>                  "ak8GenJets"                ""                "HLT"     
-      // vector<reco::GenJet>                  "ak8GenJetsNoNu"            ""                "HLT"     
-      // vector<reco::GenMET>                  "genMetCalo"                ""                "HLT"     
-      // vector<reco::GenMET>                  "genMetTrue"                ""                "HLT"     
-      // vector<reco::GenParticle>             "genParticles"              ""     
-      edm::EDGetTokenT<reco::GenParticleCollection>  GenParticlesToken_;
-
-    //P0's
-    UInt_t pizero_count;
-    Float_t pizero_px[1000];
-    Float_t pizero_py[1000];
-    Float_t pizero_pz[1000];
-      Float_t pizero_pt[1000];
-      Float_t pizero_eta[1000];
-      Float_t pizero_phi[1000];
-      Float_t pizero_e[1000];
-    Float_t pizero_x[1000];
-    Float_t pizero_y[1000];
-    Float_t pizero_z[1000];
-
-
-    Int_t v0_count; // V0s - Ks or Lambdas
-
-    vector< vector <const reco::Candidate *>> v_daughters_k0s_to_pi0;
-    vector< vector <const reco::Candidate *>> v_daughters_k0l_to_pi0;
-    vector< vector <const reco::Candidate *>> v_daughters_k0_to_pi0;
-    vector< vector <const reco::Candidate *>> v_daughters_k0s_to_pic;
-    vector< vector <const reco::Candidate *>> v_daughters_k0l_to_pic;
-    vector <reco::RecoTauPiZero *> v_strips_ref;
-    vector < vector< vector <reco::RecoTauPiZero *>>> v_daughters_k0s_to_pi0_SimToStrips;
-    vector < vector< const reco::Candidate *>> v_daughters_k0s_to_pi0_StipsToSim;
-    /*static*/ std::map <long, string> map_kaons; //could also be a std::set
-    /*static*/ std::map <long, string> map_pions;
-    //Parameters initialised by default
-    bool IsData;
-    TString OutFileName;
-    bool crecpizero;
-    bool debug;
-    bool mute;
-    int num_pion_res;
-    double max_inv_mass;
-    double max_ks_daughter_pt;
-    unsigned int num_ev_tau_pi_not_in_hps_pi;
-    bool outputGenEvolution;
-};
-
-
-void AOD_pi0::dout() 
-{
-    cout << endl; 
-}
-template <typename Head, typename... Tail>
-void AOD_pi0::dout(Head H, Tail... T) 
-{
-  cout << H << ' ';
-  dout(T...);
-}
-
-
-void AOD_pi0::dlog() 
-{
-    clog << endl; 
-}
-template <typename Head, typename... Tail>
-void AOD_pi0::dlog(Head H, Tail... T) 
-{
-  clog << H << ' ';
-  dlog(T...);
-}
-
-// constants, enums and typedefs
-//
-
-// static data member definitions
-//
-  
-  
-  
-
-AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
-  //the one passed from python configure file
-  IsData(iConfig.getUntrackedParameter<bool>("IsData", false)),
-  OutFileName("aod_pi0.root"),
-  //other
-  crecpizero(iConfig.getUntrackedParameter<bool>("RecPiZero", false)),
-  debug(true),
-  mute(false),
-  num_pion_res(0),
-  max_inv_mass(0),
-  max_ks_daughter_pt(0),
-  num_ev_tau_pi_not_in_hps_pi(0),
-  outputGenEvolution(false)
-{
-  usesResource("TFileService");
-  map_kaons[311] = "K0";
-  map_kaons[310] = "K0s";
-  map_kaons[130] = "K0l";
-
-  map_pions[111] = "pi0";
-  map_pions[211] = "pic";
-  ofs.open ("geninfo.txt", std::ofstream::out /*| std::ofstream::app*/);
-  // Saved histograms 
-    if (!IsData) OutFileName = "simaod_pi0.root";
-    else outputGenEvolution = false;
-    outfile = new TFile(OutFileName,"RECREATE");
-    outfile->cd();  
-      h_v0_count = new TH1D("v0_count","v0 count", 10, 0, 9);
-      pions_inv_m  = new TH1D("pions_inv_m","inv mass of pions in taus", 100, 0, 1);
-      num_pions = new TH1D("num_of_pios","num of pions", 10, 0, 9);
-    hist_directory[1]  = outfile->mkdir("ks_coll", "ks_collection");
-    //hist_directory[1]->cd();  //= outfile->mkdir("ks_coll", "ks_collection");
-      ks_daughter_pt = new TH1D("ks_daughter_pt","ks daughters pt", 1000, 0, 10);
-      ks_inv_m_pi = new TH1D("ks_inv_m_pi","ks daughters inv mass", 1000, 0, 10);
-    hist_directory[0]  = outfile->mkdir("Taus_pions_coll", "Taus_pions_collections");
-    //hist_directory[0]->cd();  //= outfile->mkdir("Taus_pions_coll", "Taus_pions_collections");
-      taus_isol_pi0_inv_m_to_ks = new TH1D("taus_isol_pi0_inv_m_to_ks","all Pairs of tau isolation pions inv mass", 1000, 0, 17);
-      taus_isol_pi0_inv_pt = new TH1D("taus_isol_pi0_inv_pt","all Pairs of tau isolation pions int pt", 1000, 0, 10);
-      taus_pi0_inv_m_to_ks = new TH1D("taus_pi0_inv_m_to_ks","all Pairs of tau pions inv mass", 1000, 0, 17);
-      taus_pi0_inv_pt = new TH1D("taus_pi0_inv_pt","all Pairs of tau pions inv pt", 1000, 0, 10);
-    hist_directory[2]  = outfile->mkdir("Taus_charged_had_coll", "Taus_charged_had_coll");
-    //hist_directory[2]->cd();  //= outfile->mkdir("Taus_charged_had_coll", "Taus_charged_had_coll");
-      taus_pi_charged_inv_m_to_ks = new TH1D("taus_pi_charged_inv_m_to_ks","all Pairs of tau pions from Charged had coll inv mass", 1000, 0, 17);
-      taus_pi_charged_inv_pt = new TH1D("taus_pi_charged_inv_pt","all Pairs of tau pions from Charged had coll inv pt", 1000, 0, 10);
-    hist_directory[3]  = outfile->mkdir("Taus_neutral_had_coll", "Taus_neutral_had_coll");
-    //hist_directory[3]->cd();  //= outfile->mkdir("Taus_neutral_had_coll", "Taus_neutral_had_coll");
-      taus_pi0_had_inv_m_to_ks = new TH1D("taus_pi0_had_inv_m_to_ks", "all Pairs of tau pions from Neutal had coll inv mass", 1000, 0, 17);
-      taus_pi0_had_inv_pt = new TH1D("taus_pi0_had_inv_pt", "all Pairs of tau pions from Neutal had coll inv pt", 1000, 0, 10);
-    h_gen_k0_all_to_pi0 = new TH1D("h_gen_k0_all_to_pi0", "gen. all k0's decaying to pi0", 1000, 0, 10);
-    h_gen_k0_all_to_pic = new TH1D("h_gen_k0_all_to_pic", "gen. all k0's decaying to pi+-", 1000, 0, 10);
-  
-  // Tokens
-    //Ks's
-    KshortCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag"));//vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Kshort"          "RECO"  
-    LambdaCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("LambdaCollectionTag"));
-    //Pi0
-    TauPiZeroCollectionToken_ = consumes<reco::RecoTauPiZeroCollection>(iConfig.getParameter<edm::InputTag>("TauPiZeroCollectionTag"));
-    //Taus
-    TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
-    //SIMAOD
-    if (!IsData) GenParticlesToken_ = consumes<reco::GenParticleCollection>(edm::InputTag("genParticles","","")); //typedef std::vector<GenParticle> reco::GenParticleCollection
-
-  if (mute) 
-  {
-    cout.setstate(ios_base::failbit);
-    clog.setstate(ios_base::failbit);
-  }
-  if (debug)
-    cout.setstate(ios_base::failbit);
-}
-
-void AOD_pi0::RecO_Cand_type(const reco::Candidate* cand)
-{
-  if (cand->isCaloMuon()) dout("isCaloMuon():", cand->isCaloMuon());
-  else if (cand->isConvertedPhoton()) dout("isConvertedPhoton():", cand->isConvertedPhoton());
-  else if (cand->isElectron()) dout("isElectron():", cand->isElectron());
-  else if (cand->isGlobalMuon()) dout("isGlobalMuon():", cand->isGlobalMuon());
-  else if (cand->isJet()) dout("isJet():", cand->isJet());
-  else if (cand->isMuon()) dout("isMuon():", cand->isMuon());
-  else if (cand->isPhoton()) dout("isPhoton():", cand->isPhoton());
-  else if (cand->isStandAloneMuon()) dout("isStandAloneMuon():", cand->isStandAloneMuon());
-  else if (cand->isTrackerMuon()) dout("isTrackerMuon():", cand->isTrackerMuon());
-  else dlog("unknown type of particles");
-}
+#include "AOD_pi0.h"
 
 // ------------ method called for each event  ------------
 void
 AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+
   using namespace edm;
-    v0_count = 0 ;
-    pizero_count = 0;
-  //Ks's token
-    edm::Handle<reco::VertexCompositeCandidateCollection> Vertices;
-    iEvent.getByToken( KshortCollectionToken_, Vertices);
+  v0_count = 0 ;
+  pizero_count = 0;
 
-  //HPS Pi0's token
-    edm::Handle<reco::RecoTauPiZeroCollection> Strips;
-    iEvent.getByToken( TauPiZeroCollectionToken_, Strips);
+  //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tokens access
+    //V0 Ks's token
+      edm::Handle<reco::VertexCompositeCandidateCollection> V0Ks;
+      iEvent.getByToken( KshortCollectionToken_, V0Ks);
+    //HPS 
+      //Pi0's token
+      edm::Handle<reco::RecoTauPiZeroCollection> Strips;
+      iEvent.getByToken( TauPiZeroCollectionToken_, Strips); //actually HPS pi0s
+      //Tau's token based hps- according to https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookPATDataFormats#PatTau contains the same as PFjets
+      edm::Handle<reco::PFTauCollection> PF_hps_taus;// typedef vector< PFTau >  PFTauCollection - the collection of charged pions will be taken from here
+      iEvent.getByToken( TauHPSCollectionToken_, PF_hps_taus); //TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
+    //SIMAOD's token
+      edm::Handle<reco::GenParticleCollection> GenPart;
+      if (!IsData) iEvent.getByToken( GenParticleCollectionToken_, GenPart);
 
-  //Tau's token based hps
-    edm::Handle<reco::PFTauCollection> PF_taus;// typedef vector< PFTau >  PFTauCollection
-    iEvent.getByToken( TauHPSCollectionToken_, PF_taus);
-  //TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
-
-  //SIMAOD's token
-    edm::Handle<reco::GenParticleCollection> GenPart;
-    if (!IsData) iEvent.getByToken( GenParticlesToken_, GenPart);
-
-  /// RECO Ks's - all are charged
-  if (false && Vertices.isValid())
-  {
-    dlog("RECO Ks's Particles");
-    vector<reco::CandidateCollection> v_daughters;
-    v0_count = Vertices->size();
-    dout("Size:", v0_count);
-    for(unsigned i = 0 ; i < Vertices->size() ; i++)
+  /// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+  /// PV
+    if (crecprimvertex)
     {
-      int num = (*Vertices)[i].numberOfDaughters();//edm::reco::CompositeCandidate::daughters 
-      int num_moth = (*Vertices)[i].numberOfMothers();
-      dlog("Ks_", i, "(", (*Vertices)[i].charge(), ")");
-      dlog("\tdaughters tot number:", num, ";", " moth number:", num_moth); 
+      edm::Handle<reco::VertexCollection> Vertex;
+      iEvent.getByToken(PVToken_, Vertex);
+      primvertex_count = goodprimvertex_count = 0;
 
-      //for (vector<reco::Candidate* >::const_iterator iter = (*Vertices)[i].daughters.begin(); iter != (*Vertices)[i].daughters.end(); ++iter)
-      double E = 0, p_x = 0, p_y = 0, p_z = 0, inv_M = 0;
-      for( int j = 0; j < num; j++) // Loop over daughters
+      pv_position = math::XYZPoint(0., 0., 0.);
+      if (Vertex.isValid()) 
       {
-        const reco::Candidate* daughter = (*Vertices)[i].daughter(j);
-        //RecO_Cand_type(daughter); is unknown
-        TLorentzVector temp(daughter->px(),daughter->py(),daughter->pz(),daughter->energy());
-        dlog("\t\tdaughter_", j, "(", daughter->charge(), ")", " mass:", temp.M());
-        if (daughter->pt() > max_ks_daughter_pt) max_ks_daughter_pt = daughter->pt();
-        ks_daughter_pt->Fill(daughter->pt());
+        for(unsigned i = 0; i < Vertex->size(); i++) 
+        {
+          primvertex_count++;
+          if (i == 0) 
+          {
+            primvertex_x = (*Vertex)[i].x();
+            primvertex_y = (*Vertex)[i].y();
+            primvertex_z = (*Vertex)[i].z();
+            primvertex_chi2 = (*Vertex)[i].chi2();
+            primvertex_ndof = (*Vertex)[i].ndof();
+            primvertex_ntracks = (*Vertex)[i].tracksSize();
+            primvertex_cov[0] = (*Vertex)[i].covariance(0,0); // xError()
+            primvertex_cov[1] = (*Vertex)[i].covariance(0,1); 
+            primvertex_cov[2] = (*Vertex)[i].covariance(0,2);
+            primvertex_cov[3] = (*Vertex)[i].covariance(1,1); // yError()
+            primvertex_cov[4] = (*Vertex)[i].covariance(1,2);
+            primvertex_cov[5] = (*Vertex)[i].covariance(2,2); // zError()
 
-        E += daughter->energy();
-        p_x += daughter->px();
-        p_y += daughter->py();
-        p_z += daughter->pz();
+            Float_t ptq = 0.;
+            for(reco::Vertex::trackRef_iterator it = (*Vertex)[i].tracks_begin(); it != (*Vertex)[i].tracks_end(); ++it)
+              ptq += (*it)->pt() * (*it)->pt();
+            primvertex_ptq = ptq;
+            
+            pv_position = (*Vertex)[i].position();
+            primvertex = (*Vertex)[i];
+
+            h_primvertex_x->Fill(primvertex_x);
+            h_primvertex_y->Fill(primvertex_y);
+            h_primvertex_z->Fill(primvertex_z);
+            h_primvertex_chi2->Fill(primvertex_chi2);
+            h_primvertex_ndof->Fill(primvertex_ndof);
+            h_primvertex_ptq->Fill(primvertex_ptq);
+            h_primvertex_ntracks->Fill(primvertex_ntracks);
+            h_primvertex_cov_x->Fill(primvertex_cov[0]);
+            h_primvertex_cov_y->Fill(primvertex_cov[3]);
+            h_primvertex_cov_z->Fill(primvertex_cov[5]);
+          }
+          if ((*Vertex)[i].isValid() && !(*Vertex)[i].isFake() && (*Vertex)[i].ndof() >= 4 && 
+             (*Vertex)[i].z() > -24 && (*Vertex)[i].z() < 24 && (*Vertex)[i].position().Rho() < 2.) goodprimvertex_count++;
+        }
       }
-      inv_M += sqrt(pow(E, 2) - pow(p_x, 2) - pow(p_y, 2) - pow(p_z, 2));
-      ks_inv_m_pi->Fill(inv_M);
+      h_primvertex_count->Fill(primvertex_count);
+      h_goodprimvertex_count->Fill(goodprimvertex_count);
+     
     }
-    // Fill the variables
-    h_v0_count->Fill(v0_count);
-  }
-  else if (!Vertices.isValid()) dlog("UNVALID Ks's");
+  /// V0's RECO Ks's - all are charged - also matching with pi+- of HPS
+    if (true && V0Ks.isValid())
+    {
+      dlog("RECO Ks's Particles");
+      vector<reco::CandidateCollection> v_daughters;
+      v0_count = V0Ks->size();
+      dout("Size V0:", v0_count);
+      if (v0_count > 0)
+      {
+        int number_of_passed_ks = 0;
+        int number_of_passed_ks_in_hps_tau = 0;
+        int number_of_passed_ks_in_hps_tau_hard_cut = 0;
+        int number_of_pion_in_tau_jets_with_good_Ks = 0;
+        //h_Ks_v0_n_tau_jets_with_good_Ks_per_event, h_Ks_v0_n_pion_in_tau_jets_with_good_Ks};//15-20
+        bool at_least_one_Ks_passed_dz = false;
+        for(unsigned k0_i = 0 ; k0_i < V0Ks->size() ; k0_i++) // over V0 K0s
+        {
+          if (abs((*V0Ks)[k0_i].vz() - pv_position.z()) > 0.2) continue;
+          at_least_one_Ks_passed_dz = true;
+          TLorentzVector v_Ks((*V0Ks)[k0_i].px(), (*V0Ks)[k0_i].py(), (*V0Ks)[k0_i].pz(), (*V0Ks)[k0_i].energy());
+          map_Ks_v0_histos[1]->Fill(v_Ks.X());
+          map_Ks_v0_histos[2]->Fill(v_Ks.Y());
+          map_Ks_v0_histos[3]->Fill(v_Ks.Z());
+          number_of_passed_ks++;
+          int num = (*V0Ks)[k0_i].numberOfDaughters();//edm::reco::CompositeCandidate::daughters
+          TLorentzVector v0_ks_pion1((*V0Ks)[k0_i].daughter(0)->px(),(*V0Ks)[k0_i].daughter(0)->py(),(*V0Ks)[k0_i].daughter(0)->pz(),(*V0Ks)[k0_i].daughter(0)->energy());
+          TLorentzVector v0_ks_pion2((*V0Ks)[k0_i].daughter(1)->px(),(*V0Ks)[k0_i].daughter(1)->py(),(*V0Ks)[k0_i].daughter(1)->pz(),(*V0Ks)[k0_i].daughter(1)->energy());          
+          map_Ks_v0_histos[12]->Fill((v0_ks_pion1).DeltaR(v0_ks_pion2));
+
+          int num_moth = (*V0Ks)[k0_i].numberOfMothers();
+          dlog("Ks", k0_i, "(", (*V0Ks)[k0_i].charge(), ")", "vertex:",  (*V0Ks)[k0_i].vx(), (*V0Ks)[k0_i].vy(),  (*V0Ks)[k0_i].vz());
+          dlog("\t\tp:",  (*V0Ks)[k0_i].px(), (*V0Ks)[k0_i].py(),  (*V0Ks)[k0_i].pz(), "Energy:", (*V0Ks)[k0_i].energy());
+          dlog("\tdaughters tot number:", num, ";", " moth number:", num_moth);
+          
+          
+          double E = 0, p_x = 0, p_y = 0, p_z = 0, inv_M = 0;
+          for( int j = 0; j < num; j++) // Loop over daughters of V0s K
+          {
+            const reco::Candidate* daug_pion = (*V0Ks)[k0_i].daughter(j); //RecO_Cand_type(daug_pion); is unknown
+            TLorentzVector vec_pion(daug_pion->px(),daug_pion->py(),daug_pion->pz(),daug_pion->energy());
+            dlog("\t\tpion", j, "(", daug_pion->charge(), ")", " mass:", vec_pion.M(), "p:", daug_pion->px(),daug_pion->py(), daug_pion->pz(), "Energy:", daug_pion->energy());
+            
+            if (daug_pion->pt() > max_ks_daughter_pt) max_ks_daughter_pt = daug_pion->pt();
+            map_Ks_v0_histos[5]->Fill(daug_pion->pt());//ks_daughter_pt->Fill(daug_pion->pt());
   
-  /// HPS pi0's and taus - with loop among reco::tau
-  if (false && Strips.isValid() && false) 
-  {
-    unsigned int matched_pi = 0;
-    if (Strips->size() > 0) dout("Number of HPS piz0's =", Strips->size());
-    if (PF_taus->size() > 0) dout("Number of RECO Tau =", PF_taus->size());
-
-    for (unsigned int i = 0; i < Strips->size(); i++) 
-    {
-      if (!debug) 
-      {
-        dout("\tPi0_", i, "(", (*Strips)[i].charge(), ")", (*Strips)[i].px(), (*Strips)[i].py(), (*Strips)[i].pz(), (*Strips)[i].p());
-        dout(" PI0", i, "px =", (*Strips)[i].px(), "py =", (*Strips)[i].py(), "pz =", (*Strips)[i].pz(), "e =", (*Strips)[i].p(), "pt =", (*Strips)[i].pt(), "; vx =", (*Strips)[i].vx(),  "vy =", (*Strips)[i].vy(),  "vz =", (*Strips)[i].vz());
-      }
-      pizero_count++;
-      if (pizero_count>=1000) 
-      {
-        cerr << "number of pizeros > 1000. They are missing." << endl; 
-        break;
-      }
-
-      // RECO Taus
-        bool foundpi = false;
-        for (unsigned int i_tau = 0; i_tau < PF_taus->size(); i_tau++) //over all taus
-        {
-          cout << "\t\tTau_" << i_tau << endl;
-          reco::PFTauRef pftauref(PF_taus, i_tau);
-
-          //Signal Pi0
-            const vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
-            dout("\t\t\tsignal tau_pizeros:", tau_pizeros.size());
-            if (tau_pizeros.size() > 0)
-              for (unsigned int j_pi = 0; j_pi < tau_pizeros.size(); j_pi++) //over signal pions in tau
-              {
-                if (pow(tau_pizeros[j_pi].charge() - (*Strips)[i].charge(), 2) + 
-                    pow(tau_pizeros[j_pi].px() - (*Strips)[i].px(), 2) + 
-                    pow(tau_pizeros[j_pi].py() - (*Strips)[i].py(), 2) + 
-                    pow(tau_pizeros[j_pi].pz() - (*Strips)[i].pz(), 2) + 
-                    pow(tau_pizeros[j_pi].energy() - (*Strips)[i].energy(), 2) < 0.001)
-                {
-                  foundpi = true;
-                  dout("\t\t\t\tPi0_", j_pi, "(", tau_pizeros[j_pi].charge(),")", tau_pizeros[j_pi].px(), tau_pizeros[j_pi].py(), tau_pizeros[j_pi].pz(), tau_pizeros[j_pi].energy());
-                  break;
-                }
-              }
-
-          //Isol Pi0
-            const vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates();
-            dout("\t\t\tisolation tau_pizeros_isol :", tau_pizeros_isol.size());
-            if (tau_pizeros_isol.size() > 0 && !foundpi)
-              for (unsigned int j_pi = 0; j_pi < tau_pizeros_isol.size(); j_pi++) //over isolation pions in tau
-              {
-                if (pow(tau_pizeros_isol[j_pi].charge() - (*Strips)[i].charge(), 2) + 
-                    pow(tau_pizeros_isol[j_pi].px() - (*Strips)[i].px(), 2) + 
-                    pow(tau_pizeros_isol[j_pi].py() - (*Strips)[i].py(), 2) + 
-                    pow(tau_pizeros_isol[j_pi].pz() - (*Strips)[i].pz(), 2) + 
-                    pow(tau_pizeros_isol[j_pi].energy() - (*Strips)[i].energy(), 2) < 0.001)
-                {
-                  foundpi = true;
-                  dout("\t\t\t\tPi0_", j_pi, "(", tau_pizeros_isol[j_pi].charge(), ")", tau_pizeros_isol[j_pi].px(), tau_pizeros_isol[j_pi].py(), tau_pizeros_isol[j_pi].pz(), tau_pizeros_isol[j_pi].energy());
-                  break;
-                }
-              }
-
-            if (foundpi) 
+            E += daug_pion->energy();
+            p_x += daug_pion->px();
+            p_y += daug_pion->py();
+            p_z += daug_pion->pz();
+          }
+          inv_M += sqrt(pow(E, 2) - pow(p_x, 2) - pow(p_y, 2) - pow(p_z, 2));
+          map_Ks_v0_histos[6]->Fill(inv_M);//ks_inv_m_pi->Fill(inv_M);
+          
+  
+          // Matching to HPS pi+-
+          if (match_KsV0_to_HPS && PF_hps_taus.isValid() )
+          {
+            dout("\t\t\tPF taus:", PF_hps_taus->size());
+            for( unsigned tau_index = 0; tau_index < PF_hps_taus->size(); tau_index++)
             {
-              matched_pi++;
-              break;
+              reco::PFTauRef pftauref(PF_hps_taus, tau_index); 
+              TLorentzVector v_tau(pftauref->px(), pftauref->py(), pftauref->pz(), pftauref->energy());
+              dout("\t\t\t\tPF tau", tau_index, "p:", pftauref->px(), pftauref->py(), pftauref->pz(), "Energy:", pftauref->energy(), "dR:", v_tau.DeltaR(v_Ks));
+              
+              //number_of_passed_ks_in_hps_tau++;
+              //break;h_Ks_v0_found_in_hps_tau_dRcut
+              if (v_tau.DeltaR(v_Ks) < 0.5)
+              {
+                number_of_passed_ks_in_hps_tau_hard_cut++;
+                map_Ks_v0_histos[9]->Fill(v_tau.DeltaR(v_Ks));
+              }
+              else continue;
+  
+              //pi+-
+                vector < reco::PFCandidatePtr  > tau_signalPFChargedHadrCands    = pftauref->signalPFChargedHadrCands();//typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+                vector < reco::PFCandidatePtr  > tau_isolationPFChargedHadrCands = pftauref->isolationPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+              // All pi+-'s
+              vector < reco::PFCandidatePtr > tau_picharge = pftauref->signalPFChargedHadrCands(); // vector < edm::Ptr<PFCandidate> >
+                                              tau_picharge.insert(tau_picharge.end(), tau_isolationPFChargedHadrCands.begin(), tau_isolationPFChargedHadrCands.end());
+              map_Ks_v0_histos[19]->Fill(tau_picharge.size());
+              //dout("comb:", tau_picharge.size());
+              for(unsigned pi_i = 0; pi_i < tau_picharge.size() - 1 && tau_picharge.size() > 1; pi_i++) 
+              {
+
+                //dout("pi_i", pi_i);
+                TLorentzVector tau_pion(tau_picharge[pi_i]->px(), tau_picharge[pi_i]->py(), tau_picharge[pi_i]->pz(), tau_picharge[pi_i]->energy());
+                for(unsigned pi_i2 = pi_i + 1; pi_i2 < tau_picharge.size() ; pi_i2++) 
+                {
+
+                  //dout("pi_i2", pi_i2);
+                  TLorentzVector tau_pion2(tau_picharge[pi_i2]->px(), tau_picharge[pi_i2]->py(), tau_picharge[pi_i2]->pz(), tau_picharge[pi_i2]->energy());
+                  //dout("tes");
+                  map_Ks_v0_histos[13]->Fill((tau_pion).DeltaR(tau_pion2));
+                }
+              }
+
+              bool both_ks_pions_found_in_tau = true;
+              int firstfound = -1, secondfound = -1;
+              double deltaR1=100, deltaR2=100;
+              for(unsigned pi_i = 0; pi_i < tau_picharge.size(); pi_i++) 
+              {
+
+                TLorentzVector tau_pion(tau_picharge[pi_i]->px(), tau_picharge[pi_i]->py(), tau_picharge[pi_i]->pz(), tau_picharge[pi_i]->energy());
+
+                map_Ks_v0_histos[14]->Fill(tau_pion.DeltaR(v0_ks_pion1));
+                map_Ks_v0_histos[14]->Fill(tau_pion.DeltaR(v0_ks_pion2));
+                //if (tau_pion.M() < 0.1) break; //ISSUE
+
+                if (tau_pion.DeltaR(v0_ks_pion1) < 0.5 && tau_picharge[pi_i]->charge() == (*V0Ks)[k0_i].daughter(0)->charge() && 
+                    (firstfound == -1 || deltaR1 > tau_pion.DeltaR(v0_ks_pion1)))
+                {
+                  deltaR1 = tau_pion.DeltaR(v0_ks_pion1);
+
+                  if (firstfound != -1 && tau_pion.DeltaR(v0_ks_pion2) < 0.5 && tau_picharge[firstfound]->charge() == (*V0Ks)[k0_i].daughter(1)->charge() && 
+                     (secondfound == -1 || deltaR2 > TLorentzVector(tau_picharge[firstfound]->px(), tau_picharge[firstfound]->py(), tau_picharge[firstfound]->pz(), tau_picharge[firstfound]->energy()).DeltaR(v0_ks_pion2)))
+                  {
+                    deltaR2 = TLorentzVector(tau_picharge[firstfound]->px(), tau_picharge[firstfound]->py(), tau_picharge[firstfound]->pz(), tau_picharge[firstfound]->energy()).DeltaR(v0_ks_pion2);
+                    secondfound = firstfound;
+                  }
+
+                  firstfound = pi_i;        
+                  /*
+                    dlog("dR:",v_tau.DeltaR(v_Ks),"But first pion found");
+                    both_ks_pions_found_in_tau = false;
+                    dlog("tau pion1:", tau_picharge[pi_i]->px(),tau_picharge[pi_i]->py(),tau_picharge[pi_i]->pz(),tau_picharge[pi_i]->energy());
+                    for(unsigned pi_i2 = pi_i + 1 ; pi_i2 < tau_picharge.size() ; pi_i2++) 
+                    {
+                      TLorentzVector tau_pion2(tau_picharge[pi_i2]->px(), tau_picharge[pi_i2]->py(), tau_picharge[pi_i2]->pz(), tau_picharge[pi_i2]->energy());
+                      if( tau_pion2.DeltaR(v0_ks_pion2) < 0.1 && tau_picharge[pi_i2]->charge() == (*V0Ks)[k0_i].daughter(1)->charge())
+                      {
+                        dlog("AND THE SECOND FOUND", pi_i2, tau_picharge[pi_i2]->px(),tau_picharge[pi_i2]->py(),tau_picharge[pi_i2]->pz(),tau_picharge[pi_i2]->energy()); 
+                        both_ks_pions_found_in_tau = true;
+                        map_Ks_v0_histos[8]->Fill(v_tau.DeltaR(v_Ks));
+                        map_Ks_v0_histos[11]->Fill((tau_pion + tau_pion2).M());
+                        number_of_passed_ks_in_hps_tau++;
+                        //exit(1);
+                        if (v_tau.DeltaR(v_Ks) > 0.5)
+                        {
+                          dout("CRITICAL KINEMATICAL ERROR");
+                          exit(1);
+                        }
+                        pi_i = tau_picharge.size() + 1; break;
+                      }
+                    }
+                  */
+                }
+                else if (tau_pion.DeltaR(v0_ks_pion2) < 0.5 && tau_picharge[pi_i]->charge() == (*V0Ks)[k0_i].daughter(1)->charge() && 
+                  (secondfound == -1 || deltaR2 > tau_pion.DeltaR(v0_ks_pion2)))
+                {
+                  deltaR2 = tau_pion.DeltaR(v0_ks_pion2);
+                  secondfound = pi_i;
+                  /*
+                    dlog("dR:",v_tau.DeltaR(v_Ks),"But first pion found");
+                    both_ks_pions_found_in_tau = false;
+                    dlog("tau pion1:", tau_picharge[pi_i]->px(), tau_picharge[pi_i]->py(), tau_picharge[pi_i]->pz(), tau_picharge[pi_i]->energy());
+                    for(unsigned pi_i2 = pi_i + 1 ; pi_i2 < tau_picharge.size() ; pi_i2++) 
+                    {
+                      TLorentzVector tau_pion2(tau_picharge[pi_i2]->px(), tau_picharge[pi_i2]->py(), tau_picharge[pi_i2]->pz(), tau_picharge[pi_i2]->energy());
+                      if( tau_pion2.DeltaR(v0_ks_pion1) < 0.1 && tau_picharge[pi_i2]->charge() == (*V0Ks)[k0_i].daughter(0)->charge())
+                      {
+                        dlog("AND THE SECOND FOUND", pi_i2, tau_picharge[pi_i2]->px(),tau_picharge[pi_i2]->py(),tau_picharge[pi_i2]->pz(),tau_picharge[pi_i2]->energy()); 
+                        both_ks_pions_found_in_tau = true;
+                        map_Ks_v0_histos[8]->Fill(v_tau.DeltaR(v_Ks));
+                        map_Ks_v0_histos[11]->Fill((tau_pion + tau_pion2).M());
+                        number_of_passed_ks_in_hps_tau++;
+                        //exit(1);
+                        if (v_tau.DeltaR(v_Ks) > 0.5)
+                        {
+                          dout("CRITICAL KINEMATICAL ERROR");exit(1);
+                        }
+                        pi_i = tau_picharge.size() + 1; break;
+                      }
+                    }
+                  */
+                }
+              }
+              if (firstfound != -1 && secondfound != -1)
+              {
+                map_Ks_v0_histos[11]->Fill((TLorentzVector(tau_picharge[firstfound]->px(), tau_picharge[firstfound]->py(), tau_picharge[firstfound]->pz(), tau_picharge[firstfound]->energy()) 
+                                          + TLorentzVector(tau_picharge[secondfound]->px(), tau_picharge[secondfound]->py(), tau_picharge[secondfound]->pz(), tau_picharge[secondfound]->energy())).M());
+              }
+              if (!both_ks_pions_found_in_tau)
+              {
+                 map_Ks_v0_histos[10]->Fill(v_tau.DeltaR(v_Ks));
+              }
             }
+          }
         }
-        if (!foundpi)  
-        {
-          cerr << "PION LOST" << endl;
-        }
-    }
-    if (matched_pi != Strips->size()) 
-    {
-      cerr << "===>THE NUMBER OF PIONS DON'T MATCH" << endl;
-      num_ev_tau_pi_not_in_hps_pi++;
-    }
-    else dout("ALL PIONS MATCHED");
-  } 
+        // Fill the variables
+        if (at_least_one_Ks_passed_dz) map_Ks_v0_histos[15]->Fill(1);
+        if (number_of_passed_ks_in_hps_tau_hard_cut>0) map_Ks_v0_histos[16]->Fill(number_of_passed_ks_in_hps_tau_hard_cut);
+        map_Ks_v0_histos[4]->Fill(v0_count);//h_v0_count->Fill(v0_count);
+        map_Ks_v0_histos[0]->Fill(number_of_passed_ks);
+        map_Ks_v0_histos[7]->Fill(number_of_passed_ks_in_hps_tau);
+        dlog("v0_count", v0_count,"number_of_passed_ks", number_of_passed_ks, "number_of_passed_ks_in_hps_tau:", number_of_passed_ks_in_hps_tau, "number_of_passed_ks_in_hps_tau_hard_cut", number_of_passed_ks_in_hps_tau_hard_cut);
+      }
 
-  /// Only hps reco Taus
-  if (false && PF_taus.isValid() )
-  {
-    if (PF_taus->size() > 0)  dout("Number of Tau = ", PF_taus->size());
-    for (unsigned int i = 0; i < PF_taus->size(); i++) // Over Tau's
-    {
-      reco::PFTauRef pftauref(PF_taus, i); // one Tau instance, typedef edm::Ref<PFTauCollection> reco::PFTauRef
-      dlog("tau #", i, "from", PF_taus->size(), "(", pftauref->vx(), pftauref->vy(), pftauref->vz(), ")");
-        //reco::PFTau pfTau(PF_taus, i); //same as (*PF_taus)[i]
-        //edm::AtomicPtrCache< vector< reco::RecoTauPiZero > >
-        //const vector< reco::RecoTauPiZero > a  = (*PF_taus)[i].signalPiZeroCandidates();
-        //(*reco::PFTau)pfTau->signalPiZeroCandidates();
-        //const vector < RecoTauPiZero > &   isolationPiZeroCandidates () const
-        //const vector< RecoTauPiZero > & reco::PFTau::isolationPiZeroCandidates (   ) const
-        //const vector < RecoTauPiZero > &   signalPiZeroCandidates () const
-
-      // Lists to be used 
-        //Pizeros list
-          // Signal pi0's
-            vector < reco::RecoTauPiZero > tau_pizeros_sig = pftauref->signalPiZeroCandidates();
-          //Isolation pi0's
-            const vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates(); // pions of the considered Tau
-            vector < reco::RecoTauPiZero *> point_tau_pizeros_isol;
-          // All pi0's
-            vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
-                                           tau_pizeros.insert(tau_pizeros.end(), tau_pizeros_isol.begin(), tau_pizeros_isol.end());
-            vector < reco::RecoTauPiZero* > point_tau_pizeros;
-       
-        // Hadrons list
+      map_Ks_v0_histos[17]->Fill(PF_hps_taus->size());
+      for( unsigned tau_index = 0; tau_index < PF_hps_taus->size(); tau_index++)
+      {
+        reco::PFTauRef pftauref(PF_hps_taus, tau_index); 
+        //pi+-
           vector < reco::PFCandidatePtr  > tau_signalPFChargedHadrCands    = pftauref->signalPFChargedHadrCands();//typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
           vector < reco::PFCandidatePtr  > tau_isolationPFChargedHadrCands = pftauref->isolationPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-            // All pi+-'s
-            vector < reco::PFCandidatePtr > tau_picharge = pftauref->signalPFChargedHadrCands(); // vector < edm::Ptr<PFCandidate> > 
-                                            tau_picharge.insert(tau_picharge.end(), tau_isolationPFChargedHadrCands.begin(), tau_isolationPFChargedHadrCands.end());
-            std::vector<reco::PFCandidatePtr * > point_tau_picharge;
+        // All pi+-'s
+        vector < reco::PFCandidatePtr > tau_picharge = pftauref->signalPFChargedHadrCands(); // vector < edm::Ptr<PFCandidate> >
+                                        tau_picharge.insert(tau_picharge.end(), tau_isolationPFChargedHadrCands.begin(), tau_isolationPFChargedHadrCands.end());
+        map_Ks_v0_histos[18]->Fill(tau_picharge.size());
 
-          vector < reco::PFCandidatePtr  > tau_signalPFNeutrHadrCands    = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-          vector < reco::PFCandidatePtr  > tau_isolationPFNeutrHadrCands = pftauref->isolationPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-            // All pi0_had's
-            vector < reco::PFCandidatePtr > tau_pizeros_had = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-                                            tau_pizeros_had.insert(tau_pizeros_had.end(), tau_isolationPFNeutrHadrCands.begin(), tau_isolationPFNeutrHadrCands.end());
-            std::vector<reco::PFCandidatePtr *> point_tau_pizeros_had;
-        
-        //NOT USED list
-          vector < reco::PFRecoTauChargedHadron > tau_signalTauChargedHadronCandidates = pftauref->signalTauChargedHadronCandidates(); // gives 0 size
-          vector < reco::PFRecoTauChargedHadron > tau_isolationTauChargedHadronCandidates = pftauref->isolationTauChargedHadronCandidates();// gives 0 size
-          const reco::PFCandidatePtr tau_leadPFChargedHadrCand = pftauref->leadPFChargedHadrCand(); // by output eeror message // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
-          float tau_leadPFChargedHadrCandsignedSipt = pftauref->leadPFChargedHadrCandsignedSipt();
-          reco::PFRecoTauChargedHadronRef tau_leadTauChargedHadronCandidate = pftauref->leadTauChargedHadronCandidate(); // can not implement
-
-      // Pions of PFRecoTau - all RecoTauPiZero
-      dlog("\t...................");
-      dlog("\tPions of RecoTauPiZero of PFRecoTau");
-        // Signal pi0's
-        if (tau_pizeros_sig.size() && true)
+        if (v0_count > 0)
         {
-          dlog("\t\t signal tau pi0's number:", tau_pizeros_sig.size());
-          num_pions->Fill(tau_pizeros_sig.size());
-          double inv_M = 0;
-          if (tau_pizeros_sig.size() > 0)
+          for(unsigned k0_i = 0 ; k0_i < V0Ks->size() ; k0_i++)
           {
-            TLorentzVector first(0, 0, 0, 0);
-            for (unsigned int j = 0; j < tau_pizeros_sig.size(); j++)
+            TLorentzVector v0_ks_pion1((*V0Ks)[k0_i].daughter(0)->px(),(*V0Ks)[k0_i].daughter(0)->py(),(*V0Ks)[k0_i].daughter(0)->pz(),(*V0Ks)[k0_i].daughter(0)->energy());
+            TLorentzVector v0_ks_pion2((*V0Ks)[k0_i].daughter(1)->px(),(*V0Ks)[k0_i].daughter(1)->py(),(*V0Ks)[k0_i].daughter(1)->pz(),(*V0Ks)[k0_i].daughter(1)->energy());          
+          
+            for(unsigned pi_i = 0; pi_i < tau_picharge.size(); pi_i++) 
             {
-              dout("\t\t\tPi0_", j, "(", tau_pizeros_sig[j].charge(), ")", tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz(), tau_pizeros_sig[j].energy());
-              TLorentzVector second(tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz(), tau_pizeros_sig[j].energy());
-              first = (first + second);
-              
-              dlog("\t\t\t signal tau pi0_", j, ":", tau_pizeros_sig[j].vx(), tau_pizeros_sig[j].vy(), tau_pizeros_sig[j].vz(), 
-                                                ":", tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz());
+
+              TLorentzVector tau_pion(tau_picharge[pi_i]->px(), tau_picharge[pi_i]->py(), tau_picharge[pi_i]->pz(), tau_picharge[pi_i]->energy());
+
+              map_Ks_v0_histos[20]->Fill(tau_pion.DeltaR(v0_ks_pion1));
+              map_Ks_v0_histos[20]->Fill(tau_pion.DeltaR(v0_ks_pion2));
             }
-            inv_M = first.M();
           }
-          dout("TAU_", i, " WITH TOTAL INVARIANT MASS OF PIONS:", inv_M);
         }
-        else dlog("\t\t\tto few pions in signal pions ");
-
-        //Isolation pi0's
-        point_tau_pizeros_isol = TransformToPointers(tau_pizeros_isol, point_tau_pizeros_isol);
-        CombinatoricOfTwoToNeutralInvM(point_tau_pizeros_isol, "isolat tau pi0", "tau", "pi0", taus_isol_pi0_inv_m_to_ks, taus_isol_pi0_inv_pt);
-        
-        //All pi0's loop
-        point_tau_pizeros = TransformToPointers(tau_pizeros, point_tau_pizeros);
-        CombinatoricOfTwoToNeutralInvM(point_tau_pizeros, "all tau pi0", "tau", "pi0", taus_pi0_inv_m_to_ks, taus_pi0_inv_pt);
-
-      //Charged hadrons of PFRecoTau - all PFCandidatePtr
-      dlog("\t...................");
-      dlog("\tCharged hadrons of PFRecoTau ");
-      point_tau_picharge = TransformToPointers(tau_picharge, point_tau_picharge);
-      CombinatoricOfTwoToNeutralInvM(tau_picharge, "all tau pi+-", "tau", "pi+-", taus_pi_charged_inv_m_to_ks, taus_pi_charged_inv_pt);
-
-      //Neutral hadrons of PFRecoTau - all PFCandidatePtr
-      dlog("\t...................");
-      dlog("\tNeutral hadrons of PFRecoTau "); // this is empty
-      point_tau_pizeros_had = TransformToPointers(tau_pizeros_had, point_tau_pizeros_had);
-      CombinatoricOfTwoToNeutralInvM(tau_pizeros_had, "all tau pi0_had", "tau", "pi0_had", taus_pi0_had_inv_m_to_ks, taus_pi0_had_inv_pt);
+      }
     }
-  } 
-  else if (!PF_taus.isValid()) dout("no valid PF_taus");
+    // else if (!V0Ks.isValid()) dlog("UNVALID Ks's");
 
-  /// GEN Particles
-  dlog("GEN Particles");
-  if (!IsData && GenPart.isValid())
-  {
-    //vector<reco::GenParticleCollection> gen_daughters;
-    int gen_count = GenPart->size();
-    dlog("Size:", gen_count);
-    if (outputGenEvolution)
+  /// HPS Pi0's and taus - with loop among reco::tau
+  if (false && Strips.isValid())
     {
-      ofs << string(10, '=') << "Size:" << gen_count << endl;
-      for(unsigned i = 0 ; i < GenPart->size() ; i++)
+      unsigned int matched_pi = 0;
+      if (Strips->size() > 0)  dout("Number of HPS piz0's =", Strips->size());
+      if (PF_hps_taus->size() > 0) dout("Number of RECO Tau =", PF_hps_taus->size());
+
+      for (unsigned int i = 0; i < Strips->size(); i++)
       {
-        const reco::GenParticle & gen_prt = (*GenPart)[i];
-        ofs << "paritcle # " << i << " (" << (*GenPart)[i].charge() << ") " << endl;//dlog("paritcle #", i, "(", (*GenPart)[i].charge(), ")"); 
-        ofs << "\t" << gen_prt.pdgId() << " " <<  gen_prt.status() << endl;//dlog("\t", gen_prt.pdgId(), gen_prt.status()); 
-        GenEvolution(&gen_prt, 2);
-      } 
+        if (debug)
+        {
+          dout("\tPi0_", i, "(", (*Strips)[i].charge(), ")", (*Strips)[i].px(), (*Strips)[i].py(), (*Strips)[i].pz(), (*Strips)[i].p());
+          //dout(" \tPI0", i, "px =", (*Strips)[i].px(), "py =", (*Strips)[i].py(), "pz =", (*Strips)[i].pz(), "e =", (*Strips)[i].p(), "pt =", (*Strips)[i].pt(), "; vx =", (*Strips)[i].vx(),  "vy =", (*Strips)[i].vy(),  "vz =", (*Strips)[i].vz());
+        }
+        pizero_count++;
+        if (pizero_count>=1000)
+        {
+          cerr << "number of pizeros > 1000. They are missing." << endl;
+          break;
+        }
+
+        // RECO Taus
+          bool foundpi = false;
+          for (unsigned int i_tau = 0; i_tau < PF_hps_taus->size(); i_tau++) //over all taus
+          {
+            cout << "\t\tTau_" << i_tau << endl;
+            reco::PFTauRef pftauref(PF_hps_taus, i_tau);
+
+            //Signal Pi0
+              const vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
+              dout("\t\t\tsignal tau_pizeros:", tau_pizeros.size());
+              if (tau_pizeros.size() > 0)
+                for (unsigned int j_pi = 0; j_pi < tau_pizeros.size(); j_pi++) //over signal pions in tau
+                {
+                  if (pow(tau_pizeros[j_pi].charge() - (*Strips)[i].charge(), 2) +
+                      pow(tau_pizeros[j_pi].px() - (*Strips)[i].px(), 2) +
+                      pow(tau_pizeros[j_pi].py() - (*Strips)[i].py(), 2) +
+                      pow(tau_pizeros[j_pi].pz() - (*Strips)[i].pz(), 2) +
+                      pow(tau_pizeros[j_pi].energy() - (*Strips)[i].energy(), 2) < 0.001)
+                  {
+                    foundpi = true;
+                    dout("\t\t\t\tPi0_", j_pi, "(", tau_pizeros[j_pi].charge(),")", tau_pizeros[j_pi].px(), tau_pizeros[j_pi].py(), tau_pizeros[j_pi].pz(), tau_pizeros[j_pi].energy());
+                    break;
+                  }
+                }
+
+            //Isol Pi0
+              const vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates();
+              dout("\t\t\tisolation tau_pizeros_isol :", tau_pizeros_isol.size());
+              if (tau_pizeros_isol.size() > 0 && !foundpi)
+                for (unsigned int j_pi = 0; j_pi < tau_pizeros_isol.size(); j_pi++) //over isolation pions in tau
+                {
+                  if (pow(tau_pizeros_isol[j_pi].charge() - (*Strips)[i].charge(), 2) +
+                      pow(tau_pizeros_isol[j_pi].px() - (*Strips)[i].px(), 2) +
+                      pow(tau_pizeros_isol[j_pi].py() - (*Strips)[i].py(), 2) +
+                      pow(tau_pizeros_isol[j_pi].pz() - (*Strips)[i].pz(), 2) +
+                      pow(tau_pizeros_isol[j_pi].energy() - (*Strips)[i].energy(), 2) < 0.001)
+                  {
+                    foundpi = true;
+                    dout("\t\t\t\tPi0_", j_pi, "(", tau_pizeros_isol[j_pi].charge(), ")", tau_pizeros_isol[j_pi].px(), tau_pizeros_isol[j_pi].py(), tau_pizeros_isol[j_pi].pz(), tau_pizeros_isol[j_pi].energy());
+                    break;
+                  }
+                }
+
+              if (foundpi)
+              {
+                matched_pi++;
+                break;
+              }
+          }
+          if (!foundpi)
+          {
+            cerr << "PION LOST" << endl;
+          }
+      }
+      if (matched_pi != Strips->size())
+      {
+        cerr << "===>THE NUMBER OF PIONS DON'T MATCH" << endl;
+        num_ev_tau_pi_not_in_hps_pi++;
+      }
+      else dout("ALL PIONS MATCHED");
     }
 
-    v_daughters_k0s_to_pi0.clear();
-    BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0s_to_pi0, 310, map_kaons, 2, 111, map_pions);// k0s 310 
-    if (false)//temp
+  ///K(892)+- TODO: build using V0 and hps pi0; made: patching to pi+- of hps and V0
+    if (true && PF_hps_taus.isValid() )
     {
-      v_daughters_k0l_to_pi0.clear();
-      BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0l_to_pi0, 130, map_kaons, 2, 111, map_pions);// k0l 130
-      //v_daughters_k0_to_pi0.clear();
-      //BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0_to_pi0, 311, map_kaons, 2, 111, map_pions);// k0 311 - is empty by definition of converting to 310 or 130
-      v_daughters_k0s_to_pic.clear();
-      BuildTo(GenPart, h_gen_k0_all_to_pic, v_daughters_k0s_to_pic, 310, map_kaons, 2, 211, map_pions);// k0s 310 
-      v_daughters_k0l_to_pic.clear();
-      BuildTo(GenPart, h_gen_k0_all_to_pic, v_daughters_k0l_to_pic, 130, map_kaons, 2, 211, map_pions);// k0l 130
-    }
+      vector<reco::CandidateCollection> v0_daughters;
+      v0_count = V0Ks->size();
+      // Loop over PF::Taus
+      for( unsigned tau_index = 0; tau_index < PF_hps_taus->size(); tau_index++)
+      {
+         reco::PFTauRef pftauref(PF_hps_taus, tau_index); 
+          //pi+-
+            vector < reco::PFCandidatePtr  > tau_signalPFChargedHadrCands    = pftauref->signalPFChargedHadrCands();//typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+            vector < reco::PFCandidatePtr  > tau_isolationPFChargedHadrCands = pftauref->isolationPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+          // All pi+-'s
+            vector < reco::PFCandidatePtr > tau_picharge = pftauref->signalPFChargedHadrCands(); // vector < edm::Ptr<PFCandidate> >
+                                            tau_picharge.insert(tau_picharge.end(), tau_isolationPFChargedHadrCands.begin(), tau_isolationPFChargedHadrCands.end());
+        
+        //dout("tau:", tau_index);
 
-    v_daughters_k0s_to_pi0_SimToStrips.clear();//vector< vector <const reco::Candidate *>>
-    v_daughters_k0s_to_pi0_StipsToSim.clear();//vector< vector <const reco::Candidate *>>
-    MakeVectorofRef(Strips, v_strips_ref);//typedef edm::Ref< RecoTauPiZeroCollection >   RecoTauPiZeroRef
-    Match(v_daughters_k0s_to_pi0, v_strips_ref, v_daughters_k0s_to_pi0_SimToStrips, v_daughters_k0s_to_pi0_StipsToSim);//Gen to Reco, resulting vactor
-    //reco::CandMatchMap map = MCTruthDeltaRMatcher("pions and pizeros")
-  }
-  else if (!IsData) dlog("\tno GenPart.isValid()");
-  else dlog("no GenPart in data");
+        // Loop over pi+- in Tau
+        double E = 0, p_x = 0, p_y = 0, p_z = 0, inv_M = 0;
+        for(unsigned pi_i = 0 ; pi_i < tau_picharge.size() ; pi_i++) 
+        {
+          //dout("\tpion:", pi_i, tau_picharge[pi_i]->charge(), tau_picharge[pi_i]->px(), tau_picharge[pi_i]->py(), tau_picharge[pi_i]->pz(), tau_picharge[pi_i]->energy());
+          TLorentzVector tau_pion(tau_picharge[pi_i]->px(), tau_picharge[pi_i]->py(), tau_picharge[pi_i]->pz(), tau_picharge[pi_i]->energy());
+
+          // Loop over known Ks
+          for(unsigned k0_i = 0 ; k0_i < V0Ks->size() ; k0_i++)// ISSUE: not all K0s's pi+- are matched in one event to the pions of tau
+          {
+            TLorentzVector v0_ks_pion1((*V0Ks)[k0_i].daughter(0)->px(),(*V0Ks)[k0_i].daughter(0)->py(),(*V0Ks)[k0_i].daughter(0)->pz(),(*V0Ks)[k0_i].daughter(0)->energy());
+            TLorentzVector v0_ks_pion2((*V0Ks)[k0_i].daughter(1)->px(),(*V0Ks)[k0_i].daughter(1)->py(),(*V0Ks)[k0_i].daughter(1)->pz(),(*V0Ks)[k0_i].daughter(1)->energy());
+            
+            TLorentzVector v0_ks((*V0Ks)[k0_i].px(),(*V0Ks)[k0_i].py(),(*V0Ks)[k0_i].pz(),(*V0Ks)[k0_i].energy());
+            double k892_m_inv = (v0_ks + tau_pion).M(); //K892 from the deffinitely K0s from V0 and a pi+- inside the tau
+            if (tau_pion.M() < 0.1) break;
+            // {
+            //   dout("pion mass can not be <135", tau_pion.M(), "is it?", tau_picharge[pi_i]->mass());
+            //   exit(1);
+            // }
+            if (pow(tau_picharge[pi_i]->charge() - (*V0Ks)[k0_i].daughter(0)->charge(), 2) +
+                      pow(tau_picharge[pi_i]->px() - (*V0Ks)[k0_i].daughter(0)->px(), 2) +
+                      pow(tau_picharge[pi_i]->py() - (*V0Ks)[k0_i].daughter(0)->py(), 2) +
+                      pow(tau_picharge[pi_i]->pz() - (*V0Ks)[k0_i].daughter(0)->pz(), 2) +
+                      pow(tau_picharge[pi_i]->energy() - (*V0Ks)[k0_i].daughter(0)->energy(), 2) < 0.001 ||
+                    pow(tau_picharge[pi_i]->charge() - (*V0Ks)[k0_i].daughter(1)->charge(), 2) +
+                      pow(tau_picharge[pi_i]->px() - (*V0Ks)[k0_i].daughter(1)->px(), 2) +
+                      pow(tau_picharge[pi_i]->py() - (*V0Ks)[k0_i].daughter(1)->py(), 2) +
+                      pow(tau_picharge[pi_i]->pz() - (*V0Ks)[k0_i].daughter(1)->pz(), 2) +
+                      pow(tau_picharge[pi_i]->energy() - (*V0Ks)[k0_i].daughter(1)->energy(), 2) < 0.001
+                      )
+             {
+              //HAVE TO PASS THIS PION SINCE IT ALREADY INCLUDED
+              //dout("\t\tis the same as pion in Ks:", k0_i, ":");
+              //dout("\t\tfirst:", (*V0Ks)[k0_i].daughter(0)->charge(), (*V0Ks)[k0_i].daughter(0)->px(), (*V0Ks)[k0_i].daughter(0)->py(), (*V0Ks)[k0_i].daughter(0)->pz(), (*V0Ks)[k0_i].daughter(0)->energy());
+              //dout("\t\tsecond:", (*V0Ks)[k0_i].daughter(1)->charge(), (*V0Ks)[k0_i].daughter(1)->px(), (*V0Ks)[k0_i].daughter(1)->py(), (*V0Ks)[k0_i].daughter(1)->pz(), (*V0Ks)[k0_i].daughter(1)->energy());
+             }
+             else if (//abs(k892_m_inv - 0.892) < 0.02 &&  
+                        (abs(tau_picharge[pi_i]->vz() ) < 0.2))
+              {
+                dout("FOUND k(892)");
+                h_K892->Fill(k892_m_inv);
+              }
+              else 
+              {
+                //dout(k892_m_inv, "while kaon", v0_ks.M(), "is", (*V0Ks)[k0_i].mass());
+              }
+          }
+          // if (v0ks_piCharged->pt() > max_ks_daughter_pt) max_ks_daughter_pt = v0ks_piCharged->pt();
+          // ks_daughter_pt->Fill(v0ks_piCharged->pt());
+
+          // E += v0ks_piCharged->energy();
+          // p_x += v0ks_piCharged->px();
+          // p_y += v0ks_piCharged->py();
+          // p_z += v0ks_piCharged->pz();
+        }
+
+        inv_M += sqrt(pow(E, 2) - pow(p_x, 2) - pow(p_y, 2) - pow(p_z, 2));
+        // ks_inv_m_pi->Fill(inv_M);
+      }
+    }
+    else if (!PF_hps_taus.isValid()) dout("no valid PF_hps_taus");
+
+  /// HPS reco Taus only - general study
+    if (false && PF_hps_taus.isValid() )
+    {
+      if (PF_hps_taus->size() > 0)  dout("Number of Tau = ", PF_hps_taus->size());
+      for (unsigned int i = 0; i < PF_hps_taus->size(); i++) // Over Tau's
+      {
+        reco::PFTauRef pftauref(PF_hps_taus, i); // one Tau instance, typedef edm::Ref<PFTauCollection> reco::PFTauRef
+        dlog("tau #", i, "from", PF_hps_taus->size(), "(", pftauref->vx(), pftauref->vy(), pftauref->vz(), ")");
+          //reco::PFTau pfTau(PF_hps_taus, i); //same as (*PF_hps_taus)[i]
+          //edm::AtomicPtrCache< vector< reco::RecoTauPiZero > >
+          //const vector< reco::RecoTauPiZero > a  = (*PF_hps_taus)[i].signalPiZeroCandidates();
+          //(*reco::PFTau)pfTau->signalPiZeroCandidates();
+          //const vector < RecoTauPiZero > &   isolationPiZeroCandidates () const
+          //const vector< RecoTauPiZero > & reco::PFTau::isolationPiZeroCandidates (   ) const
+          //const vector < RecoTauPiZero > &   signalPiZeroCandidates () const
+
+        // Lists of objects of the tau
+          // Pizeros list
+            // Signal pi0's
+              vector < reco::RecoTauPiZero > tau_pizeros_sig = pftauref->signalPiZeroCandidates();
+            //Isolation pi0's
+              const vector < reco::RecoTauPiZero > tau_pizeros_isol = pftauref->isolationPiZeroCandidates(); // pions of the considered Tau
+              vector < reco::RecoTauPiZero *> point_tau_pizeros_isol;
+            // All pi0's
+              vector < reco::RecoTauPiZero > tau_pizeros = pftauref->signalPiZeroCandidates();
+                                             tau_pizeros.insert(tau_pizeros.end(), tau_pizeros_isol.begin(), tau_pizeros_isol.end());
+              vector < reco::RecoTauPiZero* > point_tau_pizeros;
+       
+          // Hadrons list - all are pions charged and neutral
+            //pi+-
+              vector < reco::PFCandidatePtr  > tau_signalPFChargedHadrCands    = pftauref->signalPFChargedHadrCands();//typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+              vector < reco::PFCandidatePtr  > tau_isolationPFChargedHadrCands = pftauref->isolationPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+              // All pi+-'s
+              vector < reco::PFCandidatePtr > tau_picharge = pftauref->signalPFChargedHadrCands(); // vector < edm::Ptr<PFCandidate> >
+                                              tau_picharge.insert(tau_picharge.end(), tau_isolationPFChargedHadrCands.begin(), tau_isolationPFChargedHadrCands.end());
+              std::vector<reco::PFCandidatePtr * > point_tau_picharge;
+            //pi0
+              vector < reco::PFCandidatePtr  > tau_signalPFNeutrHadrCands    = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+              vector < reco::PFCandidatePtr  > tau_isolationPFNeutrHadrCands = pftauref->isolationPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+              // All pi0_had's
+              vector < reco::PFCandidatePtr > tau_pizeros_had = pftauref->signalPFNeutrHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+                                              tau_pizeros_had.insert(tau_pizeros_had.end(), tau_isolationPFNeutrHadrCands.begin(), tau_isolationPFNeutrHadrCands.end());
+              std::vector<reco::PFCandidatePtr *> point_tau_pizeros_had;
+        
+          // NOT USED list
+            vector < reco::PFRecoTauChargedHadron > tau_signalTauChargedHadronCandidates = pftauref->signalTauChargedHadronCandidates(); // gives 0 size
+            vector < reco::PFRecoTauChargedHadron > tau_isolationTauChargedHadronCandidates = pftauref->isolationTauChargedHadronCandidates();// gives 0 size
+            const reco::PFCandidatePtr tau_leadPFChargedHadrCand = pftauref->leadPFChargedHadrCand(); // by output eeror message // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
+            float tau_leadPFChargedHadrCandsignedSipt = pftauref->leadPFChargedHadrCandsignedSipt();
+            reco::PFRecoTauChargedHadronRef tau_leadTauChargedHadronCandidate = pftauref->leadTauChargedHadronCandidate(); // can not implement
+
+        // Pions of PFRecoTau - all RecoTauPiZero
+        dlog("\t...................");
+        dlog("\tPions of RecoTauPiZero of PFRecoTau");
+          // Signal pi0's
+          if (tau_pizeros_sig.size() && true)
+          {
+            dlog("\t\t signal tau pi0's number:", tau_pizeros_sig.size());
+            num_pions->Fill(tau_pizeros_sig.size());
+            double inv_M = 0;
+            if (tau_pizeros_sig.size() > 0)
+            {
+              TLorentzVector first(0, 0, 0, 0);
+              for (unsigned int j = 0; j < tau_pizeros_sig.size(); j++)
+              {
+                dout("\t\t\tPi0_", j, "(", tau_pizeros_sig[j].charge(), ")", tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz(), tau_pizeros_sig[j].energy());
+                TLorentzVector second(tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz(), tau_pizeros_sig[j].energy());
+                first = (first + second);
+              
+                //dlog("\t\t\t signal tau pi0_", j, " vtx:", tau_pizeros_sig[j].vx(), tau_pizeros_sig[j].vy(), tau_pizeros_sig[j].vz(), " || p:", tau_pizeros_sig[j].px(), tau_pizeros_sig[j].py(), tau_pizeros_sig[j].pz());
+              }
+              inv_M = first.M();
+            }
+            dout("\tTAU_", i, " WITH TOTAL INVARIANT MASS OF pi0's:", inv_M);
+          }
+          else dlog("\t\t\tto few pions in signal pions ");
+
+          //Isolation pi0's
+          point_tau_pizeros_isol = TransformToPointers(tau_pizeros_isol, point_tau_pizeros_isol);
+          CombinatoricOfTwoToNeutralInvM(point_tau_pizeros_isol, "isolat tau pi0", "tau", "pi0", taus_isol_pi0_inv_m_to_ks, taus_isol_pi0_inv_pt);
+        
+          //All pi0's loop
+          point_tau_pizeros = TransformToPointers(tau_pizeros, point_tau_pizeros);
+          CombinatoricOfTwoToNeutralInvM(point_tau_pizeros, "all tau pi0", "tau", "pi0", taus_pi0_inv_m_to_ks, taus_pi0_inv_pt);
+
+        //Charged hadrons of PFRecoTau - all PFCandidatePtr
+        dlog("\t...................");
+        dlog("\tCharged hadrons of PFRecoTau ");
+        point_tau_picharge = TransformToPointers(tau_picharge, point_tau_picharge);
+        CombinatoricOfTwoToNeutralInvM(tau_picharge, "all tau pi+-", "tau", "pi+-", taus_pi_charged_inv_m_to_ks, taus_pi_charged_inv_pt);
+
+        //Neutral hadrons of PFRecoTau - all PFCandidatePtr
+        dlog("\t...................");
+        dlog("\tNeutral hadrons of PFRecoTau "); // this is empty
+        point_tau_pizeros_had = TransformToPointers(tau_pizeros_had, point_tau_pizeros_had);
+        CombinatoricOfTwoToNeutralInvM(tau_pizeros_had, "all tau pi0_had", "tau", "pi0_had", taus_pi0_had_inv_m_to_ks, taus_pi0_had_inv_pt);
+      }
+    }
+    // else if (!PF_hps_taus.isValid()) dout("no valid PF_hps_taus");
+
+  /// GEN Particles K(892)- gen level study
+    if (false && !IsData && GenPart.isValid())
+    {
+      int gen_count = GenPart->size();
+      dlog("Size:", gen_count);
+      cout << string(10, '=') << "Size:" << gen_count << endl;
+      int NumberOfK892_neutral = 0,  NumberOfK892_charged = 0;
+        for(unsigned i = 0 ; i < GenPart->size() ; i++)
+        {
+          const reco::GenParticle & gen_prt = (*GenPart)[i];
+          if (gen_prt.numberOfMothers() != 0) continue;
+          //cout << "paritcle # " << i << " (" << (*GenPart)[i].charge() << ") " << "("<< gen_prt.numberOfMothers()<<":"<< gen_prt.numberOfDaughters()<< ")"<< endl;
+          //dlog("paritcle #", i, "(", (*GenPart)[i].charge(), ")", "(", gen_prt.numberOfMothers(),":", gen_prt.numberOfDaughters(), ") pdgId:", gen_prt.pdgId() << " status:" <<  gen_prt.status());
+          if (abs(gen_prt.pdgId()) == 313 ) 
+            {
+              NumberOfK892_neutral++;
+              map_K892_gen_histos[313][1]->Fill(gen_prt.vx());
+              map_K892_gen_histos[313][2]->Fill(gen_prt.vy());
+              map_K892_gen_histos[313][3]->Fill(gen_prt.vz());
+            }
+          else NumberOfK892_neutral += CountGenPrtID(&gen_prt, 313, 0, 2, &map_K892_gen_histos[313]);
+
+          if (abs(gen_prt.pdgId()) == 323) 
+            {
+              NumberOfK892_charged++;
+              map_K892_gen_histos[323][1]->Fill(gen_prt.vx());
+              map_K892_gen_histos[323][2]->Fill(gen_prt.vy());
+              map_K892_gen_histos[323][3]->Fill(gen_prt.vz());
+            }
+          else NumberOfK892_charged += CountGenPrtID(&gen_prt, 323, 0, 2, &map_K892_gen_histos[323]);
+
+        }
+        dout("NumberOfK892 neutral:",NumberOfK892_neutral);   
+        map_K892_gen_histos[313][0]->Fill(NumberOfK892_neutral);
+        //h_K892_0_gen_number_per_event->Fill(NumberOfK892_neutral);
+        dout("NumberOfK892 charged:", NumberOfK892_charged);  
+        map_K892_gen_histos[323][0]->Fill(NumberOfK892_charged);
+      
+    }
+  /// GEN Particles - gen level study
+    if (false && !IsData && GenPart.isValid())
+    {
+      dlog("GEN Particles");
+      //vector<reco::GenParticleCollection> gen_daughters;
+      int gen_count = GenPart->size();
+      dlog("Size:", gen_count);
+      if (outputGenEvolution)
+      {
+        ofs << string(10, '=') << "Size:" << gen_count << endl;
+        for(unsigned i = 0 ; i < GenPart->size() ; i++)
+        {
+          const reco::GenParticle & gen_prt = (*GenPart)[i];
+          ofs << "paritcle # " << i << " (" << (*GenPart)[i].charge() << ") " << endl;//dlog("paritcle #", i, "(", (*GenPart)[i].charge(), ")");
+          ofs << "\t" << gen_prt.pdgId() << " " <<  gen_prt.status() << endl;//dlog("\t", gen_prt.pdgId(), gen_prt.status());
+          GenEvolution(&gen_prt, 2);
+        }
+      }
+
+      v_daughters_k0s_to_pi0.clear();
+      BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0s_to_pi0, 310, map_kaons, 2, 111, map_pions);// k0s 310
+      if (false)//temp
+      {
+        v_daughters_k0l_to_pi0.clear();
+        BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0l_to_pi0, 130, map_kaons, 2, 111, map_pions);// k0l 130
+        //v_daughters_k0_to_pi0.clear();
+        //BuildTo(GenPart, h_gen_k0_all_to_pi0, v_daughters_k0_to_pi0, 311, map_kaons, 2, 111, map_pions);// k0 311 - is empty by definition of converting to 310 or 130
+        v_daughters_k0s_to_pic.clear();
+        BuildTo(GenPart, h_gen_k0_all_to_pic, v_daughters_k0s_to_pic, 310, map_kaons, 2, 211, map_pions);// k0s 310
+        v_daughters_k0l_to_pic.clear();
+        BuildTo(GenPart, h_gen_k0_all_to_pic, v_daughters_k0l_to_pic, 130, map_kaons, 2, 211, map_pions);// k0l 130
+      }
+
+      v_daughters_k0s_to_pi0_SimToStrips.clear();//vector< vector <const reco::Candidate *>>
+      v_daughters_k0s_to_pi0_StipsToSim.clear();//vector< vector <const reco::Candidate *>>
+      MakeVectorofRef(Strips, v_strips_ref);//typedef edm::Ref< RecoTauPiZeroCollection >   RecoTauPiZeroRef
+      Match(v_daughters_k0s_to_pi0, v_strips_ref, v_daughters_k0s_to_pi0_SimToStrips, v_daughters_k0s_to_pi0_StipsToSim);//Gen to Reco, resulting vactor
+      //reco::CandMatchMap map = MCTruthDeltaRMatcher("pions and pizeros")
+    }
+    // else if (!IsData) dlog("\tno GenPart.isValid()");
+    // else dlog("no GenPart in data");
 }
 
-template <typename Tc, typename Tr>// T - collection   reco::PFTauRef pftauref(PF_taus, i);
+template <typename Tc, typename Tr>// T - collection   reco::PFTauRef pftauref(PF_hps_taus, i);
 void AOD_pi0::MakeVectorofRef(edm::Handle< Tc > Collection, vector< Tr* > v_of_ref)
 {
 
 }
 
 template <typename T>
-void AOD_pi0::Match(vector < vector <const reco::Candidate *>> & From, 
+void AOD_pi0::Match(vector < vector <const reco::Candidate *>> & From,
                     vector < T *> & To, //e.g. Strips
                     vector < vector< vector <T *>>> & SimToReco,
                     vector < vector <const reco::Candidate *>> & RecoToSim
@@ -764,7 +698,7 @@ void AOD_pi0::Match(vector < vector <const reco::Candidate *>> & From,
       for(unsigned j = 0; j < To.size(); j++)
       {
         cout << "\tfrom Kaon num" << i << ", pion number" << ii;
-        if (Incone(*To[j], *From[i][ii], 0.2)) 
+        if (Incone(*To[j], *From[i][ii], 0.2))
         {
           vector< vector <T *>> * K = &(SimToReco[SimToReco.size() - 1]);
           vector <T *> *Pi = &((*K)[K->size() - 1]);
@@ -775,6 +709,7 @@ void AOD_pi0::Match(vector < vector <const reco::Candidate *>> & From,
           found = true;
         }
       }
+
       if (!found) dlog("was not matched");
       else dlog();
     }
@@ -791,47 +726,48 @@ bool AOD_pi0::Incone(Ta& A, Tb& B, double cone_size)
   else return false;
 }
 
-void AOD_pi0::BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart, 
-                      TH1 *hist, 
-                      vector< vector <const reco::Candidate *>>& daughters, 
-                      int mom_pdgid, map <long, string>& map_mom, 
-                      int num_daugh, 
+void AOD_pi0::BuildTo(edm::Handle<std::vector<reco::GenParticle> >& genPart,
+                      TH1 *hist,
+                      vector< vector <const reco::Candidate *>>& daughters,
+                      int mom_pdgid, map <long, string>& map_mom,
+                      int num_daugh,
                       int daugh_pdgid, map <long, string>& map_daugh)
 {
   for(unsigned i = 0; i < genPart->size(); i++)
   {
     const reco::GenParticle & gen_prt = (*genPart)[i];
     BuildTo(&gen_prt, hist, daughters,  mom_pdgid, map_mom,  num_daugh, daugh_pdgid, map_daugh);
-  } 
+  }
   dlog("Found K", mom_pdgid, "to", daugh_pdgid, ":", daughters.size());
-  //for(std::vector<vector <const reco::Candidate *>>::iterator it = daughters.begin(); it != daughters.end(); ++it) 
+  //for(std::vector<vector <const reco::Candidate *>>::iterator it = daughters.begin(); it != daughters.end(); ++it)
   for(unsigned i = 0; i < daughters.size(); i++)
   {
     //dlog("\t\tFound pi", ":", daughters[i].size());
     TLorentzVector temp;//reco::Candidate::LorentzVector
-    for(std::vector<const reco::Candidate *>::iterator jt = daughters[i].begin(); jt != daughters[i].end(); ++jt) 
+    for(std::vector<const reco::Candidate *>::iterator jt = daughters[i].begin(); jt != daughters[i].end(); ++jt)
       temp += TLorentzVector((*jt)->px(), (*jt)->py(), (*jt)->pz(), (*jt)->energy());
     //dlog("temp:", temp.Px(), temp.Py(), temp.Pz(), temp.E(), temp.M());
     hist->Fill(temp.M());
   }
 }
-void AOD_pi0::BuildTo(const reco::Candidate *mom, 
-                      TH1 *hist, 
-                      vector< vector <const reco::Candidate *>> & daughters, 
-                      int mom_pdgid, map <long, string>& map_mom, 
-                      int num_daugh, 
+
+void AOD_pi0::BuildTo(const reco::Candidate *mom,
+                      TH1 *hist,
+                      vector< vector <const reco::Candidate *>> & daughters,
+                      int mom_pdgid, map <long, string>& map_mom,
+                      int num_daugh,
                       int daugh_pdgid, map <long, string>& map_daugh )
 {
-  for(unsigned i = 0; i < mom->numberOfDaughters(); i++) 
+  for(unsigned i = 0; i < mom->numberOfDaughters(); i++)
   {
     const reco::Candidate * prt = mom->daughter(i);
-    if (abs(prt->pdgId()) == mom_pdgid && prt->numberOfDaughters() > 0 && NoRadiating(prt, map_mom)) 
+    if (abs(prt->pdgId()) == mom_pdgid && prt->numberOfDaughters() > 0 && NoRadiating(prt, map_mom))
     {
       dout("K found");
       daughters.push_back(vector <const reco::Candidate *>());
       FindFinalPrt(&daughters.back(), prt, num_daugh, daugh_pdgid);//(*daughters)[daughters.size() - 1]
-      if ( (daughters.back()).size() == 0 ) 
-      { 
+      if ( (daughters.back()).size() == 0 )
+      {
         dout("but no daughers which would fit");
         daughters.erase(daughters.end() - 1);
       }
@@ -843,9 +779,9 @@ void AOD_pi0::BuildTo(const reco::Candidate *mom,
 //pi0 111 ;100111 9010111 ...
 //pi+ 211 ;100211 9010211 ...
 //k0l 130 k0s 310 k0 311...
-void AOD_pi0::FindFinalPrt(vector<const reco::Candidate *> *d = 0, 
-                            const reco::Candidate *mom = 0 , 
-                            int num_of_final_daughters = 2, 
+void AOD_pi0::FindFinalPrt(vector<const reco::Candidate *> *d = 0,
+                            const reco::Candidate *mom = 0 ,
+                            int num_of_final_daughters = 2,
                             int daug_pdgid = 111)// if charged - of opposite charge
 {
   if (d == 0 || mom == 0)
@@ -855,7 +791,7 @@ void AOD_pi0::FindFinalPrt(vector<const reco::Candidate *> *d = 0,
   }
 
   int n = mom->numberOfDaughters();
-  for(int i = 0; i < n; i++) 
+  for(int i = 0; i < n; i++)
   {
     if (num_of_final_daughters == 0) break;
     const reco::Candidate * prt = mom->daughter(i);
@@ -879,6 +815,7 @@ bool AOD_pi0::NoRadiating(const reco::Candidate * mom, int daug_pdgid)//map_kaon
   }
   return true;
 }
+
 bool AOD_pi0::NoRadiating(const reco::Candidate * mom, map <long, string> &map_daug_pdgid)//map_kaons
 {
   dout("mom:",mom->pdgId(), "has", mom->numberOfDaughters(), "daughters");
@@ -886,7 +823,7 @@ bool AOD_pi0::NoRadiating(const reco::Candidate * mom, map <long, string> &map_d
   {
     const reco::Candidate * prt = mom->daughter(i);
     dout("\tdaughter", i, "is of type", abs(prt->pdgId()));
-    if (map_daug_pdgid.find(abs(prt->pdgId())) != map_daug_pdgid.end()) 
+    if (map_daug_pdgid.find(abs(prt->pdgId())) != map_daug_pdgid.end())
     {
       dout("\t\tfound that daughter", i, "of type", abs(prt->pdgId()), "is in map", map_daug_pdgid.find(abs(prt->pdgId()))->second );
       return false;
@@ -895,14 +832,37 @@ bool AOD_pi0::NoRadiating(const reco::Candidate * mom, map <long, string> &map_d
   return true;
 }
 
-void AOD_pi0::GenEvolution(const reco::Candidate * mom, int num_of_tabs = 2)
+int AOD_pi0::CountGenPrtID(const reco::Candidate * mom, int searched_id = 310, int number = 0, int num_of_tabs = 2, std::vector<TH1D *>* vector_of_histograms=0)
 {
-    int n = mom->numberOfDaughters();
-    for(int i = 0; i < n; i++) 
+  int n = mom->numberOfDaughters();
+    for(int i = 0; i < n; i++)
     {
       const reco::Candidate * daughter = mom->daughter(i);
       //if (abs(daughter->pdgId()) == 311/*(abs(daughter->pdgId()) % 1000 == 311 || abs(daughter->pdgId()) % 1000 == 321)*/ && daughter->numberOfDaughters() == 0 ) {dlog(string(num_of_tabs, '\t'), i, ") is Kaon", daughter->pdgId(), daughter->status(), daughter->numberOfDaughters());exit(1);}
-      ofs << string(num_of_tabs, '\t') << i << ") " << daughter->pdgId() << " " << daughter->status() << " " << daughter->numberOfDaughters() << endl;//dlog(string(num_of_tabs, '\t'), i, ") ", daughter->pdgId(), daughter->status(), daughter->numberOfDaughters()); 
+      //cout << string(num_of_tabs, '\t') << i << ") "<< number<< " | " << daughter->pdgId() << " status:" << daughter->status() << " nmom:" << daughter->numberOfMothers()  << " ndaugters:" << daughter->numberOfDaughters() << endl;//dlog(string(num_of_tabs, '\t'), i, ") ", daughter->pdgId(), daughter->status(), daughter->numberOfDaughters());
+      if (searched_id == abs(daughter->pdgId())) 
+      {
+        number++;
+        if (vector_of_histograms->size() > 0)
+        {
+          (*vector_of_histograms)[1]->Fill(daughter->vx());
+          (*vector_of_histograms)[2]->Fill(daughter->vy());
+          (*vector_of_histograms)[3]->Fill(daughter->vz());
+        }
+      }
+      else number += CountGenPrtID(daughter, searched_id, 0, num_of_tabs+1, vector_of_histograms);
+    }
+    return number;
+}
+
+void AOD_pi0::GenEvolution(const reco::Candidate * mom, int num_of_tabs = 2)
+{
+    int n = mom->numberOfDaughters();
+    for(int i = 0; i < n; i++)
+    {
+      const reco::Candidate * daughter = mom->daughter(i);
+      //if (abs(daughter->pdgId()) == 311/*(abs(daughter->pdgId()) % 1000 == 311 || abs(daughter->pdgId()) % 1000 == 321)*/ && daughter->numberOfDaughters() == 0 ) {dlog(string(num_of_tabs, '\t'), i, ") is Kaon", daughter->pdgId(), daughter->status(), daughter->numberOfDaughters());exit(1);}
+      cout << string(num_of_tabs, '\t') << i << ") " << daughter->pdgId() << " " << daughter->status() << " " << daughter->numberOfDaughters() << endl;//dlog(string(num_of_tabs, '\t'), i, ") ", daughter->pdgId(), daughter->status(), daughter->numberOfDaughters());
       GenEvolution(daughter, num_of_tabs + 1);
     }
 }
@@ -920,11 +880,11 @@ vector <T*> AOD_pi0::TransformToPointers(vector <T> a, vector <T*> b)
 }
 
 template  <typename VectoreType >
-void AOD_pi0::CombinatoricOfTwoToNeutralInvM(vector <VectoreType *> collection, 
-                                    TString typeOfCollection, 
+void AOD_pi0::CombinatoricOfTwoToNeutralInvM(vector <VectoreType *> collection,
+                                    TString typeOfCollection,
                                     TString typeOfObjects,
-                                    TString typeOfConstituences, 
-                                    TH1 * hist_inv_m, 
+                                    TString typeOfConstituences,
+                                    TH1 * hist_inv_m,
                                     TH1 * hist_pt)
 {
   dlog();
@@ -933,7 +893,7 @@ void AOD_pi0::CombinatoricOfTwoToNeutralInvM(vector <VectoreType *> collection,
   {
     for (unsigned int i = 0; i < collection.size() - 1; i++) //over isolation pions in Tau
     {
-      dlog("\t\t\t", typeOfCollection, i, ":", collection[i]->vx(), collection[i]->vy(), collection[i]->vz(),    
+      dlog("\t\t\t", typeOfCollection, i, ":", collection[i]->vx(), collection[i]->vy(), collection[i]->vz(),  
                                           ":", collection[i]->px(), collection[i]->py(), collection[i]->pz());
 
       //Check the vertex position
@@ -943,29 +903,29 @@ void AOD_pi0::CombinatoricOfTwoToNeutralInvM(vector <VectoreType *> collection,
         dout("\t\t===>matching to", typeOfConstituences , i, "from", collection.size(), "in this", typeOfObjects);
         for (unsigned int j = i + 1; j < collection.size(); j++)
         {
-          if (typeOfConstituences.Contains("pi+-") && collection[i]->charge() * collection[j]->charge() < 0) continue;
+          if (typeOfConstituences.Contains("pi+-") && collection[i]->charge() * collection[j]->charge() < 0) continue;// combine only to neutral particles K0
           TLorentzVector second(collection[j]->px(), collection[j]->py(), collection[j]->pz(), collection[j]->energy());
           double inv_M = (first + second).M();
-          hist_inv_m->Fill(inv_M);
+          hist_inv_m->Fill(inv_M); //This will give us a combinatiric bg
           dout("\t\t\tm(", typeOfConstituences, i, "+", typeOfConstituences, j, ") =", inv_M);
-          if (hist_pt != 0) hist_pt->Fill((first + second).Pt());
+          if (hist_pt != 0) hist_pt->Fill((first + second).Pt()); //This will give us a combinatiric bg
         }
         //cout,  endl;
         //if (hist_pt != 0) hist_pt->Fill(collection[i]->pt());
     }
     //if (hist_pt != 0) hist_pt->Fill(collection[collection.size() - 1]->pt());
-    dlog("\t\t\t", typeOfCollection, collection.size() - 1, ":", collection[collection.size() - 1]->vx(), collection[collection.size() - 1]->vy(), collection[collection.size() - 1]->vz(), 
+    dlog("\t\t\t", typeOfCollection, collection.size() - 1, ":", collection[collection.size() - 1]->vx(), collection[collection.size() - 1]->vy(), collection[collection.size() - 1]->vz(),
                                                             ":", collection[collection.size() - 1]->px(), collection[collection.size() - 1]->py(), collection[collection.size() - 1]->pz());
   }
-  else if (collection.size() == 1) dlog("\t\t\t", typeOfCollection, 0, ":", collection[0]->vx(), collection[0]->vy(), collection[0]->vz(), 
-                                           ":", collection[0]->px(), collection[0]->py(), collection[0]->pz());
+  else if (collection.size() == 1) dlog("\t\t\t", typeOfCollection, 0, " vtx:", collection[0]->vx(), collection[0]->vy(), collection[0]->vz(), " || p:", collection[0]->px(), collection[0]->py(), collection[0]->pz());
 }
+
 template  <typename VectoreType >
-void AOD_pi0::CombinatoricOfTwoToNeutralInvM(vector <VectoreType> collection, 
-                                    TString typeOfCollection, 
+void AOD_pi0::CombinatoricOfTwoToNeutralInvM(vector <VectoreType> collection, // doubt that this function is needed - check it
+                                    TString typeOfCollection,
                                     TString typeOfObjects,
-                                    TString typeOfConstituences, 
-                                    TH1 * hist_inv_m, 
+                                    TString typeOfConstituences,
+                                    TH1 * hist_inv_m,
                                     TH1 * hist_pt)
 {
   dlog();
@@ -974,7 +934,7 @@ void AOD_pi0::CombinatoricOfTwoToNeutralInvM(vector <VectoreType> collection,
   {
     for (unsigned int i = 0; i < collection.size() - 1; i++) //over isolation pions in Tau
     {
-      dlog("\t\t\t", typeOfCollection, i, ":", collection[i]->vx(), collection[i]->vy(), collection[i]->vz(),    
+      dlog("\t\t\t", typeOfCollection, i, ":", collection[i]->vx(), collection[i]->vy(), collection[i]->vz(),  
                                           ":", collection[i]->px(), collection[i]->py(), collection[i]->pz());
 
       //Check the vertex position
@@ -987,67 +947,56 @@ void AOD_pi0::CombinatoricOfTwoToNeutralInvM(vector <VectoreType> collection,
           if (typeOfConstituences.Contains("pi+-") && collection[i]->charge() * collection[j]->charge() < 0) continue;
           TLorentzVector second(collection[j]->px(), collection[j]->py(), collection[j]->pz(), collection[j]->energy());
           double inv_M = (first + second).M();
-          hist_inv_m->Fill(inv_M);
+          hist_inv_m->Fill(inv_M); //This will give us a combinatiric bg
           dout("\t\t\tm(", typeOfConstituences, i, "+", typeOfConstituences, j, ") =", inv_M);
-          if (hist_pt != 0) hist_pt->Fill((first + second).Pt());
+          if (hist_pt != 0) hist_pt->Fill((first + second).Pt()); //This will give us a combinatiric bg
         }
         // if (hist_pt != 0) hist_pt->Fill(collection[i]->pt());
         //cout,  endl;
     }
     //if (hist_pt != 0) hist_pt->Fill(collection[collection.size() - 1]->pt());
-    dlog("\t\t\t", typeOfCollection, collection.size() - 1, ":", collection[collection.size() - 1]->vx(), collection[collection.size() - 1]->vy(), collection[collection.size() - 1]->vz(), 
-                                                            ":", collection[collection.size() - 1]->px(), collection[collection.size() - 1]->py(), collection[collection.size() - 1]->pz());
+    dlog("\t\t\t", typeOfCollection, collection.size() - 1, " vtx:", collection[collection.size() - 1]->vx(), collection[collection.size() - 1]->vy(), collection[collection.size() - 1]->vz(), " || p:", collection[collection.size() - 1]->px(), collection[collection.size() - 1]->py(), collection[collection.size() - 1]->pz());
   }
-  else if (collection.size() == 1) dlog("\t\t\t", typeOfCollection, 0, ":", collection[0]->vx(), collection[0]->vy(), collection[0]->vz(), 
-                                        ":", collection[0]->px(), collection[0]->py(), collection[0]->pz());
-}
-   
-// ------------ method called once each job just before starting event loop  ------------
-void 
-AOD_pi0::beginJob()
-{
-    
+  else if (collection.size() == 1) dlog("\t\t\t", typeOfCollection, 0, " vtx:", collection[0]->vx(), collection[0]->vy(), collection[0]->vz(), " || p:", collection[0]->px(), collection[0]->py(), collection[0]->pz());
 }
 
-// ------------ method called once each job just after ending the event loop  ------------
-void 
-AOD_pi0::endJob() 
-{
-  h_v0_count->Write();
-  pions_inv_m->Write();
-  num_pions->Write();
-  taus_isol_pi0_inv_m_to_ks->Write();
-  ks_daughter_pt->Write();
-  ks_inv_m_pi->Write();
-  taus_isol_pi0_inv_pt->Write();
-  taus_pi0_inv_m_to_ks->Write();
-  taus_pi0_inv_pt->Write();
-  taus_pi_charged_inv_m_to_ks->Write();
-  taus_pi_charged_inv_pt->Write();
-  h_gen_k0_all_to_pi0->Write();
-  h_gen_k0_all_to_pic->Write();
-}
+// unsigned int AOD_pi0::AddGammas(const edm::Event& iEvent, const edm::EventSetup& iSetup) 
+// {
+//   edm::Handle<reco::PFCandidateCollection> Tracks;
+//   iEvent.getByToken(PFCandidateCollectionToken_, Tracks);
 
-AOD_pi0::~AOD_pi0()
-{
-  dlog("Total num of not-matched events:", num_ev_tau_pi_not_in_hps_pi);
-  dlog("num_pion_res: ", num_pion_res);
-  dlog("max_inv_mass: ", max_inv_mass);
-  dlog("max_ks_daughter_pt: ", max_ks_daughter_pt);
-  outfile->Close();
-  ofs.close();
-}
+//   if (Tracks.isValid())
+//   {
+//     for(unsigned i = 0; i < Tracks->size(); i++)
+//     {
+//       if ((*Tracks)[i].pdgId() != 22) continue;
+//       if ((*Tracks)[i].pt() < cPhotonPtMin) continue;
+//       if (fabs((*Tracks)[i].eta()) > cPhotonEtaMax) continue;
 
-// ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void
-AOD_pi0::fillDescriptions(edm::ConfigurationDescriptions& descriptions) 
-{
-  //The following says we do not know what parameters are allowed so do no validation
-  // Please change this to state exactly what you do use, even if it is no parameters
-  edm::ParameterSetDescription desc;
-  desc.setUnknown();
-  descriptions.addDefault(desc);
-}
+//       photon_px[photon_count]  = (*Tracks)[i].px();
+//       photon_py[photon_count]  = (*Tracks)[i].py();
+//       photon_pz[photon_count]  = (*Tracks)[i].pz();
+//       photon_pt[photon_count]  = (*Tracks)[i].pt();
+//       photon_eta[photon_count] = (*Tracks)[i].eta();
+//       photon_phi[photon_count] = (*Tracks)[i].phi();
+//       photon_e[photon_count]   = (*Tracks)[i].p();
+      
+//       const reco::SuperClusterRef superCluster = (*Tracks)[i].superClusterRef();
+//       photon_superClusterX[photon_count] = superCluster->x();
+//       photon_superClusterY[photon_count] = superCluster->y();
+//       photon_superClusterZ[photon_count] = superCluster->z();
+//       photon_count++;
+
+//       if (photon_count == M_photonmaxcount) 
+//       {
+//         cerr << "number of tracks > M_trackmaxcount. They are missing." << endl; errors |= 1<<1;
+//         break;
+//       }
+//     }
+//   }
+
+//   return photon_count;
+// }
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(AOD_pi0);
