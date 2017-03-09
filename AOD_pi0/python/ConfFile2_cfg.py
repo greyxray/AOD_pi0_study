@@ -1,46 +1,13 @@
+# Use the tracks_and_vertices.root file as input.
 import FWCore.ParameterSet.Config as cms
-from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag #from Configuration.AlCa.GlobalTag import GlobalTag
-from RecoVertex.V0Producer.generalV0Candidates_cfi import *
+#from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag #from Configuration.AlCa.GlobalTag import GlobalTag
+#from RecoVertex.V0Producer.generalV0Candidates_cfi import *
 
-process = cms.Process("DemoKSHORTS")
+process = cms.Process("KSHORTS")
 
-
-process.load("FWCore.MessageService.MessageLogger_cfi")
-
-
-process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
-#process.load('Configuration.Geometry.GeometryRecoDB_cff')
-#process.load('Configuration.Geometry.GeometrySimDB_cff')
-#process.load('Configuration.Geometry.GeometryIdeal_cff')
-#process.load('Configuration.StandardSequences.Geometry_cff')
-
-
-
-################ Aleksei
-process.MessageLogger.cerr.FwkReport.reportEvery = 100
-process.MessageLogger.cerr.threshold = cms.untracked.string('INFO')
-# Suppress messages that are less important than ERRORs. process.MessageLogger = cms.Service("MessageLogger", destinations = cms.untracked.vstring("cout"), cout = cms.untracked.PSet(threshold = cms.untracked.string("ERROR")))
-
-process.load('Configuration/StandardSequences/Services_cff')
-process.load("Configuration.Geometry.GeometryDB_cff")#but in twiki process.load('Configuration.Geometry.GeometryIdeal_cff')
-process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff') # process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
-
-process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:startup', '')#80X_dataRun2_Prompt_v16
-
-################ 
-
-# From the CMSDAS twiki https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideCMSDataAnalysisSchoolNTU2016TrackingAndVertexingExercise
-process.load("TrackingTools.TransientTrack.TransientTrackBuilder_cfi") #also from alexei process.load("TrackingTools/TransientTrack/TransientTrackBuilder_cfi")
-process.load("Configuration.StandardSequences.MagneticField_cff") #also from alexei
-
-################
-
-#process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
-process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(10)# -1 for all events
-)
-
-
+# Use the tracks_and_vertices.root file as input.
+#process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring("file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_26_patch1/src/AOD_pi0_study/0E2AE912-1C0E-E611-86FB-002590743042.root"))
+#process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10))
 studyroot = {
 	'SUSYMC': 
 		{
@@ -67,14 +34,36 @@ studyroot = {
 			'output_rootfile_name': "out_AOD_JetHTdata2.root"
 		}
 }
-
-filekey  = 'SUSYMC'
+filekey  = 'JetHTdata'
 isData = studyroot[filekey]['isData']
 process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(studyroot[filekey]['fileName']))
+process.maxEvents = cms.untracked.PSet(
+    input = cms.untracked.int32(10)# -1 for all events
+)
 
-from RecoVertex.V0Producer.generalV0Candidates_cff import *
-#process.load('RecoVertex/V0Producer/generalV0Candidates_cff')
-process.newV0Collection = generalV0Candidates.clone(
+
+# Suppress messages that are less important than ERRORs.
+#process.load("FWCore.MessageService.MessageLogger_cfi")
+#process.MessageLogger.cerr.FwkReport.reportEvery = 100
+#process.MessageLogger.cerr.threshold = cms.untracked.string('INFO')
+process.MessageLogger = cms.Service("MessageLogger",
+    destinations = cms.untracked.vstring("cout"),
+    cout = cms.untracked.PSet(threshold = cms.untracked.string("INFO")))
+
+# Load part of the CMSSW reconstruction sequence to make vertexing possible.
+# We'll need the CMS geometry and magnetic field to follow the true, non-helical shapes of tracks through the detector.
+process.load("Configuration/StandardSequences/FrontierConditions_GlobalTag_cff")
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:startup', '')# 80X_dataRun2_Prompt_v16 - doesn't work
+process.load("TrackingTools.TransientTrack.TransientTrackBuilder_cfi")
+process.load("Configuration.Geometry.GeometryIdeal_cff")
+process.load("Configuration.StandardSequences.MagneticField_cff")
+
+# Copy most of the vertex producer's parameters, but accept tracks with progressively more strict quality.
+process.load("RecoVertex.V0Producer.generalV0Candidates_cfi")
+
+# loose
+process.SecondaryVerticesFromLooseTracks = process.generalV0Candidates.clone( 
      # which beamSpot to reference
    beamSpot = cms.InputTag('offlineBeamSpot'),
    # reference primary vertex instead of beamSpot
@@ -82,13 +71,11 @@ process.newV0Collection = generalV0Candidates.clone(
    # which vertex collection to use
    vertices = cms.InputTag('offlinePrimaryVertices'),
    # which TrackCollection to use for vertexing
-    trackRecoAlgorithm = cms.InputTag("generalTracks"),
+    trackRecoAlgorithm = cms.InputTag("generalTracks"),#The standard track collection (label "generalTracks") is not saved in the MiniAOD event content.
    # which V0s to reconstruct
    doKShorts = cms.bool(True),
    doLambdas = cms.bool(False),
-    #selectKshorts = cms.bool(True),
-    #selectLambdas = cms.bool(False),
-    trackQualities = cms.vstring("loose"),
+
    # which vertex fitting algorithm to use
    # True -> KalmanVertexFitter (recommended)
    # False -> AdaptiveVertexFitter (not recommended)
@@ -98,23 +85,24 @@ process.newV0Collection = generalV0Candidates.clone(
    # this is automatically set to False if using the AdaptiveVertexFitter
    #useRefTracks = cms.bool(True),
 
-   # -- cuts on initial track collection --
+    #trackQualities = cms.vstring("loose"), # This is non-existing parameter which is prob will be stored in the output.root file
+    # -- cuts on initial track collection --
    # Track normalized Chi2 <
    #tkChi2Cut = cms.double(10.),
    # Number of valid hits on track >=
    #tkNHitsCut = cms.int32(7),
-   tkNhitsCut = cms.int32(-9999999), #patch, variable broken in 72X when reading old file
+   #tkNhitsCut = cms.int32(-9999999), #patch, variable broken in 72X when reading old file
    # Pt of track >
    #tkPtCut = cms.double(0.35),
    # Track impact parameter significance >
-   #tkIPSigXYCut = cms.double(2.),
+   tkIPSigXYCut = cms.double(-1),#2
    #tkIPSigZCut = cms.double(-1.),
 
    # -- cuts on the vertex --
    # Vertex chi2 <
    #vtxChi2Cut = cms.double(15.),
    # XY decay distance significance >
-   #vtxDecaySigXYCut = cms.double(10.),
+   vtxDecaySigXYCut = cms.double(-1),#10
    # XYZ decay distance significance >
    #vtxDecaySigXYZCut = cms.double(-1.),
 
@@ -135,9 +123,17 @@ process.newV0Collection = generalV0Candidates.clone(
    # V0 mass window +- pdg value
    #kShortMassCut = cms.double(0.07),
    #lambdaMassCut = cms.double(0.05)
-)
-#process.v0 = cms.Path(process.generalV0Candidates)
+    )
 
+# tight
+process.SecondaryVerticesFromTightTracks = process.SecondaryVerticesFromLooseTracks.clone(
+    trackQualities = cms.vstring("tight"),
+    )
+
+# highPurity
+process.SecondaryVerticesFromHighPurityTracks = process.SecondaryVerticesFromLooseTracks.clone(
+    trackQualities = cms.vstring("highPurity"),
+    )
 
 process.demo = cms.EDAnalyzer('AOD_pi0',
 	# # data, year, period, skim
@@ -164,7 +160,7 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	 GenParticleCollectionTag = cms.InputTag("genParticles"),
 	# BeamSpotCollectionTag =  cms.InputTag("offlineBeamSpot"),
 	 PVCollectionTag = cms.InputTag("offlinePrimaryVertices"),
-	 KshortCollectionTag = cms.InputTag("newV0Collection", "Kshort", "DemoKSHORTS"),#the lable RECO is only for the original collection. here it goes either what is process = cms.Process("hdfhjdsf") or nothing
+	 KshortCollectionTag = cms.InputTag("SecondaryVerticesFromHighPurityTracks","Kshort","KSHORTS"),#the lable RECO is only for the original collection
 	 LambdaCollectionTag = cms.InputTag("generalV0Candidates","Lambda","RECO"),
 	 TauPiZeroCollectionTag = cms.InputTag("hpsPFTauProducer","pizeros","RECO"),
 	# SecVertexCollectionTag = cms.InputTag("inclusiveSecondaryVertices"),
@@ -200,23 +196,15 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	Match_KsV0_to_HPS = cms.untracked.bool(True)
 )
 
+# Run all three versions of the algorithm.
+process.path = cms.Path(process.SecondaryVerticesFromHighPurityTracks * process.demo)
 
-
-process.p = cms.Path(process.newV0Collection
-*process.demo#*getattr(process, "NewGeneralV0Candidates")
-	
-	)
-#process.p = cms.Path(getattr(process, "NewGeneralV0Candidates"))
-
-process.TFileService = cms.Service("TFileService", 
-	fileName = cms.string(studyroot[filekey]['output_rootfile_name'])#cms.string("simaod_pi0_WHY.root")
-				   )
-'''
 # Writer to a new file called output.root.  Save only the new K-shorts and the primary vertices (for later exercises).
+'''
 process.output = cms.OutputModule("PoolOutputModule",
     SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring("path")),
     outputCommands = cms.untracked.vstring("drop *",
-                                           "keep *_*_*_DemoKSHORTS",
+                                           "keep *_*_*_KSHORTS",
                                            "keep *_offlineBeamSpot_*_*",
                                            "keep *_offlinePrimaryVertices_*_*",
                                            "keep *_offlinePrimaryVerticesWithBS_*_*",
