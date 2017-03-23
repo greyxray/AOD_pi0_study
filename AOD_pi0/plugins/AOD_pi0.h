@@ -30,6 +30,7 @@
 #include "TLorentzVector.h"
 #include "TString.h"
 
+
 using namespace std;
 
 // Aleksei
@@ -174,14 +175,39 @@ using namespace std;
 
   //error #include "EgammaAnalysis/ElectronTools/interface/EGammaMvaEleEstimatorCSA14.h"
 */
+
+// From the V0
+
+#include "RecoVertex/KalmanVertexFit/interface/KalmanVertexFitter.h"
+#include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
+#include "MagneticField/VolumeBasedEngine/interface/VolumeBasedMagneticField.h"
+
 const int MAXNHISTOS = 15;
+// pdg mass constants
+namespace {
+   const double piMass = 0.13957018;
+   const double piMassSquared = piMass*piMass;
+   const double protonMass = 0.938272046;
+   const double protonMassSquared = protonMass*protonMass;
+   const double kShortMass = 0.497614;
+   const double lambdaMass = 1.115683;
+}
+
+typedef ROOT::Math::SMatrix<double, 3, 3, ROOT::Math::MatRepSym<double, 3> > SMatrixSym3D;
+typedef ROOT::Math::SVector<double, 3> SVector3;
+
+
 class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 {
-	 
+
   public:
 
     explicit  AOD_pi0(const edm::ParameterSet&);
     ~AOD_pi0();
+
+    unsigned int AddGammas(const edm::Event& iEvent, const edm::EventSetup& iSetup) ;
 
     static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
     static void RecO_Cand_type(const reco::Candidate* cand);
@@ -240,8 +266,8 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
     virtual void endJob() override;
 
    // ----------member data ---------------------------
-    
-  
+
+
     TFile* outfile;
     TDirectory* hist_directory[4];
 
@@ -256,9 +282,15 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
       TH1D* taus_pi_charged_inv_pt;
       TH1D* taus_pi0_had_inv_m_to_ks ;
       TH1D* taus_pi0_had_inv_pt;
+
       TH1D* h_gen_k0_all_to_pi0;
       TH1D* h_gen_k0_all_to_pic;
 
+
+      TH1D* h_tau_v0_dXY;
+      TH1D* h_tau_comb_pions_m_inv;
+      TH1D* h_ECAL_comb_photons;
+      TH1D* h_ECAL_comb_kaons;
       // V0 collection
       TH1D* h_Ks_v0_count;
       TH1D* h_Ks_v0_daughter_pt;
@@ -267,11 +299,18 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
       TH1D* h_Ks_v0_vx;
       TH1D* h_Ks_v0_vy;
       TH1D* h_Ks_v0_vz;
+      TH1D* h_Ks_v0_dx;
+      TH1D* h_Ks_v0_dy;
+      TH1D* h_Ks_v0_dz;
+      TH1D* h_Ks_v0_PV_dXY; TH1D* h_Ks_v0_dXY;
+      TH1D* h_Ks_v0_BS_dXY;
+
       TH1D* h_Ks_v0_found_in_hps_tau;
       TH1D* h_Ks_v0_found_in_hps_tau_dR;
       TH1D* h_Ks_v0_found_in_hps_tau_dRcut;
       TH1D* h_Ks_v0_found_in_hps_tau_dR_only_one_pion_left;
       TH1D* h_Ks_v0_found_in_hps_tau_m_inv;
+      TH1D* h_Ks_v0_found_in_hps_tau_significance;
 
       TH1D* h_Ks_v0_pions_dR;
       TH1D* h_Ks_v0_hps_pions_combinatoric_dR;
@@ -283,7 +322,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
       TH1D* h_Ks_v0_n_pion_in_tau_jets;
       TH1D* h_Ks_v0_n_pion_in_tau_jets_with_good_Ks;
 
-      
+
 
       TH1D* h_Ks_v0_pions_and_hps_pions_combined_dR_with_no_constrain;
       std::vector<TH1D*> map_Ks_v0_histos;
@@ -315,22 +354,25 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 		TH1D* h_primvertex_cov_z;
     // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tokens for the Collections
       edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionToken_;
+      edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionTag_stand_;
       edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> LambdaCollectionToken_;
       edm::EDGetTokenT<reco::PFCandidateCollection> PFCandidateCollectionToken_;
       edm::EDGetTokenT<reco::RecoTauPiZeroCollection> TauPiZeroCollectionToken_;//hpsPFTauProducer
       edm::EDGetTokenT<reco::PFTauCollection> TauHPSCollectionToken_;
-      // vector<int>                           "genParticles"              ""                "HLT"   
-      // vector<reco::GenJet>                  "ak4GenJets"                ""                "HLT"   
-      // vector<reco::GenJet>                  "ak4GenJetsNoNu"            ""                "HLT"   
-      // vector<reco::GenJet>                  "ak8GenJets"                ""                "HLT"   
-      // vector<reco::GenJet>                  "ak8GenJetsNoNu"            ""                "HLT"   
-      // vector<reco::GenMET>                  "genMetCalo"                ""                "HLT"   
-      // vector<reco::GenMET>                  "genMetTrue"                ""                "HLT"   
-      // vector<reco::GenParticle>             "genParticles"              ""   
+      // vector<int>                           "genParticles"              ""                "HLT"
+      // vector<reco::GenJet>                  "ak4GenJets"                ""                "HLT"
+      // vector<reco::GenJet>                  "ak4GenJetsNoNu"            ""                "HLT"
+      // vector<reco::GenJet>                  "ak8GenJets"                ""                "HLT"
+      // vector<reco::GenJet>                  "ak8GenJetsNoNu"            ""                "HLT"
+      // vector<reco::GenMET>                  "genMetCalo"                ""                "HLT"
+      // vector<reco::GenMET>                  "genMetTrue"                ""                "HLT"
+      // vector<reco::GenParticle>             "genParticles"              ""
       //edm::EDGetTokenT<reco::GenParticleCollection>  GenParticlesToken_;
      // edm::EDGetTokenT<reco::VertexCollection>  offlinePrimaryVerticesToken_ ;
       edm::EDGetTokenT<reco::GenParticleCollection> GenParticleCollectionToken_;
 	  edm::EDGetTokenT<reco::VertexCollection> PVToken_;
+    edm::EDGetTokenT<reco::BeamSpot> BeamSpotToken_;
+      edm::EDGetTokenT<reco::TrackCollection> HPSTrackTagToken_;
 
     //P0's
     UInt_t pizero_count;
@@ -381,42 +423,41 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
     // Parameters initialised by default
 	    bool IsData;
 	    string OutFileName;
-	    // switches
-		bool cgen;
-		bool cbeamspot;
-		bool crecprimvertex;
-		bool crectrack;
-		bool crecphoton;
-		bool crecpizero;
-		bool crecsv;
-		bool crecpfjet;
-		bool crecv0;
+    // switches
+  		bool cgen;
+  		bool cbeamspot;
+  		bool crecprimvertex;
+  		bool crectrack;
+  		bool crecphoton;
+  		bool crecpizero;
+  		bool crecsv;
+  		bool crecpfjet;
+  		bool crecv0;
 		// tracks
-		double cTrackPtMin;
-		double cTrackEtaMax;
-		double cTrackDxyMax;
-		double cTrackDzMax;
-		int cTrackNum;
-
+  		double cTrackPtMin;
+  		double cTrackEtaMax;
+  		double cTrackDxyMax;
+  		double cTrackDzMax;
+  		int cTrackNum;
 		// photons
-		double cPhotonPtMin;
-		double cPhotonEtaMax;
-		int cPhotonNum;
-
+      UInt_t photon_count;
+  		double cPhotonPtMin;
+  		double cPhotonEtaMax;
+  		int cPhotonNum;
 		// pizeros
-		double cPizeroPtMin;
-		double cPizeroEtaMax;
-		int cPizeroNum;
-
+  		double cPizeroPtMin;
+  		double cPizeroEtaMax;
+  		int cPizeroNum;
 		// jets
-		double cJetPtMin;
-		double cJetEtaMax;
-		int cJetNum;
-
+  		double cJetPtMin;
+  		double cJetEtaMax;
+  		int cJetNum;
 		// other
 	    bool debug;
 	    bool mute;
-		bool match_KsV0_to_HPS;
+		  bool match_KsV0_to_HPS;
+      double tkIPSigXYCut;// = cms.double(-1),# was 2
+      double vtxDecaySigXYCut;// = cms.double(10)#10
 
     int num_pion_res;
     double max_inv_mass;
@@ -425,7 +466,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 
  //    std::streambuf * buf;
 	std::ofstream ofs;
-	
+
     //std::ostream ofs;//ostream ofstream
 
     // std::ofstream of;
@@ -436,6 +477,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
     // std::ofstream byname;
     // std::ostream& ofs;
 
+    double v0_ks_numb;
 
 };
 
@@ -449,7 +491,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
   //the one passed from python configure file
   IsData(iConfig.getUntrackedParameter<bool>("IsData", false)),
-  OutFileName(iConfig.getUntrackedParameter<string>("OutFileName", "aod_pi0.root")),
+  OutFileName(iConfig.getUntrackedParameter<string>("OutFileName", "")),
    // switches (collections)
   cgen(iConfig.getUntrackedParameter<bool>("GenParticles", false)),
   cbeamspot(iConfig.getUntrackedParameter<bool>("BeamSpot", false)),
@@ -482,11 +524,14 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
   debug(iConfig.getUntrackedParameter<bool>("Debug", true)),
   mute(iConfig.getUntrackedParameter<bool>("Mute", false)),
   match_KsV0_to_HPS(iConfig.getUntrackedParameter<bool>("Match_KsV0_to_HPS", true)),
+  tkIPSigXYCut(iConfig.getUntrackedParameter<double>("tkIPSigXYCut", -1)),
+  vtxDecaySigXYCut(iConfig.getUntrackedParameter<double>("vtxDecaySigXYCut", -1)),
   num_pion_res(0),
   max_inv_mass(0),
   max_ks_daughter_pt(0),
   num_ev_tau_pi_not_in_hps_pi(0),
-  outputGenEvolution(true)
+  outputGenEvolution(true),
+  v0_ks_numb(0)
 {
   //usesResource("TFileService");
   map_kaons[311] = "K0";
@@ -499,16 +544,13 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
   map_pions[111] = "pi0";
   map_pions[211] = "pic";
 
-  
-  //map_K892_c_gen_histos[323] = {h_K892_c_gen_number_per_event, h_K892_c_gen_vx, h_K892_c_gen_vy, h_K892_c_gen_vz};
-
-  if (outputGenEvolution)  
+  if (outputGenEvolution)
   {
   	ofs.open("geninfo.txt", std::ofstream::out /*| std::ofstream::app*/);
   }
 
   // else ofs  (cout.rdbuf());
-	// if(outputGenEvolution) 
+	// if(outputGenEvolution)
 	// {
 	//     ofs.open ("geninfo.txt", std::ofstream::out | std::ofstream::app);
 	//     buf = ofs.rdbuf();
@@ -520,28 +562,33 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 	// if (outputGenEvolution) {
  //   std::ofstream * os = new std::ofstream("geninfo.txt", std::ofstream::out | std::ofstream::app);
  //   ofs = os;}
- //   else 
+ //   else
  //   {
  //   	std::ostream& os = std::cout;
  //   	 ofs = &os;
  //   }
 
 // 	std::ostream& stream = std::cout;
-// 	if (outputGenEvolution) 
+// 	if (outputGenEvolution)
 // 	{
-	  
+
 	   // ofs(this->byname);
 // }
-//    else 
+//    else
 //    {
-   
+
 //    	 ofs = stream;
 //    }
-   
+
 
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Saved histograms
-    if (!IsData) OutFileName = "simaod_pi0_WHY.root";
-    else outputGenEvolution = false;
+    if (OutFileName.empty())
+    {
+      if (!IsData) OutFileName = "simaod_pi0_WHY.root";
+      else  OutFileName = "aod_pi0_WHY.root";
+    }
+    if (IsData) outputGenEvolution = false;
+
     outfile = new TFile((TString)OutFileName,"RECREATE");
 
     outfile->cd();
@@ -554,17 +601,28 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
       h_Ks_v0_daughter_pt = new TH1D("h_Ks_v0_daughter_pt","ks daughters pt", 1800, 0, 180);
       h_Ks_v0_inv_m_pi = new TH1D("h_Ks_v0_inv_m_pi","ks daughters inv mass", 1000, 0, 10);
       h_Ks_v0_number_per_event = new TH1D("h_Ks_v0_number_per_event","ks from V0 coll, NPE that passed PV", 10, 0, 10);
-      h_Ks_v0_vx = new TH1D("h_Ks_v0_vx","ks from V0 coll, x position", 1000, 0, 10);
-      h_Ks_v0_vy = new TH1D("h_Ks_v0_vy","ks from V0 coll, y position", 1000, 0, 10);
-      h_Ks_v0_vz = new TH1D("h_Ks_v0_vz","ks from V0 coll, z position", 1000, 0, 10);
+      h_Ks_v0_vx = new TH1D("h_Ks_v0_vx","ks from V0 coll, x position", 1000, -5, 5);
+      h_Ks_v0_vy = new TH1D("h_Ks_v0_vy","ks from V0 coll, y position", 1000, -5, 5);
+      h_Ks_v0_vz = new TH1D("h_Ks_v0_vz","ks from V0 coll, z position", 1000, 5, 5);
+      h_Ks_v0_dx = new TH1D("h_Ks_v0_dx","ks from V0 coll, ks_x distance to PV", 1000, 0, 10);
+      h_Ks_v0_dy = new TH1D("h_Ks_v0_dy","ks from V0 coll, ks_y distance to PV", 1000, 0, 10);
+      h_Ks_v0_dz = new TH1D("h_Ks_v0_dz","ks from V0 coll, ks_z distance to PV", 1000, 0, 10);
+      h_Ks_v0_PV_dXY = new TH1D("h_Ks_v0_PV_dXY","ks from V0 coll, ks_dXY distance to PV", 1000, 0, 10);
+      h_Ks_v0_dXY = new TH1D("h_Ks_v0_dXY","ks from V0 coll, ks_dXY distance to PV", 1000, 0, 10);
+      h_Ks_v0_BS_dXY = new TH1D("h_Ks_v0_BS_dXY","ks from V0 coll, ks_dXY distance to BS", 2000, 0, 200);
+      h_tau_v0_dXY = new TH1D("h_tau_v0_dXY","h_tau_v0_dXY, dXY distance to PV", 1000, 0, 10);
+      h_tau_comb_pions_m_inv = new TH1D("h_tau_comb_pions_m_inv","combinatoric pions of HPS", 1000, 0, 5);
+      h_ECAL_comb_photons = new TH1D("h_ECAL_comb_photons","combinatoric invariant mass of two photons", 1000, 0, 5);
+      h_ECAL_comb_kaons =  new TH1D("h_ECAL_comb_kaons","combinatoric invariant mass of two photons to two pions to Ks", 1000, 0, 5);
       h_Ks_v0_found_in_hps_tau = new TH1D("h_Ks_v0_found_in_hps_tau","ks from V0 coll, NPE that passed PV and found in HPS tau jets", 1000, 0, 10);
-      h_Ks_v0_found_in_hps_tau_dR = new TH1D("h_Ks_v0_found_in_hps_tau_dR","ks from V0 coll, dR of ks and tau jet, that passed PV and found in HPS tau jets and pions are matched", 1000, 0, 10);
-      h_Ks_v0_found_in_hps_tau_dRcut = new TH1D("h_Ks_v0_found_in_hps_tau_dRcut","ks from V0 coll, dR of ks and tau jet, that passed PV and found in HPS tau jets and cut on dR < 0.5", 1000, 0, 10);
+      h_Ks_v0_found_in_hps_tau_dR = new TH1D("h_Ks_v0_found_in_hps_tau_dR","ks from V0 coll, dR of ks and tau jet, that passed PV and found in HPS tau jets and pions are matched", 1000, 0, 1);
+      h_Ks_v0_found_in_hps_tau_dRcut = new TH1D("h_Ks_v0_found_in_hps_tau_dRcut","ks from V0 coll, dR of ks and tau jet, that passed PV and found in HPS tau jets and cut on dR < 0.5", 1000, 0, 1);
       h_Ks_v0_found_in_hps_tau_dR_only_one_pion_left = new TH1D("h_Ks_v0_found_in_hps_tau_dR_only_one_pion_left","ks from V0 coll, dR of ks and tau jet, that passed PV and found in HPS tau jets and only 1 pion is matched", 1000, 0, 10);
-      h_Ks_v0_found_in_hps_tau_m_inv = new TH1D("h_Ks_v0_found_in_hps_tau_m_inv","matched tau pions with ks from v0, daughters inv mass", 1000, 0, 10);
+      h_Ks_v0_found_in_hps_tau_m_inv = new TH1D("h_Ks_v0_found_in_hps_tau_m_inv","matched tau pions with ks from v0, daughters inv mass", 1000, 0, 5);
+      h_Ks_v0_found_in_hps_tau_significance = new TH1D("h_Ks_v0_found_in_hps_tau_significance","matched tau pions with ks from v0, significance with respect to BS", 1000, 0, 100);
 
       h_Ks_v0_pions_dR = new TH1D("h_Ks_v0_pions_dR","ks from V0 coll, dR for pions of Ks", 1000, 0, 10);
-	  h_Ks_v0_hps_pions_combinatoric_dR = new TH1D("h_Ks_v0_hps_pions_combinatoric_dR","combinatoric pions dR for pions of HPS taus jets", 1000, 0, 10);
+	  h_Ks_v0_hps_pions_combinatoric_dR = new TH1D("h_Ks_v0_hps_pions_combinatoric_dR","combinatoric pions dR for pions of HPS taus jets", 1000, 0, 1);
 	  h_Ks_v0_pions_and_hps_pions_combined_dR = new TH1D("h_Ks_v0_pions_and_hps_pions_combined_dR","dr of two pions of KSv V0 and all the pions of the hps tau jet with the kaon", 1000, 0, 10);
 
 	  h_Ks_v0_n_ev_passing_dz_cut = new TH1D("h_Ks_v0_n_ev_passing_dz_cut", "N ev with at least 1 Ks passing dz cut", 10, 0, 10);
@@ -626,21 +684,22 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 		map_K892_gen_histos[323].push_back(h_K892_c_gen_vz);
 
 
-	      TH1D* temp[21] = {h_Ks_v0_number_per_event, h_Ks_v0_vx, h_Ks_v0_vy, h_Ks_v0_vz, h_Ks_v0_count, //0 - 5
+	      TH1D* temp[27] = {h_Ks_v0_number_per_event, h_Ks_v0_vx, h_Ks_v0_vy, h_Ks_v0_vz, h_Ks_v0_dx, h_Ks_v0_dy, h_Ks_v0_dz, h_Ks_v0_count, //0 - 5
 	      					h_Ks_v0_daughter_pt, h_Ks_v0_inv_m_pi, h_Ks_v0_found_in_hps_tau, h_Ks_v0_found_in_hps_tau_dR, h_Ks_v0_found_in_hps_tau_dRcut, //6 -10
-	      					h_Ks_v0_found_in_hps_tau_dR_only_one_pion_left, h_Ks_v0_found_in_hps_tau_m_inv, h_Ks_v0_pions_dR, h_Ks_v0_hps_pions_combinatoric_dR, h_Ks_v0_pions_and_hps_pions_combined_dR, //11 -15
+	      					h_Ks_v0_found_in_hps_tau_dR_only_one_pion_left, h_Ks_v0_found_in_hps_tau_m_inv, h_Ks_v0_found_in_hps_tau_significance, h_Ks_v0_pions_dR, h_Ks_v0_hps_pions_combinatoric_dR, h_Ks_v0_pions_and_hps_pions_combined_dR, //11 -15
 	      					h_Ks_v0_n_ev_passing_dz_cut, h_Ks_v0_n_Ks_in_jets_per_event, h_Ks_v0_n_tau_jets_per_event, h_Ks_v0_n_pion_in_tau_jets, h_Ks_v0_n_pion_in_tau_jets_with_good_Ks,
-	      					h_Ks_v0_pions_and_hps_pions_combined_dR_with_no_constrain};//15-20
+	      					h_Ks_v0_pions_and_hps_pions_combined_dR_with_no_constrain, h_Ks_v0_PV_dXY, h_Ks_v0_BS_dXY};//15-20
 	      map_Ks_v0_histos.insert(map_Ks_v0_histos.end(), temp, temp + (sizeof(temp)/sizeof(temp[0])));
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tokens
 
 	//RASP
-	    //from generalV0Candidates 
+	    //from generalV0Candidates
+        KshortCollectionTag_stand_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag_stand"));
 	      KshortCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag"));//cms.InputTag("generalV0Candidates","Kshort","RECO"),//vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Kshort"          "RECO"
 	      LambdaCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("LambdaCollectionTag"));//cms.InputTag("generalV0Candidates","Lambda","RECO"),
    		PFCandidateCollectionToken_ = consumes<reco::PFCandidateCollection>(iConfig.getParameter<edm::InputTag>("PFCandidateCollectionTag"));
    		//from hpsPFTauProducer
-	     //Pi0 
+	     //Pi0
 	      TauPiZeroCollectionToken_ = consumes<reco::RecoTauPiZeroCollection>(iConfig.getParameter<edm::InputTag>("TauPiZeroCollectionTag"));//cms.InputTag("hpsPFTauProducer","pizeros","RECO")
 		//SIMAOD
    			if (!IsData) GenParticleCollectionToken_ = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("GenParticleCollectionTag"));//GenParticlesToken_ = consumes<reco::GenParticleCollection>(edm::InputTag("genParticles","","")); //typedef std::vector<GenParticle> reco::GenParticleCollection
@@ -648,13 +707,14 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 		/*
 		  SVToken_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("SecVertexCollectionTag"));
 		  JetCollectionToken_ = consumes<reco::PFJetCollection>(iConfig.getParameter<edm::InputTag>("JetCollectionTag"));
-		  BeamSpotToken_ = consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("BeamSpotCollectionTag"));
+
 		*/
+      BeamSpotToken_ = consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("BeamSpotCollectionTag"));
 	//New
     	//Taus
       		TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
     //Primary vertex
-    	
+    	HPSTrackTagToken_ = consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("HPSTrackTag"));
 
 
 
@@ -707,22 +767,26 @@ void AOD_pi0::RecO_Cand_type(const reco::Candidate* cand)
   else dlog("unknown type of particles");
 }
 
- 
+
 // ------------ method called once each job just before starting event loop  ------------
 void
 AOD_pi0::beginJob()
 {
-  
+
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void
 AOD_pi0::endJob()
 {
-	
-	for(std::vector<TH1D*>::iterator itv = map_Ks_v0_histos.begin(); itv != map_Ks_v0_histos.end(); ++itv) 
+	outfile->cd();
+	for(std::vector<TH1D*>::iterator itv = map_Ks_v0_histos.begin(); itv != map_Ks_v0_histos.end(); ++itv)
 	    (*itv)->Write();
-	//h_Ks_v0_count->Write(); 
+  h_tau_v0_dXY->Write();
+  h_tau_comb_pions_m_inv->Write();
+  h_ECAL_comb_photons->Write();
+  h_ECAL_comb_kaons->Write();
+	//h_Ks_v0_count->Write();
 		h_Ks_v0_count->Print();
 	pions_inv_m->Write();
 	num_pions->Write();
@@ -743,7 +807,7 @@ AOD_pi0::endJob()
 	for ( std::map<long, std::vector<TH1D *>>::iterator it = map_K892_gen_histos.begin(); it != map_K892_gen_histos.end(); it++ )
 	{
 	    std::vector<TH1D*> v = it->second;
-	    for(std::vector<TH1D*>::iterator itv = v.begin(); itv != v.end(); ++itv) 
+	    for(std::vector<TH1D*>::iterator itv = v.begin(); itv != v.end(); ++itv)
 	    (*itv)->Write();
 	}
 
@@ -759,7 +823,7 @@ AOD_pi0::endJob()
 	h_primvertex_cov_x->Write();
 	h_primvertex_cov_y->Write();
 	h_primvertex_cov_z->Write();
-	
+
 	outfile->Close();
 }
 
@@ -769,7 +833,7 @@ AOD_pi0::~AOD_pi0()
   dlog("num_pion_res: ", num_pion_res);
   dlog("max_inv_mass: ", max_inv_mass);
   dlog("max_ks_daughter_pt: ", max_ks_daughter_pt);
-
+  dlog("v0_ks_numb: ", v0_ks_numb);
    if (outputGenEvolution) ofs.close();//ofs.close();
 }
 

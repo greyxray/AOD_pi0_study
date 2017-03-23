@@ -1,13 +1,15 @@
-# Use the tracks_and_vertices.root file as input.
 import FWCore.ParameterSet.Config as cms
-#from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag #from Configuration.AlCa.GlobalTag import GlobalTag
-#from RecoVertex.V0Producer.generalV0Candidates_cfi import *
 
-process = cms.Process("KSHORTS")
+pName = "KSHORTS"
+process = cms.Process(pName)
 
-# Use the tracks_and_vertices.root file as input.
-#process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring("file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_26_patch1/src/AOD_pi0_study/0E2AE912-1C0E-E611-86FB-002590743042.root"))
-#process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10))
+process.load("Configuration/StandardSequences/FrontierConditions_GlobalTag_cff")
+from Configuration.AlCa.GlobalTag import GlobalTag
+process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:startup', '')# 80X_dataRun2_Prompt_v16 - doesn't work
+process.load("TrackingTools.TransientTrack.TransientTrackBuilder_cfi")
+process.load("Configuration.Geometry.GeometryIdeal_cff")
+process.load("Configuration.StandardSequences.MagneticField_cff")
+
 studyroot = {
 	'SUSYGluGluToHToTauTau':
 		{
@@ -111,118 +113,101 @@ studyroot = {
 	        'output_rootfile_name': "out_AOD_JetHTdata_FULL_With_HPS.root"
 		}
 }
-filekey
-filekey  = 'JetHTdataFull'
+filekey  = 'SUSYGluGluToHToTauTau'
 isData = studyroot[filekey]['isData']
 process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(studyroot[filekey]['fileName']))
-process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(-1)# -1 for all events
-)
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+process.MessageLogger = cms.Service("MessageLogger", destinations = cms.untracked.vstring("cout"), cout = cms.untracked.PSet(threshold = cms.untracked.string("ERROR")))
+print("filekey: ", filekey)
 
-
-# Suppress messages that are less important than ERRORs.
-#process.load("FWCore.MessageService.MessageLogger_cfi")
-#process.MessageLogger.cerr.FwkReport.reportEvery = 100
-#process.MessageLogger.cerr.threshold = cms.untracked.string('INFO')
-process.MessageLogger = cms.Service("MessageLogger",
-    destinations = cms.untracked.vstring("cout"),
-    cout = cms.untracked.PSet(threshold = cms.untracked.string("INFO")))
-
-# Load part of the CMSSW reconstruction sequence to make vertexing possible.
-# We'll need the CMS geometry and magnetic field to follow the true, non-helical shapes of tracks through the detector.
-process.load("Configuration/StandardSequences/FrontierConditions_GlobalTag_cff")
-from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:startup', '')# 80X_dataRun2_Prompt_v16 - doesn't work
-process.load("TrackingTools.TransientTrack.TransientTrackBuilder_cfi")
-process.load("Configuration.Geometry.GeometryIdeal_cff")
-process.load("Configuration.StandardSequences.MagneticField_cff")
-
-# Copy most of the vertex producer's parameters, but accept tracks with progressively more strict quality.
-process.load("RecoVertex.V0Producer.generalV0Candidates_cfi")
+print("HPSTracksLable is now hpsTracks")
 process.load("HPStracks.HPStracksProducer.HPSTracks_cfi") # gives hpsTracks
 
-# "HPSTrackLable", "HPSTracks", "HPSTRACKS"
+print("SecondaryVerticesFromNewV0")
+process.load("RecoVertex.V0Producer.generalV0Candidates_cfi")
 process.SecondaryVerticesFromNewV0 = process.generalV0Candidates.clone(
-     # which beamSpot to reference
-   beamSpot = cms.InputTag('offlineBeamSpot'),
-   # reference primary vertex instead of beamSpot
-   useVertex = cms.bool(True), # By def False
-   # which vertex collection to use
-   vertices = cms.InputTag('offlinePrimaryVertices'),
-   # which TrackCollection to use for vertexing "generalV0Candidates","Lambda","RECO" || vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Lambda"          "RECO"
-    trackRecoAlgorithm = cms.InputTag("generalTracks"),#The standard track collection (label "generalTracks") is not saved in the MiniAOD event content.
-   # which V0s to reconstruct
-   doKShorts = cms.bool(True),
-   doLambdas = cms.bool(False),
+	# which beamSpot to reference
+	beamSpot = cms.InputTag('offlineBeamSpot'),
+	# reference primary vertex instead of beamSpot
+	useVertex = cms.bool(True), # By def False
+	# which vertex collection to use
+	vertices = cms.InputTag('offlinePrimaryVertices'),
+	# which TrackCollection to use for vertexing "generalV0Candidates","Lambda","RECO" || vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Lambda"          "RECO"
+	trackRecoAlgorithm = cms.InputTag("hpsTracks", "HPSTracks", pName),#The standard track collection (label "generalTracks") is not saved in the MiniAOD event content.
+	# which V0s to reconstruct
+	doKShorts = cms.bool(True),
+	doLambdas = cms.bool(False),
 
-   # which vertex fitting algorithm to use
-   # True -> KalmanVertexFitter (recommended)
-   # False -> AdaptiveVertexFitter (not recommended)
-   #vertexFitter = cms.bool(True),
+	# which vertex fitting algorithm to use
+	# True -> KalmanVertexFitter (recommended)
+	# False -> AdaptiveVertexFitter (not recommended)
+	#vertexFitter = cms.bool(True),
 
-   # use the refitted tracks returned from the KVF for V0Candidate kinematics
-   # this is automatically set to False if using the AdaptiveVertexFitter
-   #useRefTracks = cms.bool(True),
+	# use the refitted tracks returned from the KVF for V0Candidate kinematics
+	# this is automatically set to False if using the AdaptiveVertexFitter
+	#useRefTracks = cms.bool(True),
 
-    #trackQualities = cms.vstring("loose"), # This is non-existing parameter which is prob will be stored in the output.root file
-    # -- cuts on initial track collection --
-   # Track normalized Chi2 <
-   #tkChi2Cut = cms.double(10.),
-   # Number of valid hits on track >=
-   #tkNHitsCut = cms.int32(7),
-   #tkNhitsCut = cms.int32(-9999999), #patch, variable broken in 72X when reading old file
-   # Pt of track >
-   #tkPtCut = cms.double(0.35),
-   # Track impact parameter significance >
-   ####### tkIPSigXYCut = cms.double(-1),# was 2
-   #tkIPSigZCut = cms.double(-1.),
+	#trackQualities = cms.vstring("loose"), # This is non-existing parameter which is prob will be stored in the output.root file
+	# -- cuts on initial track collection --
+	# Track normalized Chi2 <
+	#tkChi2Cut = cms.double(10.),
+	# Number of valid hits on track >=
+	#tkNHitsCut = cms.int32(7),
+	#tkNhitsCut = cms.int32(-9999999), #patch, variable broken in 72X when reading old file
+	# Pt of track >
+	#tkPtCut = cms.double(0.35),
+	# Track impact parameter significance >
+	####### tkIPSigXYCut = cms.double(-1),# was 2
+	#tkIPSigZCut = cms.double(-1.),
 
-   # -- cuts on the vertex --
-   # Vertex chi2 <
-   #vtxChi2Cut = cms.double(15.),
-   # XY decay distance significance >
-   vtxDecaySigXYCut = cms.double(10),#10
-   # XYZ decay distance significance >
-   vtxDecaySigXYZCut = cms.double(-1.),
+	# -- cuts on the vertex --
+	# Vertex chi2 <
+	#vtxChi2Cut = cms.double(15.),
+	# XY decay distance significance >
+	vtxDecaySigXYCut = cms.double(10),#10 - DPG
+	# XYZ decay distance significance >
+	vtxDecaySigXYZCut = cms.double(-1.),
 
-   # -- miscellaneous cuts --
-   # POCA distance between tracks <
-   #tkDCACut = cms.double(2.),
-   # invariant mass of track pair - assuming both tracks are charged pions <
-   #mPiPiCut = cms.double(0.6),
-   # check if either track has a hit radially inside the vertex position minus this number times the sigma of the vertex fit
-   # note: Set this to -1 to disable this cut, which MUST be done if you want to run V0Producer on the AOD track collection!
-    innerHitPosCut = cms.double(-1.)
-   # cos(angleXY) between x and p of V0 candidate >
-   #cosThetaXYCut = cms.double(0.9998),
-   # cos(angleXYZ) between x and p of V0 candidate >
-   #cosThetaXYZCut = cms.double(-2.),
+	# -- miscellaneous cuts --
+	# POCA distance between tracks <
+	#tkDCACut = cms.double(2.),
+	# invariant mass of track pair - assuming both tracks are charged pions <
+	#mPiPiCut = cms.double(0.6),
+	# check if either track has a hit radially inside the vertex position minus this number times the sigma of the vertex fit
+	# note: Set this to -1 to disable this cut, which MUST be done if you want to run V0Producer on the AOD track collection!
+	innerHitPosCut = cms.double(-1.)
+	# cos(angleXY) between x and p of V0 candidate >
+	#cosThetaXYCut = cms.double(0.9998),
+	# cos(angleXYZ) between x and p of V0 candidate >
+	#cosThetaXYZCut = cms.double(-2.),
 
-   # -- cuts on the V0 candidate mass --
-   # V0 mass window +- pdg value
-   #kShortMassCut = cms.double(0.07),
-   #lambdaMassCut = cms.double(0.05)
-    )
+	# -- cuts on the V0 candidate mass --
+	# V0 mass window +- pdg value
+	#kShortMassCut = cms.double(0.07),
+	#lambdaMassCut = cms.double(0.05)
+)
 
-# tight process.SecondaryVerticesFromNewV0tight = process.SecondaryVerticesFromNewV0.clone(trackQualities = cms.vstring("tight"))
-
-print("SecondaryVerticesFromNewV0 constructed")
-
-available_v0 = {'new': {
-					"process_link": process.SecondaryVerticesFromNewV0,
-					"collectionName": "SecondaryVerticesFromNewV0",
-					"lable": "Kshort",
-					"Process": "KSHORTS",
-					"newv0": True},
-				'old': {
-					"process_link": 1,
-					"collectionName": "generalV0Candidates",
-					"lable": "Kshort",
-					"Process": "RECO",
-					"newv0": False}
+available_v0 = {
+					'new':
+					{
+						"process_link": process.SecondaryVerticesFromNewV0,
+						"collectionName": "SecondaryVerticesFromNewV0",
+						"lable": "Kshort",
+						"Process": pName,
+						"newv0": True
+					},
+					'old':
+					{
+						"process_link": 1,
+						"collectionName": "generalV0Candidates",
+						"lable": "Kshort",
+						"Process": "RECO",
+						"newv0": False
 					}
+				}
 which_v0 = available_v0['new']
 
+print("demo AOD_pi0")
 process.demo = cms.EDAnalyzer('AOD_pi0',
 	# # data, year, period, skim
 	 IsData = cms.untracked.bool(isData),
@@ -248,6 +233,7 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	 GenParticleCollectionTag = cms.InputTag("genParticles"),
 	 BeamSpotCollectionTag =  cms.InputTag("offlineBeamSpot"),
 	 PVCollectionTag = cms.InputTag("offlinePrimaryVertices"),
+	 KshortCollectionTag_stand = cms.InputTag("generalV0Candidates","Kshort","RECO"),#the lable RECO is only for the original collection
 	 KshortCollectionTag = cms.InputTag(which_v0['collectionName'], which_v0['lable'], which_v0['Process']),#the lable RECO is only for the original collection
 	 LambdaCollectionTag = cms.InputTag("generalV0Candidates","Lambda","RECO"),
 	 TauPiZeroCollectionTag = cms.InputTag("hpsPFTauProducer","pizeros","RECO"),
@@ -279,18 +265,20 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	RecJetEtaMax = cms.untracked.double(5.2),
 	RecJetNum = cms.untracked.int32(0),
 	# other
-	Debug = cms.untracked.bool(True),
-	Mute = cms.untracked.bool(False),
+	Debug = cms.untracked.bool(False),
+	Mute = cms.untracked.bool(True),
 	Match_KsV0_to_HPS = cms.untracked.bool(True),
 	HPSTrackTag = cms.InputTag("HPSTrackLable", "HPSTracks", "HPSTRACKS")#,
 	#tkIPSigXYCut = cms.double(-1),# was 2
 	#vtxDecaySigXYCut = cms.double(10)#10
 )
-print("demo AOD_pi0 constructed")
+
 
 # Run all three versions of the algorithm.
-if which_v0['newv0']: process.path = cms.Path( which_v0["process_link"] * process.demo)#process.hpsTracks *
-else: process.path = cms.Path(process.demo)
+if which_v0['newv0']:
+	process.path = cms.Path( process.hpsTracks * which_v0["process_link"] * process.demo)#
+else:
+	process.path = cms.Path(process.demo)
 # Writer to a new file called output.root.  Save only the new K-shorts and the primary vertices (for later exercises).
 
 
