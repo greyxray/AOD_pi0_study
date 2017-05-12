@@ -11,10 +11,10 @@ process.load("Configuration.Geometry.GeometryIdeal_cff")
 process.load("Configuration.StandardSequences.MagneticField_cff")
 
 studyroot = {
-	'SUSYGluGluToHToTauTau':
+	'SUSYGluGluToHToTauTau_Full':
 		{
 			'isData': False,
-			'fileName':
+			'fileName': 
 			[
 				'/store/mc/RunIIFall15DR76/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/0A56906C-73A7-E511-ADB2-00259073E512.root',
 				'/store/mc/RunIIFall15DR76/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/0EB2F543-96A6-E511-8155-44A84225CDA4.root',
@@ -24,50 +24,56 @@ studyroot = {
 				'/store/mc/RunIIFall15DR76/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/C65AE49E-82A6-E511-91FF-20CF3027A561.root',
 				'/store/mc/RunIIFall15DR76/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/CE0370C6-8CA6-E511-829E-00259073BB58.root',
 				'/store/mc/RunIIFall15DR76/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/D4C0DDDF-D2A7-E511-9AFC-0CC47A4D767C.root',
-				'/store/mc/RunIIFall15DR76/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/D6DA8FA0-A9A6-E511-83A0-44A84223FF3C.root',
-				'/store/mc/RunIIFall15DR76/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/F83430DF-9EA6-E511-8DE0-44A84225CABC.root'
+				'/store/mc/RunIIFall15DR76/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/D6DA8FA0-A9A6-E511-83A0-44A84223FF3C.root'#,
+				#'/store/mc/RunIIFall15DR76/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/F83430DF-9EA6-E511-8DE0-44A84225CABC.root' #migh be corrupted
 			],
-			'output_rootfile_name': "out_simAOD_SUSYGluGluToHToTauTau.root"
+			'output_rootfile_name': "out_simAOD_SUSYGluGluToHToTauTau_Full.root"
 		},
-	'QCD_Pt_20toInf_MuEnrichedPt15':
+	'SUSYGluGluToHToTauTau':
 		{
-			'isData':False,
-			'fileName': 'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_26_patch1/src/AOD_pi0_study/0E2AE912-1C0E-E611-86FB-002590743042.root',
+			'isData': False,
+			'fileName': 'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_26_patch1/src/AOD_pi0_study/F83430DF-9EA6-E511-8DE0-44A84225CABC.root',
+			'output_rootfile_name': "out_simAOD_SUSYGluGluToHToTauTau_siggleRemote.root"
+		},
+	'QCD_Pt_20toInf_MuEnrichedPt15': 
+		{
+			'isData':False, 
+			'fileName': '/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C88808A-930D-E611-8DE7-B083FED0FFCF.root',#'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_26_patch1/src/AOD_pi0_study/0C88808A-930D-E611-8DE7-B083FED0FFCF.root',#'fileName': cms.untracked.vstring('root://cms-xrd-global.cern.ch//store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C88808A-930D-E611-8DE7-B083FED0FFCF.root'),
 			'output_rootfile_name': "out_simAOD_QCD_Pt_20toInf_MuEnrichedPt15.root"
 		},
 	'QCD_Pt_20toInf_MuEnrichedPt15_Full':
 		{
-			'isData':False,
-			'fileName':
+			'isData':False, 
+			'fileName': 
 			[
-				# '/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0053436E-790D-E611-BA31-B499BAAC03BA.root',
-				# '/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/00FEF7A6-3B0D-E611-8C73-00221983E092.root',
-				# '/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/02B4D52C-980D-E611-8D65-001E4F1BC725.root',
-				# '/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/02C16DFE-8F0D-E611-8CA1-44A84225C4EB.root',
-				# '/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/04FB8C8C-C40D-E611-AF6C-00259057490C.root',
-				# '/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/087A984B-AD0E-E611-9DA9-44A842CFC9F3.root',
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/08A931F3-570D-E611-ABF5-02163E012767.root',
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C5D0DD3-570D-E611-B4CB-02163E0137B9.root',
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C88808A-930D-E611-8DE7-B083FED0FFCF.root',
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0053436E-790D-E611-BA31-B499BAAC03BA.root', 
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/00FEF7A6-3B0D-E611-8C73-00221983E092.root', 
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/02B4D52C-980D-E611-8D65-001E4F1BC725.root', 
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/02C16DFE-8F0D-E611-8CA1-44A84225C4EB.root', 
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/04FB8C8C-C40D-E611-AF6C-00259057490C.root', 
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/087A984B-AD0E-E611-9DA9-44A842CFC9F3.root', 
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/08A931F3-570D-E611-ABF5-02163E012767.root', 
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C5D0DD3-570D-E611-B4CB-02163E0137B9.root', 
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C88808A-930D-E611-8DE7-B083FED0FFCF.root', 
 				'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_26_patch1/src/AOD_pi0_study/0E2AE912-1C0E-E611-86FB-002590743042.root'
 			],
 			'output_rootfile_name': "out_simAOD_QCD_Pt_20toInf_MuEnrichedPt15_Full.root"
 		},
 	'JetHTdata': # JetHT AOD dataset=/JetHT*/*PromptReco-v2/AOD*  => dataset=/JetHT/Run2016B-PromptReco-v2/AOD
 		{
-			'isData': True,
-			'fileName': 'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root',
-			'output_rootfile_name': "out_AOD_JetHTdata_With_HPS.root"
+			'isData': True, 
+			'fileName': '/store/data/Run2016B/JetHT/AOD/PromptReco-v2/000/273/150/00000/FC972EB3-D819-E611-94F9-02163E0134F4.root',#'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root',
+			'output_rootfile_name': "out_AOD_JetHTdata_With_HPS_temp.root"
 		}, # 10 out of 1315
 	'kappaminidata':
 		{
-			'isData': True,
+			'isData': True, 
 			'fileName': 'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/miniAOD-prod_PAT.root',
 			'output_rootfile_name': "out_miniAOD_kappaminidata.root"
 		},
 	'JetHTdata2': #ONLY ON NFS # JetHT AOD dataset=/JetHT*/*PromptReco-v2/AOD*  => dataset=/JetHT/Run2016B-PromptReco-v2/AOD
 		{
-			'isData': True,
+			'isData': True, 
 			'fileName': 'file:/nfs/dust/cms/user/glusheno/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root',
 			'output_rootfile_name': "out_AOD_JetHTdata2.root"
 		},
@@ -113,7 +119,7 @@ studyroot = {
 	        'output_rootfile_name': "out_AOD_JetHTdata_FULL_With_HPS.root"
 		}
 }
-filekey  = 'SUSYGluGluToHToTauTau'
+filekey  = 'QCD_Pt_20toInf_MuEnrichedPt15'
 isData = studyroot[filekey]['isData']
 process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(studyroot[filekey]['fileName']))
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
@@ -125,14 +131,14 @@ process.load("HPStracks.HPStracksProducer.HPSTracks_cfi") # gives hpsTracks
 
 print("SecondaryVerticesFromNewV0")
 process.load("RecoVertex.V0Producer.generalV0Candidates_cfi")
-process.SecondaryVerticesFromNewV0 = process.generalV0Candidates.clone(
+process.SecondaryVerticesFromNewV0 = process.generalV0Candidates.clone( 
 	# which beamSpot to reference
 	beamSpot = cms.InputTag('offlineBeamSpot'),
 	# reference primary vertex instead of beamSpot
 	useVertex = cms.bool(True), # By def False
 	# which vertex collection to use
 	vertices = cms.InputTag('offlinePrimaryVertices'),
-	# which TrackCollection to use for vertexing "generalV0Candidates","Lambda","RECO" || vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Lambda"          "RECO"
+	# which TrackCollection to use for vertexing "generalV0Candidates","Lambda","RECO" || vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Lambda"          "RECO"   
 	trackRecoAlgorithm = cms.InputTag("hpsTracks", "HPSTracks", pName),#The standard track collection (label "generalTracks") is not saved in the MiniAOD event content.
 	# which V0s to reconstruct
 	doKShorts = cms.bool(True),
@@ -188,7 +194,7 @@ process.SecondaryVerticesFromNewV0 = process.generalV0Candidates.clone(
 )
 
 available_v0 = {
-					'new':
+					'new': 
 					{
 						"process_link": process.SecondaryVerticesFromNewV0,
 						"collectionName": "SecondaryVerticesFromNewV0",
@@ -196,7 +202,7 @@ available_v0 = {
 						"Process": pName,
 						"newv0": True
 					},
-					'old':
+					'old': 
 					{
 						"process_link": 1,
 						"collectionName": "generalV0Candidates",
@@ -226,7 +232,7 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	RecJet = cms.untracked.bool(False),
 	RecV0 = cms.untracked.bool(True),
 	# # JEC
-	# #
+	# # 
 	# # Collections
 	# JetCollectionTag = cms.InputTag(""),
 	 PFCandidateCollectionTag = cms.InputTag("particleFlow"),
@@ -258,7 +264,7 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	RecElectronNum = cms.untracked.int32(0),
 	# taus
 	RecTauPtMin = cms.untracked.double(18),
-	RecTauEtaMax = cms.untracked.double(2.4),
+	RecTauEtaMax = cms.untracked.double(2.4),                                      
 	RecTauNum = cms.untracked.int32(0),
 	# jets
 	RecJetPtMin = cms.untracked.double(18.),
@@ -275,9 +281,9 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 
 
 # Run all three versions of the algorithm.
-if which_v0['newv0']:
+if which_v0['newv0']: 
 	process.path = cms.Path( process.hpsTracks * which_v0["process_link"] * process.demo)#
-else:
+else: 
 	process.path = cms.Path(process.demo)
 # Writer to a new file called output.root.  Save only the new K-shorts and the primary vertices (for later exercises).
 

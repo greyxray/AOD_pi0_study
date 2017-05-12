@@ -836,9 +836,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 template <typename Tc, typename Tr>// T - collection   reco::PFTauRef pftauref(PF_hps_taus, i);
 void AOD_pi0::MakeVectorofRef(edm::Handle< Tc > Collection, vector< Tr* > v_of_ref)
-{
-
-}
+{}
 
 template <typename T>
 void AOD_pi0::Match(vector < vector <const reco::Candidate *>> & From,
