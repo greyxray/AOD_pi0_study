@@ -7,8 +7,6 @@
 
  Description: build a ks resonan
 
- Implementation:
-     [Notes on implementation]
 */
 #include "AOD_pi0.h"
 
@@ -16,7 +14,6 @@
 void
 AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-
   using namespace edm;
   v0_count = 0 ;
   pizero_count = 0;
@@ -55,7 +52,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       // // const reco::TrackCollection* theTrackCollection = HPSTraHandle.product();
 
   /// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  /// PV
+  /// PV -> pv_position
     if (crecprimvertex)
     {
       edm::Handle<reco::VertexCollection> Vertex;
@@ -68,7 +65,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         for(unsigned i = 0; i < Vertex->size(); i++)
         {
           primvertex_count++;
-          if (i == 0)
+          if (i == 0) // pv_position - the first PV
           {
             primvertex_x = (*Vertex)[i].x();
             primvertex_y = (*Vertex)[i].y();
@@ -102,14 +99,20 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             h_primvertex_cov_y->Fill(primvertex_cov[3]);
             h_primvertex_cov_z->Fill(primvertex_cov[5]);
           }
-          if ((*Vertex)[i].isValid() && !(*Vertex)[i].isFake() && (*Vertex)[i].ndof() >= 4 &&
-             (*Vertex)[i].z() > -24 && (*Vertex)[i].z() < 24 && (*Vertex)[i].position().Rho() < 2.) goodprimvertex_count++;
+
+          if ((*Vertex)[i].isValid() &&
+              !(*Vertex)[i].isFake() &&
+              (*Vertex)[i].ndof() >= 4 &&
+              (*Vertex)[i].z() > -24 &&
+              (*Vertex)[i].z() < 24 &&
+              (*Vertex)[i].position().Rho() < 2.) goodprimvertex_count++;
         }
       }
       h_primvertex_count->Fill(primvertex_count);
       h_goodprimvertex_count->Fill(goodprimvertex_count);
       dout("PrimVertex:", pv_position.X(), pv_position.Y(), pv_position.Z());
     }
+
   /// V0's RECO Ks's - all are charged - also matching with pi+- of HPS
     if (true && V0Ks.isValid())
     {
@@ -158,10 +161,10 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
           // Possitioning
             double distMagXY_PV_Ks = sqrt(pow(v_Ks.X() - pv_position.x(), 2) + pow(v_Ks.Y() - pv_position.y(), 2));// distnce from PV to Ks
             dout("distMagXY_PV_Ks:", distMagXY_PV_Ks);
-            //h_Ks_v0_PV_dXY->Fill(distMagXY_PV_Ks);
+            h_Ks_v0_PV_dXY->Fill(distMagXY_PV_Ks);
             double distMagXY_BS_Ks = sqrt(pow(v_Ks.X() - BSposition.x(), 2) + pow(v_Ks.Y() - BSposition.y(), 2));// distnce from BS to Ks
             //h_Ks_v0_BS_dXY->Fill(distMagXY_BS_Ks);
-            //if (distMagXY_PV_Ks > 4.4) continue; // distance from 0.2 -- something is clearly wrong with this cut
+            //if (distMagXY_PV_Ks > 4.4) continue; // distance from 0.2 -- something is clearly wrong with this cut.
 
             h_Ks_v0_vx->Fill(v_Ks.X());
             h_Ks_v0_vy->Fill(v_Ks.Y());

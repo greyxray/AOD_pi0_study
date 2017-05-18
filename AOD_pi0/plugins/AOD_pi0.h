@@ -599,11 +599,11 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
     //hist_directory[1]->cd();  //= outfile->mkdir("ks_coll", "ks_collection");
       h_Ks_v0_count = new TH1D("h_Ks_v0_count","v0 count", 10, 0, 10);
       h_Ks_v0_daughter_pt = new TH1D("h_Ks_v0_daughter_pt","ks daughters pt", 1800, 0, 180);
-      h_Ks_v0_inv_m_pi = new TH1D("h_Ks_v0_inv_m_pi","ks daughters inv mass", 1000, 0, 10);
+      h_Ks_v0_inv_m_pi = new TH1D("h_Ks_v0_inv_m_pi","ks daughters inv mass", 10000, 0, 5);
       h_Ks_v0_number_per_event = new TH1D("h_Ks_v0_number_per_event","ks from V0 coll, NPE that passed PV", 10, 0, 10);
       h_Ks_v0_vx = new TH1D("h_Ks_v0_vx","ks from V0 coll, x position", 1000, -5, 5);
       h_Ks_v0_vy = new TH1D("h_Ks_v0_vy","ks from V0 coll, y position", 1000, -5, 5);
-      h_Ks_v0_vz = new TH1D("h_Ks_v0_vz","ks from V0 coll, z position", 1000, 5, 5);
+      h_Ks_v0_vz = new TH1D("h_Ks_v0_vz","ks from V0 coll, z position", 1000, -5, 5);
       h_Ks_v0_dx = new TH1D("h_Ks_v0_dx","ks from V0 coll, ks_x distance to PV", 1000, 0, 10);
       h_Ks_v0_dy = new TH1D("h_Ks_v0_dy","ks from V0 coll, ks_y distance to PV", 1000, 0, 10);
       h_Ks_v0_dz = new TH1D("h_Ks_v0_dz","ks from V0 coll, ks_z distance to PV", 1000, 0, 10);

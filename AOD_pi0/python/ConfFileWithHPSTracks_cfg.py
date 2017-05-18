@@ -62,7 +62,7 @@ studyroot = {
 	'JetHTdata': # JetHT AOD dataset=/JetHT*/*PromptReco-v2/AOD*  => dataset=/JetHT/Run2016B-PromptReco-v2/AOD
 		{
 			'isData': True, 
-			'fileName': '/store/data/Run2016B/JetHT/AOD/PromptReco-v2/000/273/150/00000/FC972EB3-D819-E611-94F9-02163E0134F4.root',#'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root',
+			'fileName': 'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root',#'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root',
 			'output_rootfile_name': "out_AOD_JetHTdata_With_HPS_temp.root"
 		}, # 10 out of 1315
 	'kappaminidata':
@@ -119,10 +119,11 @@ studyroot = {
 	        'output_rootfile_name': "out_AOD_JetHTdata_FULL_With_HPS.root"
 		}
 }
-filekey  = 'QCD_Pt_20toInf_MuEnrichedPt15'
+filekey  = 'JetHTdata'
+
 isData = studyroot[filekey]['isData']
 process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(studyroot[filekey]['fileName']))
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100))
 process.MessageLogger = cms.Service("MessageLogger", destinations = cms.untracked.vstring("cout"), cout = cms.untracked.PSet(threshold = cms.untracked.string("ERROR")))
 print("filekey: ", filekey)
 
