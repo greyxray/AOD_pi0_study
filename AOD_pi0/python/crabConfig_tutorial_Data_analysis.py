@@ -9,7 +9,7 @@ config.General.transferOutputs = True # whether or not to transfer the output fi
 config.General.transferLogs = False
 
 config.JobType.pluginName = 'Analysis' # Specifies if this task is running an analysis ('Analysis') on an existing dataset or is running MC event generation ('PrivateMC').
-config.JobType.psetName = 'AOD_pi0_study/AOD_pi0/python/ConfFileWithHPSTracks_cfg_CRAB3_DATA.py' #'pset_tutorial_analysis.py'
+config.JobType.psetName = 'AOD_pi0_study/AOD_pi0/python/ConfFileWithHPSTracks_cfg_CRAB3.py' #'pset_tutorial_analysis.py'
 
 config.Data.inputDataset = '/JetHT/Run2016B-PromptReco-v2/AOD'#'/SingleMu/Run2012B-13Jul2012-v1/AOD'
 config.Data.inputDBS = 'global'

@@ -11,6 +11,8 @@
 <use   name="RecoTauTag/RecoTau"/>
 <use name="root"/>
 <use name="clhep"/>
-<use nem="DataFormats/GenParticleFwd"/>
-<use nem="DataFormats/GenParticle"/>
-<use nem="PhysicsTools/MCTruthDeltaRMatcherNew"/>
+<use name="PhysicsTools/UtilAlgos"/>
+<use name="FWCore/ServiceRegistry"/>
+<use name="DataFormats/HepMCCandidate/GenParticleFwd"/>
+<use name="DataFormats/HepMCCandidate/GenParticle"/>
+<use name="PhysicsTools/HepMCCandAlgos/MCTruthDeltaRMatcherNew"/>
