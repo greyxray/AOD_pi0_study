@@ -199,6 +199,7 @@ namespace
 typedef ROOT::Math::SMatrix<double, 3, 3, ROOT::Math::MatRepSym<double, 3> > SMatrixSym3D;
 typedef ROOT::Math::SVector<double, 3> SVector3;
 
+// comment on this: https://twiki.cern.ch/twiki/bin/view/CMSPublic/FWMultithreadedAnalysisEDAnalyzer#Using_TFileService
 class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 {
 	public:
@@ -265,17 +266,27 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 		virtual void endJob() override;
 
 	 // ----------member data ---------------------------
-
+		edm::Service<TFileService> fs;
 		TTree * tree; // example: http://www-hep.colorado.edu/~fjensen/temp/trackAnalyzer.cc
 		TTree * once_tree; 
 		//TFile* outfile;
 		//TDirectory* hist_directory[4];
 
-		// %%%%%%%% Branches
+		// %%%%%%%% Branches variables
 			Int_t nKs;
-			std::vector<double> v_Ks_v0_inv_m_pi; //Int_t Ks_v0_inv_m_pi[MAXKS];
 			double Ks_v0_inv_m_pi;
 			Int_t v0_count; // V0s - Ks or Lambdas
+			Double_t pt_1;
+			Double_t pt_2;
+			Double_t eta_1;
+			Double_t eta_2;
+
+			std::vector<double> v_Ks_v0_inv_m_pi; //Int_t Ks_v0_inv_m_pi[MAXKS];
+			std::vector<Int_t> v_v0_count;
+			std::vector<Double_t> v_pt_1;
+			std::vector<Double_t> v_pt_2;
+			std::vector<Double_t> v_eta_1;
+			std::vector<Double_t> v_eta_2;
 
 		// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Histograms
 			TH1D* pions_inv_m;
@@ -532,11 +543,12 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 	outputGenEvolution(true),
 	v0_ks_numb(0)
 {
-	edm::Service<TFileService> fs;
-	
-	tree = fs->make<TTree>("tree", "tree");
-	once_tree = fs->make<TTree>("once_tree", "once_tree");
-	//usesResource("TFileService");
+	// TFileService : add the trees
+		usesResource("TFileService");
+		// create trees
+			tree = fs->make<TTree>("tree", "tree");
+			once_tree = fs->make<TTree>("once_tree", "once_tree");
+
 	map_kaons[311] = "K0";
 	map_kaons[310] = "K0s";
 	map_kaons[130] = "K0l";
@@ -703,32 +715,29 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 		// 							h_Ks_v0_pions_and_hps_pions_combined_dR_with_no_constrain, h_Ks_v0_PV_dXY, h_Ks_v0_BS_dXY};//15-20
 		// 		map_Ks_v0_histos.insert(map_Ks_v0_histos.end(), temp, temp + (sizeof(temp)/sizeof(temp[0])));
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tokens
+		//RASP
+				//from generalV0Candidates
+					KshortCollectionTag_stand_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag_stand"));
+					KshortCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag"));//cms.InputTag("generalV0Candidates","Kshort","RECO"),//vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Kshort"          "RECO"
+					LambdaCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("LambdaCollectionTag"));//cms.InputTag("generalV0Candidates","Lambda","RECO"),
+				PFCandidateCollectionToken_ = consumes<reco::PFCandidateCollection>(iConfig.getParameter<edm::InputTag>("PFCandidateCollectionTag"));
+				//from hpsPFTauProducer
+				 //Pi0
+					TauPiZeroCollectionToken_ = consumes<reco::RecoTauPiZeroCollection>(iConfig.getParameter<edm::InputTag>("TauPiZeroCollectionTag"));//cms.InputTag("hpsPFTauProducer","pizeros","RECO")
+			//SIMAOD
+					if (!IsData) GenParticleCollectionToken_ = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("GenParticleCollectionTag"));//GenParticlesToken_ = consumes<reco::GenParticleCollection>(edm::InputTag("genParticles","","")); //typedef std::vector<GenParticle> reco::GenParticleCollection
+			PVToken_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("PVCollectionTag")); //offlinePrimaryVerticesToken_ = consumes<reco::VertexCollection>(edm::InputTag("offlinePrimaryVertices","",""));
+			/*
+				SVToken_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("SecVertexCollectionTag"));
+				JetCollectionToken_ = consumes<reco::PFJetCollection>(iConfig.getParameter<edm::InputTag>("JetCollectionTag"));
 
-	//RASP
-			//from generalV0Candidates
-				KshortCollectionTag_stand_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag_stand"));
-				KshortCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag"));//cms.InputTag("generalV0Candidates","Kshort","RECO"),//vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Kshort"          "RECO"
-				LambdaCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("LambdaCollectionTag"));//cms.InputTag("generalV0Candidates","Lambda","RECO"),
-			PFCandidateCollectionToken_ = consumes<reco::PFCandidateCollection>(iConfig.getParameter<edm::InputTag>("PFCandidateCollectionTag"));
-			//from hpsPFTauProducer
-			 //Pi0
-				TauPiZeroCollectionToken_ = consumes<reco::RecoTauPiZeroCollection>(iConfig.getParameter<edm::InputTag>("TauPiZeroCollectionTag"));//cms.InputTag("hpsPFTauProducer","pizeros","RECO")
-		//SIMAOD
-				if (!IsData) GenParticleCollectionToken_ = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("GenParticleCollectionTag"));//GenParticlesToken_ = consumes<reco::GenParticleCollection>(edm::InputTag("genParticles","","")); //typedef std::vector<GenParticle> reco::GenParticleCollection
-		PVToken_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("PVCollectionTag")); //offlinePrimaryVerticesToken_ = consumes<reco::VertexCollection>(edm::InputTag("offlinePrimaryVertices","",""));
-		/*
-			SVToken_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("SecVertexCollectionTag"));
-			JetCollectionToken_ = consumes<reco::PFJetCollection>(iConfig.getParameter<edm::InputTag>("JetCollectionTag"));
-
-		*/
-			BeamSpotToken_ = consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("BeamSpotCollectionTag"));
-	//New
-			//Taus
-					TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
-		//Primary vertex
-			HPSTrackTagToken_ = consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("HPSTrackTag"));
-
-
+			*/
+				BeamSpotToken_ = consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("BeamSpotCollectionTag"));
+		//New
+				//Taus
+						TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
+			//Primary vertex
+				HPSTrackTagToken_ = consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("HPSTrackTag"));
 
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% For quick output level control
 		if (mute)
@@ -738,7 +747,6 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 		}
 		else if (!debug) cout.setstate(ios_base::failbit);
 }
-
 
 //Template functions to simplify output
 	void AOD_pi0::dout()
@@ -779,7 +787,6 @@ void AOD_pi0::RecO_Cand_type(const reco::Candidate* cand)
 	else dlog("unknown type of particles");
 }
 
-
 // ------------ method called once each job just before starting event loop  ------------
 void
 AOD_pi0::beginJob()
@@ -791,12 +798,19 @@ AOD_pi0::beginJob()
 	// tree->Branch("nChi2", &nChi2, "nChi2/D");
 	// tree->Branch("ipSigXY", &ipSigXY, "ipSigXY/D");
 	
-	// %%%%%%%% Branches
+	// %%%%%%%% Branches // initialize branches once per job 
 		tree->Branch("Ks_v0_count", &v0_count, "v0_count/I"); 
-		//tree->Branch("n_Ks_v0_inv_m_pi", n_Ks_v0_inv_m_pi, "n_Ks_v0_inv_m_pi/I");
 		tree->Branch("Ks_v0_inv_m_pi", &Ks_v0_inv_m_pi, "Ks_v0_inv_m_pi/D");
+		tree->Branch("pt_1", &pt_1, "pt_1/D");
+		tree->Branch("pt_2", &pt_2, "pt_2/D");
+		tree->Branch("eta_1", &eta_1, "eta_1/D");
+		tree->Branch("eta_2", &eta_2, "eta_2/D");
+
 		once_tree->Branch("v_Ks_v0_inv_m_pi", &v_Ks_v0_inv_m_pi);
-		
+		once_tree->Branch("v_pt_1", &v_pt_1);
+		once_tree->Branch("v_pt_2", &v_pt_2);
+		once_tree->Branch("v_eta_1", &v_eta_1);
+		once_tree->Branch("v_eta_2", &v_eta_2);
 
 	/*
 		// tree->Branch("Ks_v0_daughter_pt",, ""); 
@@ -947,4 +961,3 @@ AOD_pi0::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
 	desc.setUnknown();
 	descriptions.addDefault(desc);
 }
-
