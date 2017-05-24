@@ -3,13 +3,13 @@ from WMCore.DataStructs.LumiList import LumiList
 
 config = config()
 
-config.General.requestName = 'JetHTdata_finer_binning_2' #
+config.General.requestName = 'JetHTdata_finer_binning_with_eta_pt' #
 config.General.workArea = 'crab_projects'
 config.General.transferOutputs = True # whether or not to transfer the output files to the storage site.
 config.General.transferLogs = False
 
 config.JobType.pluginName = 'Analysis' # Specifies if this task is running an analysis ('Analysis') on an existing dataset or is running MC event generation ('PrivateMC').
-config.JobType.psetName = 'AOD_pi0_study/AOD_pi0/python/ConfFileWithHPSTracks_cfg_CRAB3.py' #'pset_tutorial_analysis.py'
+config.JobType.psetName = 'AOD_pi0_study/AOD_pi0/python/ConfFileWithHPSTracks_cfg.py' #ConfFileWithHPSTracks_cfg_CRAB3 'pset_tutorial_analysis.py'
 
 config.Data.inputDataset = '/JetHT/Run2016B-PromptReco-v2/AOD'#'/SingleMu/Run2012B-13Jul2012-v1/AOD'
 config.Data.inputDBS = 'global'
@@ -19,6 +19,6 @@ config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/
 # config.Data.runRange = '273158-276811'# from lumimask 273158-276811 actually lumimask is enough
 config.Data.outLFNDirBase = '/store/user/%s/' % (getUsernameFromSiteDB())
 config.Data.publication = True
-config.Data.outputDatasetTag = 'CRAB3_tutorial_May2015_Data_analysis_JetHTdata_finer_binning_2l'
+config.Data.outputDatasetTag = 'CRAB3_tutorial_May2015_Data_analysis_JetHTdata_finer_binning_2_with_eta_pt'
 
 config.Site.storageSite = 'T2_DE_RWTH'

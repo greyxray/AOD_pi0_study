@@ -1,4 +1,9 @@
 import FWCore.ParameterSet.Config as cms
+'''
+	to run in CRAB3 I am not sure if parameters created in crabConfig_ step are relevant 
+	in range of this CMSSW parameter-set file, so I will have to use a copy-past code here
+	with no flexibility
+'''
 
 pName = "KSHORTS"
 process = cms.Process(pName)
@@ -41,7 +46,7 @@ studyroot = {
 			'fileName': '/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C88808A-930D-E611-8DE7-B083FED0FFCF.root',#'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_26_patch1/src/AOD_pi0_study/0C88808A-930D-E611-8DE7-B083FED0FFCF.root',#'fileName': cms.untracked.vstring('root://cms-xrd-global.cern.ch//store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C88808A-930D-E611-8DE7-B083FED0FFCF.root'),
 			'output_rootfile_name': "out_simAOD_QCD_Pt_20toInf_MuEnrichedPt15.root"
 		},
-	'QCD_Pt_20toInf_MuEnrichedPt15_Full':
+	'QCD_Pt_20toInf_MuEnrichedPt15_Full': # das: /QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/RunIISpring16DR80/AODSIM
 		{
 			'isData':False, 
 			'fileName': 
@@ -62,7 +67,7 @@ studyroot = {
 	'JetHTdata': # JetHT AOD dataset=/JetHT*/*PromptReco-v2/AOD*  => dataset=/JetHT/Run2016B-PromptReco-v2/AOD
 		{
 			'isData': True, 
-			'fileName': 'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root',#'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root',
+			'fileName': '/store/data/Run2016B/JetHT/AOD/PromptReco-v2/000/273/150/00000/FC972EB3-D819-E611-94F9-02163E0134F4.root',#'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root',
 			'output_rootfile_name': "out_AOD_JetHTdata_With_HPS_temp.root"
 		}, # 10 out of 1315
 	'kappaminidata':
@@ -119,18 +124,20 @@ studyroot = {
 	        'output_rootfile_name': "out_AOD_JetHTdata_FULL_With_HPS.root"
 		}
 }
-filekey  = 'JetHTdata'
+filekey  = 'QCD_Pt_20toInf_MuEnrichedPt15'
 
 isData = studyroot[filekey]['isData']
-process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(studyroot[filekey]['fileName']))
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100))
-process.MessageLogger = cms.Service("MessageLogger", destinations = cms.untracked.vstring("cout"), cout = cms.untracked.PSet(threshold = cms.untracked.string("ERROR")))
-print("filekey: ", filekey)
+# Input files
+# process.source = cms.Source("PoolSource",  fileNames = cms.untracked.vstring()) # crab3 will set
 
-print("HPSTracksLable is now hpsTracks")
+process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(studyroot[filekey]['fileName']))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1)) # removed by crab
+# process.MessageLogger = cms.Service("MessageLogger", destinations = cms.untracked.vstring("cout"), cout = cms.untracked.PSet(threshold = cms.untracked.string("ERROR")))
+
+print("PS: HPSTracksLable is now hpsTracks")
 process.load("HPStracks.HPStracksProducer.HPSTracks_cfi") # gives hpsTracks
 
-print("SecondaryVerticesFromNewV0")
+print("PS: SecondaryVerticesFromNewV0")
 process.load("RecoVertex.V0Producer.generalV0Candidates_cfi")
 process.SecondaryVerticesFromNewV0 = process.generalV0Candidates.clone( 
 	# which beamSpot to reference
@@ -214,7 +221,7 @@ available_v0 = {
 				}
 which_v0 = available_v0['new']
 
-print("demo AOD_pi0")
+print("PS: demo AOD_pi0")
 process.demo = cms.EDAnalyzer('AOD_pi0',
 	# # data, year, period, skim
 	 IsData = cms.untracked.bool(isData),
@@ -282,26 +289,34 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 
 
 # Run all three versions of the algorithm.
-if which_v0['newv0']: 
-	process.path = cms.Path( process.hpsTracks * which_v0["process_link"] * process.demo)#
-else: 
-	process.path = cms.Path(process.demo)
+if which_v0['newv0']:process.path = cms.Path(process.hpsTracks * which_v0["process_link"] * process.demo)
+else: process.path = cms.Path(process.demo)
 # Writer to a new file called output.root.  Save only the new K-shorts and the primary vertices (for later exercises).
 
+process.TFileService = cms.Service("TFileService", fileName = cms.string(studyroot[filekey]['output_rootfile_name'])) #, closeFileFast = cms.untracked.bool(True)
 
-process.TFileService = cms.Service("TFileService",
-                                   fileName = cms.string(studyroot[filekey]['output_rootfile_name'])
-				   )
+#HERE
+#this should probably go only together with grid
+'''  EDM output files (i.e. output files produced by PoolOutputModule)
+	process.output = cms.OutputModule("PoolOutputModule",
+	    SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring("path")),
+	    outputCommands = cms.untracked.vstring("drop *",
+	                                           "keep *_*_*_KSHORTS",
+	                                           "keep *_offlineBeamSpot_*_*",
+	                                           "keep *_offlinePrimaryVertices_*_*",
+	                                           "keep *_offlinePrimaryVerticesWithBS_*_*",
+	                                           "keep *_particleFlow_*_*",
+	                                           "SecondaryVerticesFromNewV0",
+												"generalV0Candidates",
+												"particleFlow",
+												"genParticles",
+												"offlineBeamSpot",
+												"offlinePrimaryVertices",
+												"generalV0Candidates",
+												"generalV0Candidates",
+												"hpsPFTauProducer"
+	    ),
+	    fileName = cms.untracked.string(studyroot[filekey]['output_rootfile_name']))
 
-'''
-process.output = cms.OutputModule("PoolOutputModule",
-    SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring("path")),
-    outputCommands = cms.untracked.vstring("drop *",
-                                           "keep *_*_*_KSHORTS",
-                                           "keep *_offlineBeamSpot_*_*",
-                                           "keep *_offlinePrimaryVertices_*_*",
-                                           "keep *_offlinePrimaryVerticesWithBS_*_*",
-    ),
-    fileName = cms.untracked.string("output.root"))
-process.endpath = cms.EndPath(process.output)
+	process.endpath = cms.EndPath(process.output)
 '''
