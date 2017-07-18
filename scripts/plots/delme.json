@@ -1,0 +1,15 @@
+{
+    "filename": "delme", 
+    "files": [
+        "out_simAOD_QCD_Pt_20toInf_MuEnrichedPt15.root"
+    ], 
+    "folders": [
+        "demo/once_tree"
+    ], 
+    "weights": [
+        "v_eta_1<0"
+    ], 
+    "x_expressions": [
+        "v_Ks_v0_inv_m_pi"
+    ]
+}

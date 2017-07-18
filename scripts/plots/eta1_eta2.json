@@ -1,0 +1,24 @@
+{
+    "analysis_modules": [
+        "NormalizeToUnity"
+    ], 
+    "filename": "eta1_eta2", 
+    "files": [
+        "out_mc_full_finer_binning.root"
+    ], 
+    "folders": [
+        "demo/once_tree"
+    ], 
+    "tree_draw_options": [
+        "prof"
+    ], 
+    "x_expressions": [
+        "v_eta_1"
+    ], 
+    "y_expressions": [
+        "v_eta_2"
+    ], 
+    "z_expressions": [
+        "v_Ks_v0_inv_m_pi"
+    ]
+}

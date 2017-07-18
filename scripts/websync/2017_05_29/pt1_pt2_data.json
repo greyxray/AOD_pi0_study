@@ -1,0 +1,25 @@
+{
+    "analysis_modules": [
+        "NormalizeToUnity"
+    ], 
+    "filename": "pt1_pt2_data", 
+    "files": [
+        "out_data_full_finer_binning.root"
+    ], 
+    "folders": [
+        "demo/once_tree"
+    ], 
+    "tree_draw_options": [
+        "prof"
+    ], 
+    "www": "", 
+    "x_expressions": [
+        "v_pt_1"
+    ], 
+    "y_expressions": [
+        "v_pt_2"
+    ], 
+    "z_expressions": [
+        "v_Ks_v0_inv_m_pi"
+    ]
+}

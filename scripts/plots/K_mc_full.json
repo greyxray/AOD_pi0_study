@@ -1,0 +1,31 @@
+{
+    "analysis_modules": [
+        "NormalizeToUnity"
+    ], 
+    "filename": "K_mc_full", 
+    "files": [
+        "out_mc_full_finer_binning.root"
+    ], 
+    "folders": [
+        "demo/once_tree"
+    ], 
+    "log_level": "debug", 
+    "tree_draw_options": [
+        "prof"
+    ], 
+    "x_bins": [
+        "20,0,200"
+    ], 
+    "x_expressions": [
+        "v_pt_1"
+    ], 
+    "y_bins": [
+        "20,0,200"
+    ], 
+    "y_expressions": [
+        "v_pt_2"
+    ], 
+    "z_expressions": [
+        "v_Ks_v0_inv_m_pi"
+    ]
+}
