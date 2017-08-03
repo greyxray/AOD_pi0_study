@@ -11,8 +11,7 @@
 #include "AOD_pi0.h"
 
 // ------------ method called for each event  ------------
-void
-AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+void AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 	using namespace edm;
 	v0_count = 0 ;
@@ -29,104 +28,92 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	v_eta_2.clear();
 	Ks_v0_inv_m_pi = -1;
 
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tokens access
-		//V0 Ks's token
-			edm::Handle<reco::VertexCompositeCandidateCollection> V0Ks;
-			iEvent.getByToken( KshortCollectionToken_, V0Ks);
-		//V0 Ks's standart
-			edm::Handle<reco::VertexCompositeCandidateCollection> V0Ks_standart;
-			iEvent.getByToken( KshortCollectionTag_stand_, V0Ks_standart);
-		//HPS
-			//Pi0's token
-			edm::Handle<reco::RecoTauPiZeroCollection> Strips;
-			iEvent.getByToken( TauPiZeroCollectionToken_, Strips); //actually HPS pi0s
-			//Tau's token based hps- according to https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookPATDataFormats#PatTau contains the same as PFjets
-			edm::Handle<reco::PFTauCollection> PF_hps_taus;// typedef vector< PFTau >  PFTauCollection - the collection of charged pions will be taken from here
-			iEvent.getByToken( TauHPSCollectionToken_, PF_hps_taus); //TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
-		//SIMAOD's token
-			edm::Handle<reco::GenParticleCollection> GenPart;
-			if (!IsData) iEvent.getByToken( GenParticleCollectionToken_, GenPart);
-		// Beam spot
-			edm::Handle<reco::BeamSpot> TheBeamSpotHandle;
-			iEvent.getByToken(BeamSpotToken_, TheBeamSpotHandle);
-			const reco::BeamSpot* theBeamSpot = TheBeamSpotHandle.product();
-			math::XYZPoint BSposition(theBeamSpot->position());
-		// Magnetic field
-			// edm::ESHandle<MagneticField> theMagneticFieldHandle;
-			// iSetup.get<IdealMagneticFieldRecord>().get(theMagneticFieldHandle);
-			// const MagneticField* theMagneticField = theMagneticFieldHandle.product();
+	iEvent.getByToken( KshortCollectionToken_, V0Ks); //V0 Ks's token
+	iEvent.getByToken( KshortCollectionTag_stand_, V0Ks_standart); //V0 Ks's standart
+	iEvent.getByToken( TauPiZeroCollectionToken_, Strips); //actually HPS pi0s
+	if (!IsData) iEvent.getByToken( GenParticleCollectionToken_, GenPart);
+	iEvent.getByToken(BeamSpotToken_, TheBeamSpotHandle);
+	//Tau's token based hps- according to https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookPATDataFormats#PatTau contains the same as PFjets
+	//typedef vector< PFTau >  PFTauCollection - the collection of charged pions will be taken from here
+	iEvent.getByToken( TauHPSCollectionToken_, PF_hps_taus);
+	// Magnetic field
+		// edm::ESHandle<MagneticField> theMagneticFieldHandle;
+		// iSetup.get<IdealMagneticFieldRecord>().get(theMagneticFieldHandle);
+		// const MagneticField* theMagneticField = theMagneticFieldHandle.product();
 
-			//  edm::Handle<reco::TrackCollection> HPSTraHandle;
-			// iEvent.getByToken(HPSTrackTagToken_, HPSTraHandle);
-			// if (HPSTraHandle.isValid())  dout("HPStrackCollection is fine");
-			// else dout("HPStrackCollection is NOT VALID", HPSTraHandle->size());
-			// // const reco::TrackCollection* theTrackCollection = HPSTraHandle.product();
+		//  edm::Handle<reco::TrackCollection> HPSTraHandle;
+		// iEvent.getByToken(HPSTrackTagToken_, HPSTraHandle);
+		// if (HPSTraHandle.isValid())  dout("HPStrackCollection is fine");
+		// else dout("HPStrackCollection is NOT VALID", HPSTraHandle->size());
+		// // const reco::TrackCollection* theTrackCollection = HPSTraHandle.product();
+
+	const reco::BeamSpot* theBeamSpot = TheBeamSpotHandle.product();
+	math::XYZPoint BSposition(theBeamSpot->position());
 
 	/// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 	/// PV -> pv_position
 	if (crecprimvertex)
+	{
+		iEvent.getByToken(PVToken_, Vertex);
+		primvertex_count = goodprimvertex_count = 0;
+
+		pv_position = math::XYZPoint(0., 0., 0.);
+		if (Vertex.isValid())
 		{
-			edm::Handle<reco::VertexCollection> Vertex;
-			iEvent.getByToken(PVToken_, Vertex);
-			primvertex_count = goodprimvertex_count = 0;
-
-			pv_position = math::XYZPoint(0., 0., 0.);
-			if (Vertex.isValid())
+			for(unsigned i = 0; i < Vertex->size(); i++)
 			{
-				for(unsigned i = 0; i < Vertex->size(); i++)
+				primvertex_count++;
+				if (i == 0) // pv_position - the first PV
 				{
-					primvertex_count++;
-					if (i == 0) // pv_position - the first PV
-					{
-						primvertex_x = (*Vertex)[i].x();
-						primvertex_y = (*Vertex)[i].y();
-						primvertex_z = (*Vertex)[i].z();
-						primvertex_chi2 = (*Vertex)[i].chi2();
-						primvertex_ndof = (*Vertex)[i].ndof();
-						primvertex_ntracks = (*Vertex)[i].tracksSize();
-						primvertex_cov[0] = (*Vertex)[i].covariance(0,0); // xError()
-						primvertex_cov[1] = (*Vertex)[i].covariance(0,1);
-						primvertex_cov[2] = (*Vertex)[i].covariance(0,2);
-						primvertex_cov[3] = (*Vertex)[i].covariance(1,1); // yError()
-						primvertex_cov[4] = (*Vertex)[i].covariance(1,2);
-						primvertex_cov[5] = (*Vertex)[i].covariance(2,2); // zError()
+					primvertex_x = (*Vertex)[i].x();
+					primvertex_y = (*Vertex)[i].y();
+					primvertex_z = (*Vertex)[i].z();
+					primvertex_chi2 = (*Vertex)[i].chi2();
+					primvertex_ndof = (*Vertex)[i].ndof();
+					primvertex_ntracks = (*Vertex)[i].tracksSize();
+					primvertex_cov[0] = (*Vertex)[i].covariance(0,0); // xError()
+					primvertex_cov[1] = (*Vertex)[i].covariance(0,1);
+					primvertex_cov[2] = (*Vertex)[i].covariance(0,2);
+					primvertex_cov[3] = (*Vertex)[i].covariance(1,1); // yError()
+					primvertex_cov[4] = (*Vertex)[i].covariance(1,2);
+					primvertex_cov[5] = (*Vertex)[i].covariance(2,2); // zError()
 
-						Float_t ptq = 0.;
-						for(reco::Vertex::trackRef_iterator it = (*Vertex)[i].tracks_begin(); it != (*Vertex)[i].tracks_end(); ++it)
-							ptq += (*it)->pt() * (*it)->pt();
-						primvertex_ptq = ptq;
+					Float_t ptq = 0.;
+					for(reco::Vertex::trackRef_iterator it = (*Vertex)[i].tracks_begin(); it != (*Vertex)[i].tracks_end(); ++it)
+						ptq += (*it)->pt() * (*it)->pt();
+					primvertex_ptq = ptq;
 
-						pv_position = (*Vertex)[i].position();
-						primvertex = (*Vertex)[i];
+					pv_position = (*Vertex)[i].position();
+					primvertex = (*Vertex)[i];
 
-						//TEMP_COMMENTED h_primvertex_x->Fill(primvertex_x);
-						//TEMP_COMMENTED h_primvertex_y->Fill(primvertex_y);
-						//TEMP_COMMENTED h_primvertex_z->Fill(primvertex_z);
-						//TEMP_COMMENTED h_primvertex_chi2->Fill(primvertex_chi2);
-						//TEMP_COMMENTED h_primvertex_ndof->Fill(primvertex_ndof);
-						//TEMP_COMMENTED h_primvertex_ptq->Fill(primvertex_ptq);
-						//TEMP_COMMENTED h_primvertex_ntracks->Fill(primvertex_ntracks);
-						//TEMP_COMMENTED h_primvertex_cov_x->Fill(primvertex_cov[0]);
-						//TEMP_COMMENTED h_primvertex_cov_y->Fill(primvertex_cov[3]);
-						//TEMP_COMMENTED h_primvertex_cov_z->Fill(primvertex_cov[5]);
-					}
-
-					if ((*Vertex)[i].isValid() &&
-							!(*Vertex)[i].isFake() &&
-							(*Vertex)[i].ndof() >= 4 &&
-							(*Vertex)[i].z() > -24 &&
-							(*Vertex)[i].z() < 24 &&
-							(*Vertex)[i].position().Rho() < 2.) goodprimvertex_count++;
+					//TEMP_COMMENTED h_primvertex_x->Fill(primvertex_x);
+					//TEMP_COMMENTED h_primvertex_y->Fill(primvertex_y);
+					//TEMP_COMMENTED h_primvertex_z->Fill(primvertex_z);
+					//TEMP_COMMENTED h_primvertex_chi2->Fill(primvertex_chi2);
+					//TEMP_COMMENTED h_primvertex_ndof->Fill(primvertex_ndof);
+					//TEMP_COMMENTED h_primvertex_ptq->Fill(primvertex_ptq);
+					//TEMP_COMMENTED h_primvertex_ntracks->Fill(primvertex_ntracks);
+					//TEMP_COMMENTED h_primvertex_cov_x->Fill(primvertex_cov[0]);
+					//TEMP_COMMENTED h_primvertex_cov_y->Fill(primvertex_cov[3]);
+					//TEMP_COMMENTED h_primvertex_cov_z->Fill(primvertex_cov[5]);
 				}
+
+				if ((*Vertex)[i].isValid() &&
+						!(*Vertex)[i].isFake() &&
+						(*Vertex)[i].ndof() >= 4 &&
+						(*Vertex)[i].z() > -24 &&
+						(*Vertex)[i].z() < 24 &&
+						(*Vertex)[i].position().Rho() < 2.) goodprimvertex_count++;
 			}
-			//TEMP_COMMENTED h_primvertex_count->Fill(primvertex_count);
-			//TEMP_COMMENTED h_goodprimvertex_count->Fill(goodprimvertex_count);
-			dout("PrimVertex:", pv_position.X(), pv_position.Y(), pv_position.Z());
 		}
+		//TEMP_COMMENTED h_primvertex_count->Fill(primvertex_count);
+		//TEMP_COMMENTED h_goodprimvertex_count->Fill(goodprimvertex_count);
+		dout("PrimVertex:", pv_position.X(), pv_position.Y(), pv_position.Z());
+	}
 
 	/// V0's RECO Ks's - all are charged - also matching with pi+- of HPS
-		if (true && V0Ks.isValid())
+	if (true && V0Ks.isValid())
 		{
 			dlog("RECO Ks's Particles");
 			vector<reco::CandidateCollection> v_daughters;
@@ -540,11 +527,10 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		}
 		// else if (!V0Ks.isValid()) dlog("UNVALID Ks's");
 
-	/// 
-		if (false) AddGammas(iEvent, iSetup);
+	if (false) AddGammas(iEvent, iSetup);
 
 	/// HPS Pi0's and taus - with loop among reco::tau
-		if (false && Strips.isValid())
+	if (false && Strips.isValid())
 		{
 			unsigned int matched_pi = 0;
 			if (Strips->size() > 0)  dout("Number of HPS piz0's =", Strips->size());
@@ -627,7 +613,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		}
 
 	///K(892)+- TODO: build using V0 and hps pi0; made: patching to pi+- of hps and V0
-		if (false && PF_hps_taus.isValid() )
+	if (false && PF_hps_taus.isValid() )
 		{
 			vector<reco::CandidateCollection> v0_daughters;
 			v0_count = V0Ks->size();
@@ -708,7 +694,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		else if (!PF_hps_taus.isValid()) dout("no valid PF_hps_taus");
 
 	/// HPS reco Taus only - general study
-		if (false && PF_hps_taus.isValid() )
+	if (false && PF_hps_taus.isValid() )
 		{
 			if (PF_hps_taus->size() > 0)  dout("Number of Tau = ", PF_hps_taus->size());
 			for (unsigned int i = 0; i < PF_hps_taus->size(); i++) // Over Tau's
@@ -808,7 +794,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		// else if (!PF_hps_taus.isValid()) dout("no valid PF_hps_taus");
 
 	/// GEN Particles K(892)- gen level study
-		if (false && !IsData && GenPart.isValid())
+	if (false && !IsData && GenPart.isValid())
 		{
 			int gen_count = GenPart->size();
 			dlog("Size:", gen_count);
@@ -847,7 +833,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		}
 
 	/// GEN Particles - gen level study
-		if (false && !IsData && GenPart.isValid())
+	if (false && !IsData && GenPart.isValid())
 		{
 			dlog("GEN Particles");
 			//vector<reco::GenParticleCollection> gen_daughters;
@@ -892,8 +878,7 @@ AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 }
 
 template <typename Tc, typename Tr>// T - collection   reco::PFTauRef pftauref(PF_hps_taus, i);
-void AOD_pi0::MakeVectorofRef(edm::Handle< Tc > Collection, vector< Tr* > v_of_ref)
-{}
+void AOD_pi0::MakeVectorofRef(edm::Handle< Tc > Collection, vector< Tr* > v_of_ref) {}
 
 template <typename T>
 void AOD_pi0::Match(vector < vector <const reco::Candidate *>> & From,
@@ -1183,11 +1168,11 @@ void AOD_pi0::CombinatoricOfTwoToNeutralInvM(vector <VectoreType> collection, //
 
 unsigned int AOD_pi0::AddGammas(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-	edm::Handle<reco::PFCandidateCollection> Tracks;
 	iEvent.getByToken(PFCandidateCollectionToken_, Tracks);
 
 	photon_count = 0;
 	std::vector<TLorentzVector> combined_pions;
+
 	if (Tracks.isValid())
 	{
 		for(unsigned i = 0; i < Tracks->size(); i++)
@@ -1246,10 +1231,9 @@ unsigned int AOD_pi0::AddGammas(const edm::Event& iEvent, const edm::EventSetup&
 				}
 			}
 		}
-
 	}
 
-	 return photon_count;
+	return photon_count;
 }
 
 //define this as a plug-in

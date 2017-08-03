@@ -268,11 +268,11 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 	 // ----------member data ---------------------------
 		edm::Service<TFileService> fs;
 		TTree * tree; // example: http://www-hep.colorado.edu/~fjensen/temp/trackAnalyzer.cc
-		TTree * once_tree; 
-		//TFile* outfile;
-		//TDirectory* hist_directory[4];
+		TTree * once_tree;
 
-		// %%%%%%%% Branches variables
+		// Branches variables
+			UInt_t primvertex_count;
+			UInt_t goodprimvertex_count;
 			Int_t nKs;
 			double Ks_v0_inv_m_pi;
 			Int_t v0_count; // V0s - Ks or Lambdas
@@ -288,7 +288,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 			std::vector<Double_t> v_eta_1;
 			std::vector<Double_t> v_eta_2;
 
-		// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Histograms
+		// Histograms
 			TH1D* pions_inv_m;
 			TH1D* num_pions;
 			TH1D* taus_isol_pi0_inv_m_to_ks;
@@ -370,27 +370,29 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 			TH1D* h_primvertex_cov_y;
 			TH1D* h_primvertex_cov_z;
 		
-		// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tokens for the Collections
+		// Tokens for the Collections
 			edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionToken_;
 			edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionTag_stand_;
 			edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> LambdaCollectionToken_;
 			edm::EDGetTokenT<reco::PFCandidateCollection> PFCandidateCollectionToken_;
-			edm::EDGetTokenT<reco::RecoTauPiZeroCollection> TauPiZeroCollectionToken_;//hpsPFTauProducer
+			edm::EDGetTokenT<reco::RecoTauPiZeroCollection> TauPiZeroCollectionToken_;
 			edm::EDGetTokenT<reco::PFTauCollection> TauHPSCollectionToken_;
 			// vector<int>                           "genParticles"              ""                "HLT"
-			// vector<reco::GenJet>                  "ak4GenJets"                ""                "HLT"
-			// vector<reco::GenJet>                  "ak4GenJetsNoNu"            ""                "HLT"
-			// vector<reco::GenJet>                  "ak8GenJets"                ""                "HLT"
-			// vector<reco::GenJet>                  "ak8GenJetsNoNu"            ""                "HLT"
-			// vector<reco::GenMET>                  "genMetCalo"                ""                "HLT"
-			// vector<reco::GenMET>                  "genMetTrue"                ""                "HLT"
 			// vector<reco::GenParticle>             "genParticles"              ""
-			//edm::EDGetTokenT<reco::GenParticleCollection>  GenParticlesToken_;
-			// edm::EDGetTokenT<reco::VertexCollection>  offlinePrimaryVerticesToken_ ;
 			edm::EDGetTokenT<reco::GenParticleCollection> GenParticleCollectionToken_;
 			edm::EDGetTokenT<reco::VertexCollection> PVToken_;
 			edm::EDGetTokenT<reco::BeamSpot> BeamSpotToken_;
 			edm::EDGetTokenT<reco::TrackCollection> HPSTrackTagToken_;
+
+		// Handles
+			edm::Handle<reco::VertexCompositeCandidateCollection> V0Ks;
+			edm::Handle<reco::VertexCompositeCandidateCollection> V0Ks_standart;
+			edm::Handle<reco::RecoTauPiZeroCollection> Strips;
+			edm::Handle<reco::GenParticleCollection> GenPart;
+			edm::Handle<reco::BeamSpot> TheBeamSpotHandle;
+			edm::Handle<reco::PFTauCollection> PF_hps_taus;
+			edm::Handle<reco::VertexCollection> Vertex;
+			edm::Handle<reco::PFCandidateCollection> Tracks;
 
 		// Variables
 			std::ofstream ofs;
@@ -418,8 +420,6 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 			// primary vertex
 				math::XYZPoint pv_position;
 				reco::Vertex primvertex; 
-				UInt_t  primvertex_count;
-				UInt_t  goodprimvertex_count;
 				Float_t primvertex_x;
 				Float_t primvertex_y;
 				Float_t primvertex_z;
@@ -555,14 +555,13 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 	map_kaons[130] = "K0l";
 	map_kaons[313] = "K(892)0";
 	map_kaons[323] = "K(892)c";
-
 	map_pions[111] = "pi0";
 	map_pions[211] = "pic";
 
+	if (IsData) outputGenEvolution = false;
+
 	if (outputGenEvolution)
-	{
 		ofs.open("geninfo.txt", std::ofstream::out /*| std::ofstream::app*/);
-	}
 	/*
 		// else ofs  (cout.rdbuf());
 		// if(outputGenEvolution)
@@ -596,27 +595,16 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 		//    }
 	*/
 
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Saved histograms
+	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Saved histograms - turned off
 		if (OutFileName.empty())
 		{
-			if (!IsData) OutFileName = "simaod_pi0_WHY.root";
-			else  OutFileName = "aod_pi0_WHY.root";
+			if (!IsData)
+				OutFileName = "simaod_pi0_WHY.root";
+			else
+				OutFileName = "aod_pi0_WHY.root";
 		}
-		if (IsData) outputGenEvolution = false;
 
-		//outfile = new TFile((TString)OutFileName,"RECREATE");
-		//outfile->cd();
-		
-		/* subdirs
-			//hist_directory[1]  = outfile->mkdir("ks_coll", "ks_collection");
-			//hist_directory[1]->cd();  //= outfile->mkdir("ks_coll", "ks_collection");
-			TFileDirectory subDir = fs->mkdir( "mySubDirectory" );
-			TFileDirectory subSubDir = subDir.mkdir( "mySubSubDirectory" );
-			Within a subdirectory histograms are booked with the same syntax as for TFileService:
-			TH1F * h_pt = subDir.make<TH1F>( "pt"  , "p_{t}", 100,  0., 100. );
-		*/
-
-		//= fs->make<TH1D>();
+		// Histograms
 		/*
 			pions_inv_m = fs->make<TH1D>("pions_inv_m","inv mass of pions in taus", 100, 0, 1); // pions_inv_m  = new TH1D("pions_inv_m","inv mass of pions in taus", 100, 0, 1);
 			num_pions = fs->make<TH1D>("num_of_pios","num of pions", 10, 0, 10);//new TH1D("num_of_pios","num of pions", 10, 0, 10);
@@ -696,7 +684,7 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 			h_primvertex_cov_y = fs->make<TH1D>("h_primvertex_cov_y", "h_primvertex_cov_y", 1000, -5, 5);//= new TH1D("h_primvertex_cov_y", "h_primvertex_cov_y", 1000, -5, 5);
 			h_primvertex_cov_z = fs->make<TH1D>("h_primvertex_cov_z", "h_primvertex_cov_z", 1000, -5, 5);//= new TH1D("h_primvertex_cov_z", "h_primvertex_cov_z", 1000, -5, 5);
 		*/
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MAP of histos - only after initialisation!!
+	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MAP of histos - only after initialisation!! - doesn't work
 		// map_K892_gen_histos[313].push_back(h_K892_0_gen_number_per_event);
 		// map_K892_gen_histos[313].push_back(h_K892_0_gen_vx);
 		// map_K892_gen_histos[313].push_back(h_K892_0_gen_vy);
@@ -715,30 +703,20 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 		// 							h_Ks_v0_pions_and_hps_pions_combined_dR_with_no_constrain, h_Ks_v0_PV_dXY, h_Ks_v0_BS_dXY};//15-20
 		// 		map_Ks_v0_histos.insert(map_Ks_v0_histos.end(), temp, temp + (sizeof(temp)/sizeof(temp[0])));
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tokens
-		//RASP
-				//from generalV0Candidates
-					KshortCollectionTag_stand_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag_stand"));
-					KshortCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag"));//cms.InputTag("generalV0Candidates","Kshort","RECO"),//vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Kshort"          "RECO"
-					LambdaCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("LambdaCollectionTag"));//cms.InputTag("generalV0Candidates","Lambda","RECO"),
-				PFCandidateCollectionToken_ = consumes<reco::PFCandidateCollection>(iConfig.getParameter<edm::InputTag>("PFCandidateCollectionTag"));
-				//from hpsPFTauProducer
-				 //Pi0
-					TauPiZeroCollectionToken_ = consumes<reco::RecoTauPiZeroCollection>(iConfig.getParameter<edm::InputTag>("TauPiZeroCollectionTag"));//cms.InputTag("hpsPFTauProducer","pizeros","RECO")
-			//SIMAOD
-					if (!IsData) GenParticleCollectionToken_ = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("GenParticleCollectionTag"));//GenParticlesToken_ = consumes<reco::GenParticleCollection>(edm::InputTag("genParticles","","")); //typedef std::vector<GenParticle> reco::GenParticleCollection
-			PVToken_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("PVCollectionTag")); //offlinePrimaryVerticesToken_ = consumes<reco::VertexCollection>(edm::InputTag("offlinePrimaryVertices","",""));
-			/*
-				SVToken_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("SecVertexCollectionTag"));
-				JetCollectionToken_ = consumes<reco::PFJetCollection>(iConfig.getParameter<edm::InputTag>("JetCollectionTag"));
-
-			*/
-				BeamSpotToken_ = consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("BeamSpotCollectionTag"));
-		//New
-				//Taus
-						TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
-			//Primary vertex
-				HPSTrackTagToken_ = consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("HPSTrackTag"));
-
+		//from generalV0Candidates
+		KshortCollectionTag_stand_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag_stand"));
+		KshortCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag"));//cms.InputTag("generalV0Candidates","Kshort","RECO"),//vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Kshort"          "RECO"
+		LambdaCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("LambdaCollectionTag"));//cms.InputTag("generalV0Candidates","Lambda","RECO")
+		
+		PFCandidateCollectionToken_ = consumes<reco::PFCandidateCollection>(iConfig.getParameter<edm::InputTag>("PFCandidateCollectionTag"));//cms.InputTag("particleFlow")
+		TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
+		TauPiZeroCollectionToken_ = consumes<reco::RecoTauPiZeroCollection>(iConfig.getParameter<edm::InputTag>("TauPiZeroCollectionTag"));//cms.InputTag("hpsPFTauProducer","pizeros","RECO")
+		if (!IsData) GenParticleCollectionToken_ = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("GenParticleCollectionTag"));//GenParticlesToken_ = consumes<reco::GenParticleCollection>(edm::InputTag("genParticles","","")); //typedef std::vector<GenParticle> reco::GenParticleCollection
+		PVToken_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("PVCollectionTag")); //offlinePrimaryVerticesToken_ = consumes<reco::VertexCollection>(edm::InputTag("offlinePrimaryVertices","",""));
+		BeamSpotToken_ = consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("BeamSpotCollectionTag"));
+		//SVToken_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("SecVertexCollectionTag"));
+		//JetCollectionToken_ = consumes<reco::PFJetCollection>(iConfig.getParameter<edm::InputTag>("JetCollectionTag"));
+		HPSTrackTagToken_ = consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("HPSTrackTag"));
 	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% For quick output level control
 		if (mute)
 		{
@@ -749,10 +727,7 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 }
 
 //Template functions to simplify output
-	void AOD_pi0::dout()
-	{
-			cout << endl;
-	}
+	void AOD_pi0::dout() { cout << endl; }
 	template <typename Head, typename... Tail>
 	void AOD_pi0::dout(Head H, Tail... T)
 	{
@@ -760,11 +735,7 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 		dout(T...);
 	}
 
-
-	void AOD_pi0::dlog()
-	{
-			clog << endl;
-	}
+	void AOD_pi0::dlog() { clog << endl; }
 	template <typename Head, typename... Tail>
 	void AOD_pi0::dlog(Head H, Tail... T)
 	{
@@ -772,33 +743,45 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 		dlog(T...);
 	}
 
-//Printing functions
+//Printing on screen functions
 void AOD_pi0::RecO_Cand_type(const reco::Candidate* cand)
 {
-	if      (cand->isCaloMuon()) dout("isCaloMuon():", cand->isCaloMuon());
-	else if (cand->isConvertedPhoton()) dout("isConvertedPhoton():", cand->isConvertedPhoton());
-	else if (cand->isElectron()) dout("isElectron():", cand->isElectron());
-	else if (cand->isGlobalMuon()) dout("isGlobalMuon():", cand->isGlobalMuon());
-	else if (cand->isJet()) dout("isJet():", cand->isJet());
-	else if (cand->isMuon()) dout("isMuon():", cand->isMuon());
-	else if (cand->isPhoton()) dout("isPhoton():", cand->isPhoton());
-	else if (cand->isStandAloneMuon()) dout("isStandAloneMuon():", cand->isStandAloneMuon());
-	else if (cand->isTrackerMuon()) dout("isTrackerMuon():", cand->isTrackerMuon());
-	else dlog("unknown type of particles");
+	if (cand->isCaloMuon())
+		dout("isCaloMuon():", cand->isCaloMuon());
+	else if (cand->isConvertedPhoton())
+		dout("isConvertedPhoton():", cand->isConvertedPhoton());
+	else if (cand->isElectron())
+		dout("isElectron():", cand->isElectron());
+	else if (cand->isGlobalMuon())
+		dout("isGlobalMuon():", cand->isGlobalMuon());
+	else if (cand->isJet())
+		dout("isJet():", cand->isJet());
+	else if (cand->isMuon())
+		dout("isMuon():", cand->isMuon());
+	else if (cand->isPhoton())
+		dout("isPhoton():", cand->isPhoton());
+	else if (cand->isStandAloneMuon())
+		dout("isStandAloneMuon():", cand->isStandAloneMuon());
+	else if (cand->isTrackerMuon())
+		dout("isTrackerMuon():", cand->isTrackerMuon());
+	else
+		dlog("unknown type of particles");
 }
 
 // ------------ method called once each job just before starting event loop  ------------
-void
-AOD_pi0::beginJob()
+void AOD_pi0::beginJob()
 {
-	// tree->Branch("eta", &eta, "eta/D");
-	// tree->Branch("phi", &phi, "phi/D");
-	// tree->Branch("valHits", &valHits, "valHits/I");
-	// tree->Branch("pixHits", &pixHits, "pixHits/I");
-	// tree->Branch("nChi2", &nChi2, "nChi2/D");
-	// tree->Branch("ipSigXY", &ipSigXY, "ipSigXY/D");
+	// Not presented
+		// tree->Branch("eta", &eta, "eta/D");
+		// tree->Branch("phi", &phi, "phi/D");
+		// tree->Branch("valHits", &valHits, "valHits/I");
+		// tree->Branch("pixHits", &pixHits, "pixHits/I");
+		// tree->Branch("nChi2", &nChi2, "nChi2/D");
+		// tree->Branch("ipSigXY", &ipSigXY, "ipSigXY/D");
 	
-	// %%%%%%%% Branches // initialize branches once per job 
+	// %%%%%%%% Branches // initialize branches once per job, 
+		//for types see https://root.cern.ch/doc/master/classTTree.html
+		
 		tree->Branch("Ks_v0_count", &v0_count, "v0_count/I"); 
 		tree->Branch("Ks_v0_inv_m_pi", &Ks_v0_inv_m_pi, "Ks_v0_inv_m_pi/D");
 		tree->Branch("pt_1", &pt_1, "pt_1/D");
@@ -806,12 +789,15 @@ AOD_pi0::beginJob()
 		tree->Branch("eta_1", &eta_1, "eta_1/D");
 		tree->Branch("eta_2", &eta_2, "eta_2/D");
 
+		once_tree->Branch("primvertex_count", &primvertex_count, "primvertex_count/i"); 
+		once_tree->Branch("goodprimvertex_count", &goodprimvertex_count, "goodprimvertex_count/i"); 
 		once_tree->Branch("v_Ks_v0_inv_m_pi", &v_Ks_v0_inv_m_pi);
 		once_tree->Branch("v_pt_1", &v_pt_1);
 		once_tree->Branch("v_pt_2", &v_pt_2);
 		once_tree->Branch("v_eta_1", &v_eta_1);
 		once_tree->Branch("v_eta_2", &v_eta_2);
 
+	// Former stored as histograms
 	/*
 		// tree->Branch("Ks_v0_daughter_pt",, ""); 
 		// tree->Branch("Ks_v0_number_per_event",, ""); 
@@ -890,8 +876,7 @@ AOD_pi0::beginJob()
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void
-AOD_pi0::endJob()
+void AOD_pi0::endJob()
 {
 	// outfile->cd();
 	// for(std::vector<TH1D*>::iterator itv = map_Ks_v0_histos.begin(); itv != map_Ks_v0_histos.end(); ++itv)
@@ -948,15 +933,14 @@ AOD_pi0::~AOD_pi0()
 	dlog("max_inv_mass: ", max_inv_mass);
 	dlog("max_ks_daughter_pt: ", max_ks_daughter_pt);
 	dlog("v0_ks_numb: ", v0_ks_numb);
-	if (outputGenEvolution) ofs.close();//ofs.close();
+	if (outputGenEvolution) ofs.close();
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void
-AOD_pi0::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
+void AOD_pi0::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
 {
 	//The following says we do not know what parameters are allowed so do no validation
-	// Please change this to state exactly what you do use, even if it is no parameters
+	//Please change this to state exactly what you do use, even if it is no parameters
 	edm::ParameterSetDescription desc;
 	desc.setUnknown();
 	descriptions.addDefault(desc);
