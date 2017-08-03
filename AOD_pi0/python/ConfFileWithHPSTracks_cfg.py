@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 '''
-	to run in CRAB3 I am not sure if parameters created in crabConfig_ step are relevant 
+	to run in CRAB3 I am not sure if parameters created in crabConfig_ step are relevant
 	in range of this CMSSW parameter-set file, so I will have to use a copy-past code here
 	with no flexibility
 '''
@@ -19,7 +19,7 @@ studyroot = {
 	'SUSYGluGluToHToTauTau_Full':
 		{
 			'isData': False,
-			'fileName': 
+			'fileName':
 			[
 				'/store/mc/RunIIFall15DR76/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/0A56906C-73A7-E511-ADB2-00259073E512.root',
 				'/store/mc/RunIIFall15DR76/SUSYGluGluToHToTauTau_M-160_TuneCUETP8M1_13TeV-pythia8/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/00000/0EB2F543-96A6-E511-8155-44A84225CDA4.root',
@@ -40,45 +40,45 @@ studyroot = {
 			'fileName': 'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_26_patch1/src/AOD_pi0_study/F83430DF-9EA6-E511-8DE0-44A84225CABC.root',
 			'output_rootfile_name': "out_simAOD_SUSYGluGluToHToTauTau_siggleRemote.root"
 		},
-	'QCD_Pt_20toInf_MuEnrichedPt15': 
+	'QCD_Pt_20toInf_MuEnrichedPt15':
 		{
-			'isData':False, 
+			'isData':False,
 			'fileName': '/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C88808A-930D-E611-8DE7-B083FED0FFCF.root',#'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_26_patch1/src/AOD_pi0_study/0C88808A-930D-E611-8DE7-B083FED0FFCF.root',#'fileName': cms.untracked.vstring('root://cms-xrd-global.cern.ch//store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C88808A-930D-E611-8DE7-B083FED0FFCF.root'),
 			'output_rootfile_name': "out_simAOD_QCD_Pt_20toInf_MuEnrichedPt15.root"
 		},
 	'QCD_Pt_20toInf_MuEnrichedPt15_Full': # das: /QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/RunIISpring16DR80/AODSIM
 		{
-			'isData':False, 
-			'fileName': 
+			'isData':False,
+			'fileName':
 			[
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0053436E-790D-E611-BA31-B499BAAC03BA.root', 
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/00FEF7A6-3B0D-E611-8C73-00221983E092.root', 
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/02B4D52C-980D-E611-8D65-001E4F1BC725.root', 
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/02C16DFE-8F0D-E611-8CA1-44A84225C4EB.root', 
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/04FB8C8C-C40D-E611-AF6C-00259057490C.root', 
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/087A984B-AD0E-E611-9DA9-44A842CFC9F3.root', 
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/08A931F3-570D-E611-ABF5-02163E012767.root', 
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C5D0DD3-570D-E611-B4CB-02163E0137B9.root', 
-				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C88808A-930D-E611-8DE7-B083FED0FFCF.root', 
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0053436E-790D-E611-BA31-B499BAAC03BA.root',
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/00FEF7A6-3B0D-E611-8C73-00221983E092.root',
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/02B4D52C-980D-E611-8D65-001E4F1BC725.root',
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/02C16DFE-8F0D-E611-8CA1-44A84225C4EB.root',
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/04FB8C8C-C40D-E611-AF6C-00259057490C.root',
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/087A984B-AD0E-E611-9DA9-44A842CFC9F3.root',
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/08A931F3-570D-E611-ABF5-02163E012767.root',
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C5D0DD3-570D-E611-B4CB-02163E0137B9.root',
+				'/store/mc/RunIISpring16DR80/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/0C88808A-930D-E611-8DE7-B083FED0FFCF.root',
 				'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_26_patch1/src/AOD_pi0_study/0E2AE912-1C0E-E611-86FB-002590743042.root'
 			],
 			'output_rootfile_name': "out_simAOD_QCD_Pt_20toInf_MuEnrichedPt15_Full.root"
 		},
 	'JetHTdata': # JetHT AOD dataset=/JetHT*/*PromptReco-v2/AOD*  => dataset=/JetHT/Run2016B-PromptReco-v2/AOD
 		{
-			'isData': True, 
+			'isData': True,
 			'fileName': '/store/data/Run2016B/JetHT/AOD/PromptReco-v2/000/273/150/00000/FC972EB3-D819-E611-94F9-02163E0134F4.root',#'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root',
 			'output_rootfile_name': "out_AOD_JetHTdata_With_HPS_temp.root"
 		}, # 10 out of 1315
 	'kappaminidata':
 		{
-			'isData': True, 
+			'isData': True,
 			'fileName': 'file:/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/miniAOD-prod_PAT.root',
 			'output_rootfile_name': "out_miniAOD_kappaminidata.root"
 		},
 	'JetHTdata2': #ONLY ON NFS # JetHT AOD dataset=/JetHT*/*PromptReco-v2/AOD*  => dataset=/JetHT/Run2016B-PromptReco-v2/AOD
 		{
-			'isData': True, 
+			'isData': True,
 			'fileName': 'file:/nfs/dust/cms/user/glusheno/CMSSW_8_0_20/src/Kappa/Skimming/higgsTauTau/16DA718F-DA19-E611-BCEE-02163E01376E.root',
 			'output_rootfile_name': "out_AOD_JetHTdata2.root"
 		},
@@ -125,28 +125,24 @@ studyroot = {
 		}
 }
 filekey  = 'QCD_Pt_20toInf_MuEnrichedPt15'
-
 isData = studyroot[filekey]['isData']
-# Input files
-# process.source = cms.Source("PoolSource",  fileNames = cms.untracked.vstring()) # crab3 will set
-
-process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(studyroot[filekey]['fileName']))
+process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(studyroot[filekey]['fileName'])) # crab3 will set fileNames = cms.untracked.vstring()
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1)) # removed by crab
-# process.MessageLogger = cms.Service("MessageLogger", destinations = cms.untracked.vstring("cout"), cout = cms.untracked.PSet(threshold = cms.untracked.string("ERROR")))
+#process.MessageLogger = cms.Service("MessageLogger", destinations = cms.untracked.vstring("cout"), cout = cms.untracked.PSet(threshold = cms.untracked.string("ERROR")))
 
-print("PS: HPSTracksLable is now hpsTracks")
+print("PS: HPSTracksLable is now hpsTracks: Creates the collection of tracks from HPS")
 process.load("HPStracks.HPStracksProducer.HPSTracks_cfi") # gives hpsTracks
 
-print("PS: SecondaryVerticesFromNewV0")
+print("PS: SecondaryVerticesFromNewV0: runs the official V0 producer")
 process.load("RecoVertex.V0Producer.generalV0Candidates_cfi")
-process.SecondaryVerticesFromNewV0 = process.generalV0Candidates.clone( 
+process.SecondaryVerticesFromNewV0 = process.generalV0Candidates.clone(
 	# which beamSpot to reference
 	beamSpot = cms.InputTag('offlineBeamSpot'),
 	# reference primary vertex instead of beamSpot
 	useVertex = cms.bool(True), # By def False
 	# which vertex collection to use
 	vertices = cms.InputTag('offlinePrimaryVertices'),
-	# which TrackCollection to use for vertexing "generalV0Candidates","Lambda","RECO" || vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Lambda"          "RECO"   
+	# which TrackCollection to use for vertexing "generalV0Candidates","Lambda","RECO" || vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Lambda"          "RECO"
 	trackRecoAlgorithm = cms.InputTag("hpsTracks", "HPSTracks", pName),#The standard track collection (label "generalTracks") is not saved in the MiniAOD event content.
 	# which V0s to reconstruct
 	doKShorts = cms.bool(True),
@@ -202,33 +198,33 @@ process.SecondaryVerticesFromNewV0 = process.generalV0Candidates.clone(
 )
 
 available_v0 = {
-					'new': 
-					{
-						"process_link": process.SecondaryVerticesFromNewV0,
-						"collectionName": "SecondaryVerticesFromNewV0",
-						"lable": "Kshort",
-						"Process": pName,
-						"newv0": True
-					},
-					'old': 
-					{
-						"process_link": 1,
-						"collectionName": "generalV0Candidates",
-						"lable": "Kshort",
-						"Process": "RECO",
-						"newv0": False
-					}
-				}
+	'new':
+	{
+		"process_link": process.SecondaryVerticesFromNewV0,
+		"collectionName": "SecondaryVerticesFromNewV0",
+		"lable": "Kshort",
+		"Process": pName,
+		"newv0": True
+	},
+	'old':
+	{
+		"process_link": 1,
+		"collectionName": "generalV0Candidates",
+		"lable": "Kshort",
+		"Process": "RECO",
+		"newv0": False
+	}
+}
 which_v0 = available_v0['new']
 
-print("PS: demo AOD_pi0")
+print("PS: demo AOD_pi0: constructs the plain root ntuple")
 process.demo = cms.EDAnalyzer('AOD_pi0',
 	# # data, year, period, skim
-	 IsData = cms.untracked.bool(isData),
-	 OutFileName = cms.untracked.string(studyroot[filekey]['output_rootfile_name']),
-	# Year = cms.untracked.uint32(2016),
-	# Period = cms.untracked.string('Run2016B'),
-	# Skim = cms.untracked.uint32(0),
+	IsData = cms.untracked.bool(isData),
+	OutFileName = cms.untracked.string(studyroot[filekey]['output_rootfile_name']),
+	#Year = cms.untracked.uint32(2016),
+	#Period = cms.untracked.string('Run2016B'),
+	#Skim = cms.untracked.uint32(0),
 	# # switches of collections
 	GenParticles = cms.untracked.bool(False),
 	RecPrimVertex = cms.untracked.bool(True),
@@ -240,18 +236,18 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	RecJet = cms.untracked.bool(False),
 	RecV0 = cms.untracked.bool(True),
 	# # JEC
-	# # 
+	# #
 	# # Collections
-	# JetCollectionTag = cms.InputTag(""),
-	 PFCandidateCollectionTag = cms.InputTag("particleFlow"),
-	 GenParticleCollectionTag = cms.InputTag("genParticles"),
-	 BeamSpotCollectionTag =  cms.InputTag("offlineBeamSpot"),
-	 PVCollectionTag = cms.InputTag("offlinePrimaryVertices"),
-	 KshortCollectionTag_stand = cms.InputTag("generalV0Candidates","Kshort","RECO"),#the lable RECO is only for the original collection
-	 KshortCollectionTag = cms.InputTag(which_v0['collectionName'], which_v0['lable'], which_v0['Process']),#the lable RECO is only for the original collection
-	 LambdaCollectionTag = cms.InputTag("generalV0Candidates","Lambda","RECO"),
-	 TauPiZeroCollectionTag = cms.InputTag("hpsPFTauProducer","pizeros","RECO"),
-	# SecVertexCollectionTag = cms.InputTag("inclusiveSecondaryVertices"),
+	#JetCollectionTag = cms.InputTag(""),
+	PFCandidateCollectionTag = cms.InputTag("particleFlow"),
+	GenParticleCollectionTag = cms.InputTag("genParticles"),
+	BeamSpotCollectionTag =  cms.InputTag("offlineBeamSpot"),
+	PVCollectionTag = cms.InputTag("offlinePrimaryVertices"),
+	KshortCollectionTag_stand = cms.InputTag("generalV0Candidates","Kshort","RECO"),# the lable RECO is only for the original collection
+	KshortCollectionTag = cms.InputTag(which_v0['collectionName'], which_v0['lable'], which_v0['Process']),# the lable RECO is only for the original collection
+	LambdaCollectionTag = cms.InputTag("generalV0Candidates", "Lambda", "RECO"),
+	TauPiZeroCollectionTag = cms.InputTag("hpsPFTauProducer", "pizeros", "RECO"),
+	#SecVertexCollectionTag = cms.InputTag("inclusiveSecondaryVertices"),
 	# tracks
 	RecTrackPtMin = cms.untracked.double(1.0),
 	RecTrackEtaMax = cms.untracked.double(2.4),
@@ -272,7 +268,7 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	RecElectronNum = cms.untracked.int32(0),
 	# taus
 	RecTauPtMin = cms.untracked.double(18),
-	RecTauEtaMax = cms.untracked.double(2.4),                                      
+	RecTauEtaMax = cms.untracked.double(2.4),
 	RecTauNum = cms.untracked.int32(0),
 	# jets
 	RecJetPtMin = cms.untracked.double(18.),
@@ -282,20 +278,21 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	Debug = cms.untracked.bool(False),
 	Mute = cms.untracked.bool(True),
 	Match_KsV0_to_HPS = cms.untracked.bool(True),
-	HPSTrackTag = cms.InputTag("HPSTrackLable", "HPSTracks", "HPSTRACKS")#,
+	# Access to the tracks collection from HPS used to reco V0
+	HPSTrackTag = cms.InputTag("hpsTracks", "HPSTracks", pName)
 	#tkIPSigXYCut = cms.double(-1),# was 2
 	#vtxDecaySigXYCut = cms.double(10)#10
 )
 
+print("PS: Define the analysis sequence of modules")
+if which_v0['newv0']:
+	process.path = cms.Path(process.hpsTracks * which_v0["process_link"] * process.demo)
+else:
+	process.path = cms.Path(process.demo)
 
-# Run all three versions of the algorithm.
-if which_v0['newv0']:process.path = cms.Path(process.hpsTracks * which_v0["process_link"] * process.demo)
-else: process.path = cms.Path(process.demo)
-# Writer to a new file called output.root.  Save only the new K-shorts and the primary vertices (for later exercises).
-
+print("PS: Writer to a new file called output.root.  Save only the new K-shorts and the primary vertices (for later exercises).")
 process.TFileService = cms.Service("TFileService", fileName = cms.string(studyroot[filekey]['output_rootfile_name'])) #, closeFileFast = cms.untracked.bool(True)
 
-#HERE
 #this should probably go only together with grid
 '''  EDM output files (i.e. output files produced by PoolOutputModule)
 	process.output = cms.OutputModule("PoolOutputModule",
