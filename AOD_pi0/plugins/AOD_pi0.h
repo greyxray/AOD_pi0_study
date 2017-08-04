@@ -1,3 +1,6 @@
+#ifndef AOD_pi0_H
+#define AOD_pi0_H
+
 #include <memory>
 #include <map>
 #include <fstream>      // std::ofstream
@@ -186,14 +189,14 @@ const int MAXNHISTOS = 15;
 const int MAXKS = 500;
 
 // pdg mass constants
-namespace 
+namespace PDGMassConstants
 {
-	 const double piMass = 0.13957018;
-	 const double piMassSquared = piMass*piMass;
-	 const double protonMass = 0.938272046;
-	 const double protonMassSquared = protonMass*protonMass;
-	 const double kShortMass = 0.497614;
-	 const double lambdaMass = 1.115683;
+	const double piMass = 0.13957018;
+	const double piMassSquared = piMass*piMass;
+	const double protonMass = 0.938272046;
+	const double protonMassSquared = protonMass*protonMass;
+	const double kShortMass = 0.497614;
+	const double lambdaMass = 1.115683;
 }
 
 typedef ROOT::Math::SMatrix<double, 3, 3, ROOT::Math::MatRepSym<double, 3> > SMatrixSym3D;
@@ -207,7 +210,12 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 		explicit  AOD_pi0(const edm::ParameterSet&);
 		~AOD_pi0();
 
-		unsigned int AddGammas(const edm::Event& iEvent, const edm::EventSetup& iSetup) ;
+		unsigned int AddGammas(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+		void GenLevStudy(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+		void Pi0Study(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+		void K892(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+		void GeneralStudy(const edm::Event& iEvent, const edm::EventSetup& iSetup);
+		void KFromV0Producer(const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
 		static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 		static void RecO_Cand_type(const reco::Candidate* cand);
@@ -945,3 +953,5 @@ void AOD_pi0::fillDescriptions(edm::ConfigurationDescriptions& descriptions)
 	desc.setUnknown();
 	descriptions.addDefault(desc);
 }
+
+#endif
