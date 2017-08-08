@@ -50,8 +50,10 @@ def haddMultiple(inputTuple):
 	if verbosity >= 0:
 		print "Now hadding files %i-%i of %i." % (startNum, endNum, totalNum)
 	if verbosity >= 2:
+		print "call(args)", args
 		retcode = call(args)
 	else:
+		print "verbosity else"
 		retcode = call(args, stdout=open(devnull, 'wb'))
 	# Check to makesure that hadd did not throw an error
 	if retcode != 0:
