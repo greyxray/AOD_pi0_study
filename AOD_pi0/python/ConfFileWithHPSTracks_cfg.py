@@ -274,12 +274,15 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	RecJetPtMin = cms.untracked.double(18.),
 	RecJetEtaMax = cms.untracked.double(5.2),
 	RecJetNum = cms.untracked.int32(0),
+	# matched Kaons
+	Match_KsV0_to_HPS = cms.untracked.bool(True),
+	DZCut = cms.untracked.double(999.),
+	KtoTauDR = cms.untracked.double(0.5),
+	# Access to the tracks collection from HPS used to reco V0
+	HPSTrackTag = cms.InputTag("hpsTracks", "HPSTracks", pName),
 	# other
 	Debug = cms.untracked.bool(False),
-	Mute = cms.untracked.bool(True),
-	Match_KsV0_to_HPS = cms.untracked.bool(True),
-	# Access to the tracks collection from HPS used to reco V0
-	HPSTrackTag = cms.InputTag("hpsTracks", "HPSTracks", pName)
+	Mute = cms.untracked.bool(True)
 	#tkIPSigXYCut = cms.double(-1),# was 2
 	#vtxDecaySigXYCut = cms.double(10)#10
 )
