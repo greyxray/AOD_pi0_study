@@ -7,5 +7,5 @@
 *.tar.gz
 *.gz
 *.pyc
-AOD_pi0/plots/*
+*/plots/*
 geninfo.txt
