@@ -218,7 +218,11 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 		void KFromV0Producer(const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
 		static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+		void ResetBranchesPerEvent();
 		static void RecO_Cand_type(const reco::Candidate* cand);
+		bool BetterPionMatch(TLorentzVector tau_pion, int chargeTauPion, TLorentzVector v0_ks_pion, int chargeKPion, int firstfound, double & dR);
+		template  <typename VectoreType >
+		void CombinatoricPairs(vector<VectoreType> collection);
 		template  <typename VectoreType >
 		void CombinatoricOfTwoToNeutralInvM(vector<VectoreType*> collection/*reco::RecoTauPiZero */,
 																		TString typeOfCollection,
@@ -288,13 +292,30 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 			Double_t pt_2;
 			Double_t eta_1;
 			Double_t eta_2;
+			Int_t nPionsInJetsWithKs;
 
-			std::vector<double> v_Ks_v0_inv_m_pi; //Int_t Ks_v0_inv_m_pi[MAXKS];
+			std::vector<double> v_v0_Ks_inv_m_pi; //Int_t Ks_v0_inv_m_pi[MAXKS];
+			std::vector<double> v_v0_Ks_DR;
+			std::vector<double> v_v0_Ks_pions_DR;
+			std::vector<Double_t> v_v0_pt_1;
+			std::vector<Double_t> v_v0_pt_2;
+			std::vector<Double_t> v_v0_eta_1;
+			std::vector<Double_t> v_v0_eta_2;
+			std::vector<Double_t> v_v0_matched_pt_1;
+			std::vector<Double_t> v_v0_matched_pt_2;
+			std::vector<Double_t> v_v0_matched_eta_1;
+			std::vector<Double_t> v_v0_matched_eta_2;
 			std::vector<Int_t> v_v0_count;
-			std::vector<Double_t> v_pt_1;
-			std::vector<Double_t> v_pt_2;
-			std::vector<Double_t> v_eta_1;
-			std::vector<Double_t> v_eta_2;
+			std::vector<Int_t> v_nPionsInJetsWithKs;
+			std::vector<double> v_KsCombinatoricMass;
+			std::vector<double> v_KsCombinatoricDR;
+			std::vector<double> v_HPS_Ks_inv_m_pi;
+			std::vector<double> v_HPS_Ks_DR;
+			std::vector<double> v_HPS_Ks_pions_DR;
+			std::vector<Double_t> v_HPS_pt_1;
+			std::vector<Double_t> v_HPS_pt_2;
+			std::vector<Double_t> v_HPS_eta_1;
+			std::vector<Double_t> v_HPS_eta_2;
 
 		// Histograms
 			TH1D* pions_inv_m;
@@ -401,6 +422,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 			edm::Handle<reco::PFTauCollection> PF_hps_taus;
 			edm::Handle<reco::VertexCollection> Vertex;
 			edm::Handle<reco::PFCandidateCollection> Tracks;
+			edm::Handle<reco::TrackCollection> HPSTraHandle;
 
 		// Variables
 			std::ofstream ofs;
@@ -484,12 +506,15 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 				double cJetPtMin;
 				double cJetEtaMax;
 				int cJetNum;
+			// matched Kaons
+				bool match_KsV0_to_HPS;
+				double cDZCut;
+				double cKtoTauDR;
 			// other
 				bool debug;
 				bool mute;
-				bool match_KsV0_to_HPS;
-				double tkIPSigXYCut;// = cms.double(-1),# was 2
-				double vtxDecaySigXYCut;// = cms.double(10)#10
+				double tkIPSigXYCut;
+				double vtxDecaySigXYCut;
 
 			int num_pion_res;
 			double max_inv_mass;
@@ -538,10 +563,13 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 	cJetPtMin(iConfig.getUntrackedParameter<double>("RecJetPtMin", 30.)),
 	cJetEtaMax(iConfig.getUntrackedParameter<double>("RecJetEtaMax", 4.5)),
 	cJetNum(iConfig.getUntrackedParameter<int>("RecJetNum", 0)),
+	// matched Kaons
+	match_KsV0_to_HPS(iConfig.getUntrackedParameter<bool>("Match_KsV0_to_HPS", true)),
+	cDZCut(iConfig.getUntrackedParameter<double>("DZCut", 999.)),
+	cKtoTauDR(iConfig.getUntrackedParameter<double>("KtoTauDR", 1.)),
 	//other
 	debug(iConfig.getUntrackedParameter<bool>("Debug", true)),
 	mute(iConfig.getUntrackedParameter<bool>("Mute", false)),
-	match_KsV0_to_HPS(iConfig.getUntrackedParameter<bool>("Match_KsV0_to_HPS", true)),
 	tkIPSigXYCut(iConfig.getUntrackedParameter<double>("tkIPSigXYCut", -1)),
 	vtxDecaySigXYCut(iConfig.getUntrackedParameter<double>("vtxDecaySigXYCut", -1)),
 	num_pion_res(0),
@@ -796,14 +824,31 @@ void AOD_pi0::beginJob()
 		tree->Branch("pt_2", &pt_2, "pt_2/D");
 		tree->Branch("eta_1", &eta_1, "eta_1/D");
 		tree->Branch("eta_2", &eta_2, "eta_2/D");
+		tree->Branch("nPionsInJetsWithKs", &nPionsInJetsWithKs, "nPionsInJetsWithKs/i");
 
 		once_tree->Branch("primvertex_count", &primvertex_count, "primvertex_count/i"); 
 		once_tree->Branch("goodprimvertex_count", &goodprimvertex_count, "goodprimvertex_count/i"); 
-		once_tree->Branch("v_Ks_v0_inv_m_pi", &v_Ks_v0_inv_m_pi);
-		once_tree->Branch("v_pt_1", &v_pt_1);
-		once_tree->Branch("v_pt_2", &v_pt_2);
-		once_tree->Branch("v_eta_1", &v_eta_1);
-		once_tree->Branch("v_eta_2", &v_eta_2);
+		once_tree->Branch("v_v0_Ks_inv_m_pi", &v_v0_Ks_inv_m_pi);
+		once_tree->Branch("v_v0_Ks_DR", &v_v0_Ks_DR);
+		once_tree->Branch("v_v0_Ks_pions_DR", &v_v0_Ks_pions_DR);
+		once_tree->Branch("v_v0_pt_1", &v_v0_pt_1);
+		once_tree->Branch("v_v0_pt_2", &v_v0_pt_2);
+		once_tree->Branch("v_v0_eta_1", &v_v0_eta_1);
+		once_tree->Branch("v_v0_eta_2", &v_v0_eta_2);
+		once_tree->Branch("v_v0_matched_pt_1", &v_v0_matched_pt_1);
+		once_tree->Branch("v_v0_matched_pt_2", &v_v0_matched_pt_2);
+		once_tree->Branch("v_v0_matched_eta_1", &v_v0_matched_eta_1);
+		once_tree->Branch("v_v0_matched_eta_2", &v_v0_matched_eta_2);
+		once_tree->Branch("v_KsCombinatoricMass", &v_KsCombinatoricMass);
+		once_tree->Branch("v_KsCombinatoricDR", &v_KsCombinatoricDR);
+		once_tree->Branch("v_HPS_Ks_inv_m_pi", &v_HPS_Ks_inv_m_pi);
+		once_tree->Branch("v_HPS_Ks_DR", &v_HPS_Ks_DR);
+		once_tree->Branch("v_HPS_Ks_pions_DR", &v_HPS_Ks_pions_DR);
+		once_tree->Branch("v_HPS_pt_1", &v_HPS_pt_1);
+		once_tree->Branch("v_HPS_pt_2", &v_HPS_pt_2);
+		once_tree->Branch("v_HPS_eta_1", &v_HPS_eta_1);
+		once_tree->Branch("v_HPS_eta_2", &v_HPS_eta_2);
+		once_tree->Branch("v_nPionsInJetsWithKs", &v_nPionsInJetsWithKs, "nPionsInJetsWithKs/i");
 
 	// Former stored as histograms
 	/*

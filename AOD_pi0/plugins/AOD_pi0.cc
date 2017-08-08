@@ -20,27 +20,45 @@
 #include "KFromV0Producer.h"
 #include "FWCore/Framework/interface/MakerMacros.h" //define this as a plug-in
 
+void AOD_pi0::ResetBranchesPerEvent()
+{
+	v_v0_Ks_inv_m_pi.clear();
+	v_v0_Ks_DR.clear();
+	v_v0_Ks_pions_DR.clear();
+	v_v0_pt_1.clear();
+	v_v0_pt_2.clear();
+	v_v0_eta_1.clear();
+	v_v0_eta_2.clear();
+	v_v0_matched_pt_1.clear();
+	v_v0_matched_pt_2.clear();
+	v_v0_matched_eta_1.clear();
+	v_v0_matched_eta_2.clear();
+	v_KsCombinatoricMass.clear();
+	v_KsCombinatoricDR.clear();
+	v_HPS_Ks_inv_m_pi.clear();
+	v_HPS_Ks_DR.clear();
+	v_HPS_Ks_pions_DR.clear();
+	v_HPS_pt_1.clear();
+	v_HPS_pt_2.clear();
+	v_HPS_eta_1.clear();
+	v_HPS_eta_2.clear();
+
+	Ks_v0_inv_m_pi = -1;
+	v0_count = pizero_count = 0;
+	pt_1 = pt_2 = 0;
+	eta_1 = eta_2 = 0;
+	primvertex_count = goodprimvertex_count = nPionsInJetsWithKs = -1;
+}
+
 // ------------ method called for each event  ------------
 void AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 	using namespace edm;
-	v0_count = 0 ;
-	pizero_count = 0;
-	pt_1 = 0;
-	pt_2 = 0;
-	eta_1 = 0;
-	eta_2 = 0;
-	v_Ks_v0_inv_m_pi.clear();
-	v_v0_count.clear();
-	v_pt_1.clear();
-	v_pt_2.clear();
-	v_eta_1.clear();
-	v_eta_2.clear();
-	Ks_v0_inv_m_pi = -1;
+	ResetBranchesPerEvent();
 
 	iEvent.getByToken( KshortCollectionToken_, V0Ks); //V0 Ks's token
 	iEvent.getByToken( KshortCollectionTag_stand_, V0Ks_standart); //V0 Ks's standart
-	iEvent.getByToken(BeamSpotToken_, TheBeamSpotHandle);
+	iEvent.getByToken( BeamSpotToken_, TheBeamSpotHandle);
 	//Tau's token based hps- according to https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookPATDataFormats#PatTau contains the same as PFjets
 	//typedef vector< PFTau >  PFTauCollection - the collection of charged pions will be taken from here
 	iEvent.getByToken( TauHPSCollectionToken_, PF_hps_taus);
@@ -50,7 +68,7 @@ void AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		// const MagneticField* theMagneticField = theMagneticFieldHandle.product();
 
 		//  edm::Handle<reco::TrackCollection> HPSTraHandle;
-		// iEvent.getByToken(HPSTrackTagToken_, HPSTraHandle);
+	iEvent.getByToken( HPSTrackTagToken_, HPSTraHandle);
 		// if (HPSTraHandle.isValid())  dout("HPStrackCollection is fine");
 		// else dout("HPStrackCollection is NOT VALID", HPSTraHandle->size());
 		// // const reco::TrackCollection* theTrackCollection = HPSTraHandle.product();
@@ -61,7 +79,6 @@ void AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	if (crecprimvertex)
 	{
 		iEvent.getByToken(PVToken_, Vertex);
-		primvertex_count = goodprimvertex_count = 0;
 
 		pv_position = math::XYZPoint(0., 0., 0.);
 		if (Vertex.isValid())
