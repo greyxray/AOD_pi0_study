@@ -3,7 +3,7 @@ from WMCore.DataStructs.LumiList import LumiList
 
 config = config()
 
-config.General.requestName = 'QCD_Pt_20toInf_MuEnrichedPt15_finer_binning_2_with_eta_pt' #
+config.General.requestName = 'QCD_Pt_20toInf_MuEnrichedPt15_HPS_matched' #
 config.General.workArea = 'crab_projects'
 config.General.transferOutputs = True # whether or not to transfer the output files to the storage site.
 config.General.transferLogs = False
@@ -19,6 +19,6 @@ config.Data.unitsPerJob = 1
 # No config.Data.runRange for MC
 config.Data.outLFNDirBase = '/store/user/%s/' % (getUsernameFromSiteDB())
 config.Data.publication = True
-config.Data.outputDatasetTag = 'CRAB3_tutorial_May2015_Data_analysis_QCD_Pt_20toInf_MuEnrichedPt15_finer_binning_2_with_eta_pt'
+config.Data.outputDatasetTag = 'CRAB3_tutorial_May2015_Data_analysis_QCD_Pt_20toInf_MuEnrichedPt15_HPS_matched'
 
 config.Site.storageSite = 'T2_DE_RWTH'
