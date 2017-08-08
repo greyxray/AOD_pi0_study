@@ -47,17 +47,17 @@ if __name__ == '__main__':
 	#full_mc = 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/ohlushch/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/CRAB3_tutorial_May2015_Data_analysis_QCD_Pt_20toInf_MuEnrichedPt15/170516_113031/'
 	# full_data = '/net/scratch_cms3b/hlushchenko/crab_outputs_K/JetHT/CRAB3_tutorial_May2015_Data_analysis_JetHTdata_full/170516_113921/'
 	# full_mc = '/net/scratch_cms3b/hlushchenko/crab_outputs_K/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/CRAB3_tutorial_May2015_Data_analysis_QCD_Pt_20toInf_MuEnrichedPt15/170516_113031/'
-	
+
 	# extended binning
 	#full_data = 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/ohlushch/JetHT/CRAB3_tutorial_May2015_Data_analysis_JetHTdata_finer_binning_2l/170518_090102/'
 	#full_mc = 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/ohlushch/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/CRAB3_tutorial_May2015_Data_analysis_QCD_Pt_20toInf_MuEnrichedPt15_finer_binning_2/170518_090037/'
-	
+
 	# with bins of eta pt
 	full_data = 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/ohlushch/JetHT/CRAB3_tutorial_May2015_Data_analysis_JetHTdata_HPS_matched/170807_223108/'
 	full_mc = 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/ohlushch/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/CRAB3_tutorial_May2015_Data_analysis_QCD_Pt_20toInf_MuEnrichedPt15_HPS_matched/170807_222620/'
 	# TODO: recursive under the dir
 	crab_ds = {
-		'data': 
+		'data':
 			{
 			'in_path': [full_data + '0000/', full_data + '0001/', full_data + '0002/'],
 			'out_name': 'out_data_full_finer_binning_new.root',
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 			'in_files': []
 			}
 		}
-	for key in crab_ds.keys():#['data']:#
+	for key in ['mc']:#['data']:#crab_ds.keys():
 		print "Key:", key
 		for path in crab_ds[key]['in_path']:
 			print "\tpath:", path, "..."
@@ -81,21 +81,21 @@ if __name__ == '__main__':
 
 				if line[-6:-1] != ".root": continue
 				crab_ds[key]['in_files'].append(path+line[:-1])
-				
+
 				# # To remove unwanted hist from the rootfile
 				# print 'rootrm '+ path+line[:-1] + ":h_Ks_v0_vz"
 				# os.system('rootrm '+ path+line[:-1] + ":h_Ks_v0_vz")
 			print "done:"
 
-		if len(crab_ds[key]['in_files']) < 20: 
+		if len(crab_ds[key]['in_files']) < 20:
 			print "less then I thought"
-			os.system('hadd -f '+ crab_ds[key]['out_name'] + " "  + ' '.join(crab_ds[key]['in_files']))	
+			os.system('hadd -f '+ crab_ds[key]['out_name'] + " "  + ' '.join(crab_ds[key]['in_files']))
 		else:
-			ahadd.main(['-j', '1', 
-				'-t', '/net/scratch_cms3b/hlushchenko/crab_outputs_K/temp_merging_dir', #'/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_7_4_7/src/tmp_dir', 
+			ahadd.main(['-j', '1',
+				'-t', '/net/scratch_cms3b/hlushchenko/crab_outputs_K/temp_merging_dir', #'/.automount/home/home__home2/institut_3b/hlushchenko/Work/CMSSW_7_4_7/src/tmp_dir',
 				'-V', '-f',# '-s',
 				crab_ds[key]['out_name']] + crab_ds[key]['in_files']) #? didn't work with  *crab_ds[key]['in_files']
-			
+
 		print "\toutputfile:", crab_ds[key]['out_name']
 
 	'''
@@ -105,9 +105,9 @@ if __name__ == '__main__':
 	files = []
 	while 1:
 		line = p.readline()
-		if not line: 
+		if not line:
 			break
-		if len(line)>0: 
+		if len(line)>0:
 			#print len(line), line[:-1]
 			files.append(path+line[:-1])
 
