@@ -53,24 +53,24 @@ if __name__ == '__main__':
 	#full_mc = 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/ohlushch/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/CRAB3_tutorial_May2015_Data_analysis_QCD_Pt_20toInf_MuEnrichedPt15_finer_binning_2/170518_090037/'
 
 	# with bins of eta pt
-	full_data = 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/ohlushch/JetHT/CRAB3_tutorial_May2015_Data_analysis_JetHTdata_HPS_matched/170807_223108/'
-	full_mc = 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/ohlushch/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/CRAB3_tutorial_May2015_Data_analysis_QCD_Pt_20toInf_MuEnrichedPt15_HPS_matched/170807_222620/'
+	full_data = 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/ohlushch/JetHT/CRAB3_tutorial_May2015_Data_analysis_JetHTdata_HPS_matched_byReference_full/170813_173620/'
+	full_mc = 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/ohlushch/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/CRAB3_tutorial_May2015_Data_analysis_QCD_Pt_20toInf_MuEnrichedPt15_HPS_matched_byReference_full/170813_173305/'
 	# TODO: recursive under the dir
 	crab_ds = {
 		'data':
 			{
 			'in_path': [full_data + '0000/', full_data + '0001/', full_data + '0002/'],
-			'out_name': 'out_data_full_finer_binning_new.root',
+			'out_name': 'out_data_full_matched_byReference.root',
 			'in_files': []
 			},
 		'mc':
 			{
 			'in_path': [full_mc + '0000/', full_mc + '0001/'],
-			'out_name': 'out_mc_full_finer_binning_new.root',
+			'out_name': 'out_mc_full_matched_byReference.root',
 			'in_files': []
 			}
 		}
-	for key in ['mc']:#['data']:#crab_ds.keys():
+	for key in crab_ds.keys():#['data']:#crab_ds.keys():
 		print "Key:", key
 		for path in crab_ds[key]['in_path']:
 			print "\tpath:", path, "..."
