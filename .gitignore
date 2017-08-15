@@ -8,5 +8,5 @@
 *.gz
 *.pyc
 */plots/*
-.nfs000000010552a627000039a5
+.nfs00*
 geninfo.txt
