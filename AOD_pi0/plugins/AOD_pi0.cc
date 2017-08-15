@@ -18,13 +18,18 @@
 #include "K892.h"
 #include "GeneralStudy.h"
 #include "KFromV0Producer.h"
+#include "FillPion.h"
 #include "FWCore/Framework/interface/MakerMacros.h" //define this as a plug-in
 
 void AOD_pi0::ResetBranchesPerEvent()
 {
+	// tree_once
+	v0_Ks_count = -1;
+	primvertex_count = -1;
+	goodprimvertex_count = -1;
+	numOfUnmatchedKaons = -1;
 	v_v0_Ks_inv_m_pi.clear();
-	v_v0_Ks_DR.clear();
-	v_v0_Ks_pions_DR.clear();
+	v_v0_pions_DR.clear();
 	v_v0_pt_1.clear();
 	v_v0_pt_2.clear();
 	v_v0_eta_1.clear();
@@ -35,19 +40,19 @@ void AOD_pi0::ResetBranchesPerEvent()
 	v_v0_matched_eta_2.clear();
 	v_KsCombinatoricMass.clear();
 	v_KsCombinatoricDR.clear();
-	v_HPS_Ks_inv_m_pi.clear();
-	v_HPS_Ks_DR.clear();
-	v_HPS_Ks_pions_DR.clear();
-	v_HPS_pt_1.clear();
-	v_HPS_pt_2.clear();
-	v_HPS_eta_1.clear();
-	v_HPS_eta_2.clear();
+	v_hps_Ks_inv_m_pi.clear();
+	v_hps_Ks_DR.clear();
+	v_hps_Ks_pions_DR.clear();
+	v_hps_pt_1.clear();
+	v_hps_pt_2.clear();
+	v_hps_eta_1.clear();
+	v_hps_eta_2.clear();
+	v_nPionsInJetsWithKs.clear();
 
-	Ks_v0_inv_m_pi = -1;
-	v0_count = pizero_count = 0;
-	pt_1 = pt_2 = 0;
-	eta_1 = eta_2 = 0;
-	primvertex_count = goodprimvertex_count = nPionsInJetsWithKs = -1;
+	pizero_count = -1;
+
+	ResetBranchesKaonTree();
+	ResetBranchesPionTree();
 }
 
 // ------------ method called for each event  ------------

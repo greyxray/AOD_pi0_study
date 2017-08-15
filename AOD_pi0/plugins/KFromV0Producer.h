@@ -11,12 +11,13 @@ void AOD_pi0::KFromV0Producer(const edm::Event& iEvent, const edm::EventSetup& i
 	{
 		dlog("RECO Ks's Particles");
 		vector<reco::CandidateCollection> v_daughters;
-		v0_count = V0Ks->size();
-		dout("Size V0:", v0_count, "vs", V0Ks_standart->size());
-
+		v0_Ks_count = V0Ks->size();
+		dout("Size V0:", v0_Ks_count, "vs", V0Ks_standart->size());
+		bool onexit = false;
 		// For events with Kaons
-		if (v0_count > 0)
+		if (v0_Ks_count > 0)
 		{
+			numOfUnmatchedKaons = 0;
 			// Initial
 			int number_of_passed_ks = 0;
 			int number_of_passed_ks_in_hps_tau = 0;
@@ -47,17 +48,23 @@ void AOD_pi0::KFromV0Producer(const edm::Event& iEvent, const edm::EventSetup& i
 			// Loop over V0 K0s with matching of V0 pions to HPS pions
 			for(unsigned k0_i = 0; k0_i < V0Ks->size(); k0_i++) 
 			{
+				ResetBranchesKaonTree();
+				unsigned int v0NegPionIndex(0), v0PosPionIndex(1);
+				if ((*V0Ks)[k0_i].daughter(0)->charge()>0)
+				{
+					v0NegPionIndex = 1; v0PosPionIndex = 0;
+				}
 				// In dz Kaons selected as taus: https://twiki.cern.ch/twiki/bin/view/CMS/HiggsToTauTauWorking2016#Baseline_Selection
 				if (abs((*V0Ks)[k0_i].vz() - pv_position.z()) > cDZCut) continue; // from PV to Ks
 
 				// Init
 					// K->pipi
-						TLorentzVector v_Ks((*V0Ks)[k0_i].px(), (*V0Ks)[k0_i].py(), (*V0Ks)[k0_i].pz(), (*V0Ks)[k0_i].energy());
-						TLorentzVector v0_ks_pion1((*V0Ks)[k0_i].daughter(0)->px(),(*V0Ks)[k0_i].daughter(0)->py(),(*V0Ks)[k0_i].daughter(0)->pz(),(*V0Ks)[k0_i].daughter(0)->energy());
-						TLorentzVector v0_ks_pion2((*V0Ks)[k0_i].daughter(1)->px(),(*V0Ks)[k0_i].daughter(1)->py(),(*V0Ks)[k0_i].daughter(1)->pz(),(*V0Ks)[k0_i].daughter(1)->energy());
+						TLorentzVector Ks((*V0Ks)[k0_i].px(), (*V0Ks)[k0_i].py(), (*V0Ks)[k0_i].pz(), (*V0Ks)[k0_i].energy());
+						TLorentzVector v0NegPion((*V0Ks)[k0_i].daughter(v0NegPionIndex)->px(),(*V0Ks)[k0_i].daughter(v0NegPionIndex)->py(),(*V0Ks)[k0_i].daughter(v0NegPionIndex)->pz(),(*V0Ks)[k0_i].daughter(v0NegPionIndex)->energy());
+						TLorentzVector v0PosPion((*V0Ks)[k0_i].daughter(v0PosPionIndex)->px(),(*V0Ks)[k0_i].daughter(v0PosPionIndex)->py(),(*V0Ks)[k0_i].daughter(v0PosPionIndex)->pz(),(*V0Ks)[k0_i].daughter(v0PosPionIndex)->energy());
 					// Possitioning
-						double distMagXY_PV_Ks = sqrt(pow(v_Ks.X() - pv_position.x(), 2) + pow(v_Ks.Y() - pv_position.y(), 2));// distnce from PV to Ks in XY
-						double distMagXY_BS_Ks = sqrt(pow(v_Ks.X() - BSposition.x(), 2) + pow(v_Ks.Y() - BSposition.y(), 2));// distnce from BS to Ks in XY
+						double distMagXY_PV_Ks = sqrt(pow(Ks.X() - pv_position.x(), 2) + pow(Ks.Y() - pv_position.y(), 2));// distnce from PV to Ks in XY
+						double distMagXY_BS_Ks = sqrt(pow(Ks.X() - BSposition.x(), 2) + pow(Ks.Y() - BSposition.y(), 2));// distnce from BS to Ks in XY
 						//h_Ks_v0_BS_dXY->Fill(distMagXY_BS_Ks); will be filled if both pions of K will be matched to the hps pions
 						//if (distMagXY_PV_Ks > 4.4) continue; // distance from 0.2 -- something is clearly wrong with this cut.
 					// Basic plots for Ks V0 collection
@@ -65,12 +72,6 @@ void AOD_pi0::KFromV0Producer(const edm::Event& iEvent, const edm::EventSetup& i
 						int num = (*V0Ks)[k0_i].numberOfDaughters();//edm::reco::CompositeCandidate::daughters
 						int num_moth = (*V0Ks)[k0_i].numberOfMothers();
 						v0_ks_numb++;
-						Ks_v0_inv_m_pi = (v0_ks_pion1 + v0_ks_pion2).M();
-						pt_1 = v0_ks_pion1.Pt();
-						pt_2 = v0_ks_pion2.Pt();
-						eta_1 = v0_ks_pion1.Eta();
-						eta_2 = v0_ks_pion2.Eta();
-						max_ks_daughter_pt = max(v0_ks_pion1.Pt(), v0_ks_pion2.Pt());
 
 				// Basic printout
 					dout("distMagXY_PV_Ks:", distMagXY_PV_Ks);
@@ -89,8 +90,8 @@ void AOD_pi0::KFromV0Producer(const edm::Event& iEvent, const edm::EventSetup& i
 					{
 						// Init
 							reco::PFTauRef pftauref(PF_hps_taus, tau_index);
-							TLorentzVector v_tau(pftauref->px(), pftauref->py(), pftauref->pz(), pftauref->energy());
-							dout("\t\t\t\tPF tau i", tau_index, "p:", pftauref->px(), pftauref->py(), pftauref->pz(), "Energy:", pftauref->energy(), "dR:", v_tau.DeltaR(v_Ks));
+							TLorentzVector tau(pftauref->px(), pftauref->py(), pftauref->pz(), pftauref->energy());
+							dout("\t\t\t\tPF tau i", tau_index, "p:", pftauref->px(), pftauref->py(), pftauref->pz(), "Energy:", pftauref->energy(), "dR:", tau.DeltaR(Ks));
 							// Create pions collection of tau
 							vector < reco::PFCandidatePtr  > tau_signalPFChargedHadrCands    = pftauref->signalPFChargedHadrCands();//typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
 							vector < reco::PFCandidatePtr  > tau_isolationPFChargedHadrCands = pftauref->isolationPFChargedHadrCands(); // //typedef edm::Ptr<PFCandidate> reco::PFCandidatePtr
@@ -104,88 +105,156 @@ void AOD_pi0::KFromV0Producer(const edm::Event& iEvent, const edm::EventSetup& i
 						// Check if tau jet kinematicaly matches to Ks of V0: tau^ks dr < 0.5
 						// Ks are selected close to PV, so dR to tau jet ensures that the Ks of V0 is in tau jet
 						// TODO FIND HERE THE MOST CLOSE JET INSTEAD OF THE FIRST PASSING THE CUT
-						if (v_tau.DeltaR(v_Ks) > cKtoTauDR) continue;
+						if (tau.DeltaR(Ks) > cKtoTauDR) continue;
 
 						if (false) CombinatoricPairs(tau_picharge);
 
 						// Pion to pion matching - the closest ones in dR
-						// TODO: think how to remove already matched from previous kaons matching pions
-						// TODO: check how many kaons/pions are not matched with this techniq; what if the first pion matches better to the second
+						// TODO: think if to remove already matched from previous kaons matching pions
+						// TODO: check how many kaons/pions are not matched with this techniq; what if the first pion matches better to the second - done 50%
 						for(unsigned pi_i = 0; pi_i < tau_picharge.size(); pi_i++)
 						{
 							if (!tau_picharge[pi_i]->bestTrack()) continue;
-
-							// Init
-								TLorentzVector tau_pion(tau_picharge[pi_i]->px(), tau_picharge[pi_i]->py(), tau_picharge[pi_i]->pz(), tau_picharge[pi_i]->energy());
-								double firstDaugDR = tau_pion.DeltaR(v0_ks_pion1); //TEMP_COMMENTED h_Ks_v0_pions_and_hps_pions_combined_dR->Fill(tau_pion.DeltaR(v0_ks_pion1));
-								double secondDaugDR = tau_pion.DeltaR(v0_ks_pion2); //TEMP_COMMENTED h_Ks_v0_pions_and_hps_pions_combined_dR->Fill(tau_pion.DeltaR(v0_ks_pion2));
-								//if (tau_pion.M() < 0.1) break; //ISSUE
+							if (k0_i == 0) dlog("\ttau pion:", tau_picharge[pi_i]->px(), tau_picharge[pi_i]->py(), tau_picharge[pi_i]->pz(), sqrt(pow(tau_picharge[pi_i]->energy(), 2) + pow(0.13957018, 2)) );
+							if (k0_i == 0) dlog("\ttau pion: bestTrack: ", tau_picharge[pi_i]->bestTrack()->px(), tau_picharge[pi_i]->bestTrack()->py(), tau_picharge[pi_i]->bestTrack()->pz());
 
 							// Best possible matching of tau jets pions to Ks V0 pions
-							// if matched to first pion of Ks V0 and it is matched better than the previous candidate
-							if (BetterPionMatch(tau_pion, tau_picharge[pi_i]->charge(), v0_ks_pion1, (*V0Ks)[k0_i].daughter(0)->charge(), firstfound, deltaR1))
+							if (matchByReference)
 							{
-								firstfound = pi_i;
-								dlog("dR:", v_tau.DeltaR(v_Ks), "But first pion found", "\ntau pion1:", tau_picharge[pi_i]->px(), tau_picharge[pi_i]->py(), tau_picharge[pi_i]->pz(), tau_picharge[pi_i]->energy());
+								// Checks by references that the dR of v0 pion associated track and hps track is 0
+								if (firstfound != -1 && secondfound != -1) break;
+
+								if (tau_picharge[pi_i]->charge() == (*V0Ks)[k0_i].daughter(v0NegPionIndex)->charge() && PionMatchByRefference(tau_picharge[pi_i], (*V0Ks)[k0_i].daughter(v0NegPionIndex)))
+									firstfound = pi_i;
+								else if (tau_picharge[pi_i]->charge() == (*V0Ks)[k0_i].daughter(v0PosPionIndex)->charge() && PionMatchByRefference(tau_picharge[pi_i], (*V0Ks)[k0_i].daughter(v0PosPionIndex)))
+									secondfound = pi_i;
+								else continue;
 							}
-							else if (BetterPionMatch(tau_pion, tau_picharge[pi_i]->charge(), v0_ks_pion2, (*V0Ks)[k0_i].daughter(1)->charge(), secondfound, deltaR2))
+							else
 							{
-								secondfound = pi_i;
+								// Init
+									TLorentzVector tau_pion(tau_picharge[pi_i]->px(), tau_picharge[pi_i]->py(), tau_picharge[pi_i]->pz(), tau_picharge[pi_i]->energy());
+									double firstDaugDR = tau_pion.DeltaR(v0NegPion); //TEMP_COMMENTED h_Ks_v0_pions_and_hps_pions_combined_dR->Fill(tau_pion.DeltaR(v0NegPion));
+									double secondDaugDR = tau_pion.DeltaR(v0PosPion); //TEMP_COMMENTED h_Ks_v0_pions_and_hps_pions_combined_dR->Fill(tau_pion.DeltaR(v0PosPion));
+									//if (tau_pion.M() < 0.1) break; //ISSUE
+
+								// if matched to first pion of Ks V0 and it is matched better than the previous candidate
+								if (BetterPionMatch(tau_pion, tau_picharge[pi_i]->charge(), v0NegPion, (*V0Ks)[k0_i].daughter(v0NegPionIndex)->charge(), firstfound, deltaR1))
+									firstfound = pi_i;
+								else if (BetterPionMatch(tau_pion, tau_picharge[pi_i]->charge(), v0PosPion, (*V0Ks)[k0_i].daughter(v0PosPionIndex)->charge(), secondfound, deltaR2))
+									secondfound = pi_i;
+								else continue;
 							}
 						}
 
-						// Invariant mass of two matched pions
 						if (firstfound != -1 && secondfound != -1)
 						{
+							dout("\tFillPion");
+							FillPion(tau_picharge[firstfound], (*V0Ks)[k0_i].daughter(v0NegPionIndex));
+							FillPion(tau_picharge[secondfound], (*V0Ks)[k0_i].daughter(v0PosPionIndex));
 							// init
-								TLorentzVector v_tau_picharge_firstfound  = TLorentzVector(tau_picharge[firstfound]->px(), tau_picharge[firstfound]->py(), tau_picharge[firstfound]->pz(), tau_picharge[firstfound]->energy());
-								TLorentzVector v_tau_picharge_secondfound = TLorentzVector(tau_picharge[secondfound]->px(), tau_picharge[secondfound]->py(), tau_picharge[secondfound]->pz(), tau_picharge[secondfound]->energy());
-								TLorentzVector v_Ks_from_hps_pions = v_tau_picharge_firstfound + v_tau_picharge_secondfound;
-								double invMassHPSpions = v_Ks_from_hps_pions.M();
-								number_of_passed_ks_in_hps_tau++;
+								TLorentzVector hpsNegPion  = TLorentzVector(tau_picharge[firstfound]->px(), tau_picharge[firstfound]->py(), tau_picharge[firstfound]->pz(), tau_picharge[firstfound]->energy());
+								TLorentzVector hpsPosPion = TLorentzVector(tau_picharge[secondfound]->px(), tau_picharge[secondfound]->py(), tau_picharge[secondfound]->pz(), tau_picharge[secondfound]->energy());
+								TLorentzVector hpsKs = hpsNegPion + hpsPosPion;
 
-							// fill histograms
-								//TEMP_COMMENTED h_Ks_v0_found_in_hps_tau_dR->Fill(TLorentzVector(tau_picharge[firstfound]->px(), tau_picharge[firstfound]->py(), tau_picharge[firstfound]->pz(), tau_picharge[firstfound]->energy()).DeltaR(v_Ks));//   h_Ks_v0_found_in_hps_tau_dR->Fill(v_tau_picharge_firstfound.DeltaR(v_Ks));
-								//TEMP_COMMENTED h_Ks_v0_found_in_hps_tau_dR->Fill(TLorentzVector(tau_picharge[secondfound]->px(), tau_picharge[secondfound]->py(), tau_picharge[secondfound]->pz(), tau_picharge[secondfound]->energy()).DeltaR(v_Ks));//   h_Ks_v0_found_in_hps_tau_dR->Fill(v_tau_picharge_secondfound.DeltaR(v_Ks));
-							
-							nPionsInJetsWithKs = tau_picharge.size();
-							v_HPS_Ks_inv_m_pi.push_back(invMassHPSpions);
-							v_HPS_Ks_DR.push_back(v_tau.DeltaR(v_Ks));
-							v_HPS_pt_1.push_back(v_tau_picharge_firstfound.Pt());
-							v_HPS_pt_2.push_back(v_tau_picharge_secondfound.Pt());
-							v_HPS_eta_1.push_back(v_tau_picharge_firstfound.Eta());
-							v_HPS_eta_2.push_back(v_tau_picharge_secondfound.Eta());
-							v_HPS_Ks_pions_DR.push_back(v_tau_picharge_firstfound.DeltaR(v_tau_picharge_secondfound));
-							v_v0_matched_pt_1.push_back(v0_ks_pion1.Pt());
-							v_v0_matched_pt_2.push_back(v0_ks_pion2.Pt());
-							v_v0_matched_eta_1.push_back(v0_ks_pion1.Eta());
-							v_v0_matched_eta_2.push_back(v0_ks_pion2.Eta());
-							v_nPionsInJetsWithKs.push_back(tau_picharge.size());
+								number_of_passed_ks_in_hps_tau++;
+								TLorentzVector v0_di_pion = v0NegPion + v0PosPion;
+
+							dout("\tTEST V0:", v0_di_pion.X(), v0_di_pion.Y(), v0_di_pion.Z(), v0_di_pion.M(), v0_di_pion.E());
+							dout("\t\t", sqrt(pow(v0_di_pion.E(), 2) - (pow(v0_di_pion.X(),2) + pow(v0_di_pion.Y(),2) + pow(v0_di_pion.Z(),2) )));
+							dout("\tTESTHPS:", hpsKs.X(), hpsKs.Y(), hpsKs.Z(), hpsKs.M(), hpsKs.E());
+							dout("\t\t", sqrt(pow(hpsKs.E(), 2) - (pow(hpsKs.X(),2) + pow(hpsKs.Y(),2) + pow(hpsKs.Z(),2) )));
+							if (hpsKs.M() < 0.43) onexit = true;
+
+							// tree_kaon
+								nPionsInJetsWithKs = tau_picharge.size();
+								// V0 comparison to HPS
+								v0hps_pions_dPhi_1 = hpsNegPion.DeltaPhi(v0NegPion);
+								v0hps_pions_dEta_1 = hpsNegPion.Eta() - v0NegPion.Eta();
+								v0hps_pions_dPhi_2 = hpsPosPion.DeltaPhi(v0PosPion);
+								v0hps_pions_dEta_2 = hpsPosPion.Eta() - v0PosPion.Eta();
+								v0hps_KsTau_DR = tau.DeltaR(Ks);
+								v0hps_KsDiPion_DR = hpsKs.DeltaR(Ks);
+								// HPS Kaon
+								hps_Ks_inv_m_pi = hpsKs.M();
+								hps_pions_DR = hpsNegPion.DeltaR(hpsPosPion);
+								hps_deta = hpsNegPion.Eta() - hpsPosPion.Eta();
+								hps_dphi = hpsNegPion.DeltaPhi(hpsPosPion);
+								hps_px = hpsKs.X();
+								hps_py = hpsKs.Y();
+								hps_pz = hpsKs.Z();
+								hps_energy = hpsKs.E();
+								// HPS neg pion
+								hps_pt_1 = hpsNegPion.Pt();
+								hps_eta_1 = hpsNegPion.Eta();
+								hps_phi_1 = hpsNegPion.Phi();
+								hps_px_1 = hpsNegPion.X();
+								hps_py_1 = hpsNegPion.Y();
+								hps_pz_1 = hpsNegPion.Z();
+								hps_energy_1 = hpsNegPion.E();
+								// HPS pos pion
+								hps_pt_2 = hpsPosPion.Pt();
+								hps_eta_2 = hpsPosPion.Eta();
+								hps_phi_2 = hpsPosPion.Phi();
+								hps_px_2 = hpsPosPion.X();
+								hps_py_2 = hpsPosPion.Y();
+								hps_pz_2 = hpsPosPion.Z();
+								hps_energy_2 = hpsPosPion.E();
+								// V0 kaon
+								v0_Ks_inv_m_pi = (v0NegPion + v0PosPion).M();
+								v0_Ks_pions_DR = v0NegPion.DeltaR(v0PosPion);
+								v0_deta = v0NegPion.Eta() - v0PosPion.Eta();
+								v0_dphi = v0NegPion.DeltaPhi(v0PosPion);
+								v0_pt = Ks.Pt();
+								v0_eta = Ks.Eta();
+								v0_phi = Ks.Phi();
+								v0_px = Ks.X();
+								v0_py = Ks.Y();
+								v0_pz = Ks.Z();
+								v0_energy = Ks.E();
+								// V0 neg pion
+								v0_pt_1 = v0NegPion.Pt();
+								v0_eta_1 = v0NegPion.Eta();
+								v0_phi_1 = v0NegPion.Phi();
+								v0_px_1 = v0NegPion.X();
+								v0_py_1 = v0NegPion.Y();
+								v0_pz_1 = v0NegPion.Z();
+								v0_energy_1 = v0NegPion.E();
+								// V0 pos pion
+								v0_pt_2 = v0PosPion.Pt();
+								v0_eta_2 = v0PosPion.Eta();
+								v0_phi_2 = v0PosPion.Phi();
+								v0_px_2 = v0PosPion.X();
+								v0_py_2 = v0PosPion.Y();
+								v0_pz_2 = v0PosPion.Z();
+								v0_energy_2 = v0PosPion.E();
+
+							// tree_once
+								v_hps_Ks_inv_m_pi.push_back(hps_Ks_inv_m_pi);
+								v_hps_Ks_DR.push_back(v0hps_KsTau_DR);
+								v_hps_pt_1.push_back(hps_pt_1);
+								v_hps_pt_2.push_back(hps_pt_2);
+								v_hps_eta_1.push_back(hps_eta_1);
+								v_hps_eta_2.push_back(hps_eta_2);
+								v_hps_Ks_pions_DR.push_back(hps_pions_DR);
+								v_v0_matched_pt_1.push_back(v0_pt_1);
+								v_v0_matched_pt_2.push_back(v0_pt_2);
+								v_v0_matched_eta_1.push_back(v0_eta_1);
+								v_v0_matched_eta_2.push_back(v0_eta_2);
+								v_v0_Ks_inv_m_pi.push_back(v0_Ks_inv_m_pi);
+								v_v0_pions_DR.push_back(v0_Ks_pions_DR);
+								v_v0_pt_1.push_back(v0_pt_1);
+								v_v0_pt_2.push_back(v0_pt_2);
+								v_v0_eta_1.push_back(v0_eta_1);
+								v_v0_eta_2.push_back(v0_eta_2);
+								v_nPionsInJetsWithKs.push_back(hps_eta_2);
+
+								kaon_tree->Fill();
 							break; // Since Kaon should be associated to only one jet anyway
 						}
-						//TEMP_COMMENTED else if (firstfound == -1 || secondfound == -1) h_Ks_v0_found_in_hps_tau_dR_only_one_pion_left->Fill(v_tau.DeltaR(v_Ks));
-						
+						else numOfUnmatchedKaons++;
 					}
 				}
-
-				// Fill branches per-Kaon
-				tree->Fill();
-
-				v_v0_Ks_pions_DR.push_back(v0_ks_pion1.DeltaR(v0_ks_pion2));
-				v_v0_Ks_inv_m_pi.push_back((v0_ks_pion1 + v0_ks_pion2).M());
-				v_v0_Ks_DR.push_back(v0_ks_pion1.DeltaR(v0_ks_pion2));
-				v_v0_pt_1.push_back(v0_ks_pion1.Pt());
-				v_v0_pt_2.push_back(v0_ks_pion2.Pt());
-				v_v0_eta_1.push_back(v0_ks_pion1.Eta());
-				v_v0_eta_2.push_back(v0_ks_pion2.Eta());
-
-				// Fill basic hists
-					//TEMP_COMMENTED h_Ks_v0_vx->Fill(v_Ks.X());
-					//TEMP_COMMENTED h_Ks_v0_vy->Fill(v_Ks.Y());
-					//TEMP_COMMENTED h_Ks_v0_vz->Fill(v_Ks.Z());
-					//TEMP_COMMENTED h_Ks_v0_dx->Fill(abs(v_Ks.X() - pv_position.x()));
-					//TEMP_COMMENTED h_Ks_v0_dy->Fill(abs(v_Ks.Y() - pv_position.y()));
-					//TEMP_COMMENTED h_Ks_v0_dz->Fill(abs(v_Ks.Z() - pv_position.z()));
 			}
 
 			// Fill histograms
@@ -221,8 +290,8 @@ void AOD_pi0::KFromV0Producer(const edm::Event& iEvent, const edm::EventSetup& i
 			for( unsigned tau_index = 0; tau_index < PF_hps_taus->size(); tau_index++)
 			{
 				reco::PFTauRef pftauref(PF_hps_taus, tau_index);
-				TLorentzVector v_tau(pftauref->px(), pftauref->py(), pftauref->pz(), pftauref->energy());
-				double distMagXY = sqrt(pow(v_tau.X() - pv_position.x(),2) + pow(v_tau.Y() - pv_position.y(),2));
+				TLorentzVector tau(pftauref->px(), pftauref->py(), pftauref->pz(), pftauref->energy());
+				double distMagXY = sqrt(pow(tau.X() - pv_position.x(),2) + pow(tau.Y() - pv_position.y(),2));
 				//TEMP_COMMENTED h_tau_v0_dXY->Fill(distMagXY);
 
 				//pi+-
@@ -233,12 +302,17 @@ void AOD_pi0::KFromV0Producer(const edm::Event& iEvent, const edm::EventSetup& i
 																				tau_picharge.insert(tau_picharge.end(), tau_isolationPFChargedHadrCands.begin(), tau_isolationPFChargedHadrCands.end());
 				//TEMP_COMMENTED h_Ks_v0_n_pion_in_tau_jets->Fill(tau_picharge.size());
 
-				if (v0_count > 0)
+				if (v0_Ks_count > 0)
 				{
 					for(unsigned k0_i = 0 ; k0_i < V0Ks->size() ; k0_i++)
 					{
-						TLorentzVector v0_ks_pion1((*V0Ks)[k0_i].daughter(0)->px(),(*V0Ks)[k0_i].daughter(0)->py(),(*V0Ks)[k0_i].daughter(0)->pz(),(*V0Ks)[k0_i].daughter(0)->energy());
-						TLorentzVector v0_ks_pion2((*V0Ks)[k0_i].daughter(1)->px(),(*V0Ks)[k0_i].daughter(1)->py(),(*V0Ks)[k0_i].daughter(1)->pz(),(*V0Ks)[k0_i].daughter(1)->energy());
+						unsigned int v0NegPionIndex(0), v0PosPionIndex(1);
+						if ((*V0Ks)[k0_i].daughter(0)->charge()>0)
+						{
+							v0NegPionIndex = 1; v0PosPionIndex = 0;
+						}
+						TLorentzVector v0NegPion((*V0Ks)[k0_i].daughter(v0NegPionIndex)->px(),(*V0Ks)[k0_i].daughter(v0NegPionIndex)->py(),(*V0Ks)[k0_i].daughter(v0NegPionIndex)->pz(),(*V0Ks)[k0_i].daughter(v0NegPionIndex)->energy());
+						TLorentzVector v0PosPion((*V0Ks)[k0_i].daughter(v0PosPionIndex)->px(),(*V0Ks)[k0_i].daughter(v0PosPionIndex)->py(),(*V0Ks)[k0_i].daughter(v0PosPionIndex)->pz(),(*V0Ks)[k0_i].daughter(v0PosPionIndex)->energy());
 
 						for(unsigned pi_i = 0; pi_i < tau_picharge.size(); pi_i++)
 						{
@@ -296,4 +370,80 @@ bool AOD_pi0::BetterPionMatch(TLorentzVector tau_pion, int chargeTauPion, TLoren
 			return true;
 		}
 	return false;
+}
+
+template  <typename HPSPion, typename Daughter>
+bool AOD_pi0::PionMatchByRefference(HPSPion pion, Daughter daughter)
+{
+	TLorentzVector tau_pion, v0_pion;
+	v0_pion.SetXYZM( ((reco::RecoChargedCandidate *)daughter)->track()->px(), ((reco::RecoChargedCandidate *)daughter)->track()->py(), ((reco::RecoChargedCandidate *)daughter)->track()->pz(), 0.13957018);
+	tau_pion.SetXYZM(pion->bestTrack()->px(), pion->bestTrack()->py(), pion->bestTrack()->pz(), 0.13957018);
+
+	if (v0_pion.DeltaR(tau_pion) == 0) return true;
+	return false;
+}
+
+void AOD_pi0::ResetBranchesKaonTree()
+{
+	nPionsInJetsWithKs = -999;
+	// V0 comparison to HPS
+	v0hps_pions_dPhi_1 = -999;
+	v0hps_pions_dEta_1 = -999;
+	v0hps_pions_dPhi_2 = -999;
+	v0hps_pions_dEta_2 = -999;
+	v0hps_KsTau_DR = -999;
+	v0hps_KsDiPion_DR = -999;
+	// HPS Kaon
+	hps_Ks_inv_m_pi = -999;
+	hps_pions_DR = -999;
+	hps_deta = -999;
+	hps_dphi = -999;
+	hps_px = -999;
+	hps_py = -999;
+	hps_pz = -999;
+	hps_energy = -999;
+	// HPS neg pion
+	hps_pt_1 = -999;
+	hps_eta_1 = -999;
+	hps_phi_1 = -999;
+	hps_px_1 = -999;
+	hps_py_1 = -999;
+	hps_pz_1 = -999;
+	hps_energy_1 = -999;
+	// HPS pos pion
+	hps_pt_2 = -999;
+	hps_eta_2 = -999;
+	hps_phi_2 = -999;
+	hps_px_2 = -999;
+	hps_py_2 = -999;
+	hps_pz_2 = -999;
+	hps_energy_2 = -999;
+	// V0 kaon
+	v0_Ks_inv_m_pi = -999;
+	v0_Ks_pions_DR = -999;
+	v0_deta = -999;
+	v0_dphi = -999;
+	v0_pt = -999;
+	v0_eta = -999;
+	v0_phi = -999;
+	v0_px = -999;
+	v0_py = -999;
+	v0_pz = -999;
+	v0_energy = -999;
+	// V0 neg pion
+	v0_pt_1 = -999;
+	v0_eta_1 = -999;
+	v0_phi_1 = -999;
+	v0_px_1 = -999;
+	v0_py_1 = -999;
+	v0_pz_1 = -999;
+	v0_energy_1 = -999;
+	// V0 pos pion
+	v0_pt_2 = -999;
+	v0_eta_2 = -999;
+	v0_phi_2 = -999;
+	v0_px_2 = -999;
+	v0_py_2 = -999;
+	v0_pz_2 = -999;
+	v0_energy_2 = -999;
 }

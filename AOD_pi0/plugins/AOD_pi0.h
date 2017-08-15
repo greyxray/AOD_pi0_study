@@ -40,8 +40,8 @@ using namespace std;
 // Aleksei
 	#include "DataFormats/VertexReco/interface/VertexFwd.h"
 	#include "DataFormats/VertexReco/interface/Vertex.h"
-	// #include "DataFormats/Candidate/interface/VertexCompositeCandidate.h"
-	// #include "DataFormats/Candidate/interface/VertexCompositeCandidateFwd.h"
+	#include "DataFormats/Candidate/interface/VertexCompositeCandidate.h"
+	#include "DataFormats/Candidate/interface/VertexCompositeCandidateFwd.h"
 	//error using namespace reco;
 
 	#include "DataFormats/TauReco/interface/PFTau.h"
@@ -49,6 +49,7 @@ using namespace std;
 	#include "DataFormats/TauReco/interface/PFTauDiscriminator.h"
 	#include "DataFormats/TauReco/interface/RecoTauPiZero.h"
 	#include "DataFormats/TauReco/interface/RecoTauPiZeroFwd.h"
+	#include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 
 // Alex
 	#include "DataFormats/PatCandidates/interface/Tau.h"
@@ -135,9 +136,7 @@ using namespace std;
 	#include "JetMETCorrections/Objects/interface/JetCorrector.h"
 	//error #include "DataFormats/VertexReco/interface/Vertex.h"
 	#include "DataFormats/VertexReco/interface/VertexFwd.h"
-	#include "DataFormats/Candidate/interface/VertexCompositeCandidate.h"
-	#include "DataFormats/Candidate/interface/VertexCompositeCandidateFwd.h"
-	#include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
+
 
 	#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 	#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
@@ -219,10 +218,20 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 
 		static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 		void ResetBranchesPerEvent();
+		void ResetBranchesPionTree();
+		void ResetBranchesKaonTree();
 		static void RecO_Cand_type(const reco::Candidate* cand);
 		bool BetterPionMatch(TLorentzVector tau_pion, int chargeTauPion, TLorentzVector v0_ks_pion, int chargeKPion, int firstfound, double & dR);
+
+		template  <typename HPSPion, typename Daughter>
+		bool PionMatchByRefference(HPSPion pion, Daughter daughter);
+
+		template  <typename HPSPion, typename Daughter>
+		void FillPion(HPSPion pion, Daughter daughter);
+
 		template  <typename VectoreType >
 		void CombinatoricPairs(vector<VectoreType> collection);
+
 		template  <typename VectoreType >
 		void CombinatoricOfTwoToNeutralInvM(vector<VectoreType*> collection/*reco::RecoTauPiZero */,
 																		TString typeOfCollection,
@@ -279,43 +288,133 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 
 	 // ----------member data ---------------------------
 		edm::Service<TFileService> fs;
-		TTree * tree; // example: http://www-hep.colorado.edu/~fjensen/temp/trackAnalyzer.cc
+		TTree * kaon_tree; // example: http://www-hep.colorado.edu/~fjensen/temp/trackAnalyzer.cc
 		TTree * once_tree;
+		TTree * pions_tree;
 
 		// Branches variables
-			UInt_t primvertex_count;
-			UInt_t goodprimvertex_count;
-			Int_t nKs;
-			double Ks_v0_inv_m_pi;
-			Int_t v0_count; // V0s - Ks or Lambdas
-			Double_t pt_1;
-			Double_t pt_2;
-			Double_t eta_1;
-			Double_t eta_2;
-			Int_t nPionsInJetsWithKs;
 
-			std::vector<double> v_v0_Ks_inv_m_pi; //Int_t Ks_v0_inv_m_pi[MAXKS];
-			std::vector<double> v_v0_Ks_DR;
-			std::vector<double> v_v0_Ks_pions_DR;
-			std::vector<Double_t> v_v0_pt_1;
-			std::vector<Double_t> v_v0_pt_2;
-			std::vector<Double_t> v_v0_eta_1;
-			std::vector<Double_t> v_v0_eta_2;
-			std::vector<Double_t> v_v0_matched_pt_1;
-			std::vector<Double_t> v_v0_matched_pt_2;
-			std::vector<Double_t> v_v0_matched_eta_1;
-			std::vector<Double_t> v_v0_matched_eta_2;
-			std::vector<Int_t> v_v0_count;
-			std::vector<Int_t> v_nPionsInJetsWithKs;
-			std::vector<double> v_KsCombinatoricMass;
-			std::vector<double> v_KsCombinatoricDR;
-			std::vector<double> v_HPS_Ks_inv_m_pi;
-			std::vector<double> v_HPS_Ks_DR;
-			std::vector<double> v_HPS_Ks_pions_DR;
-			std::vector<Double_t> v_HPS_pt_1;
-			std::vector<Double_t> v_HPS_pt_2;
-			std::vector<Double_t> v_HPS_eta_1;
-			std::vector<Double_t> v_HPS_eta_2;
+			// kaon_tree
+				Int_t nPionsInJetsWithKs;
+
+				// V0 comparison to HPS
+				Double_t v0hps_pions_dPhi_1;
+				Double_t v0hps_pions_dEta_1;
+				Double_t v0hps_pions_dPhi_2;
+				Double_t v0hps_pions_dEta_2;
+				Double_t v0hps_KsTau_DR;
+				Double_t v0hps_KsDiPion_DR;
+				// HPS Kaon
+				Double_t hps_Ks_inv_m_pi;
+				Double_t hps_pions_DR;
+				Double_t hps_deta;
+				Double_t hps_dphi;
+				Double_t hps_px;
+				Double_t hps_py;
+				Double_t hps_pz;
+				Double_t hps_energy;
+				// HPS neg pion
+				Double_t hps_pt_1;
+				Double_t hps_eta_1;
+				Double_t hps_phi_1;
+				Double_t hps_px_1;
+				Double_t hps_py_1;
+				Double_t hps_pz_1;
+				Double_t hps_energy_1;
+				// HPS pos pion
+				Double_t hps_pt_2;
+				Double_t hps_eta_2;
+				Double_t hps_phi_2;
+				Double_t hps_px_2;
+				Double_t hps_py_2;
+				Double_t hps_pz_2;
+				Double_t hps_energy_2;
+				// V0 kaon
+				Double_t v0_Ks_inv_m_pi;
+				Double_t v0_Ks_pions_DR;
+				Double_t v0_deta;
+				Double_t v0_dphi;
+				Double_t v0_pt;
+				Double_t v0_eta;
+				Double_t v0_phi;
+				Double_t v0_px;
+				Double_t v0_py;
+				Double_t v0_pz;
+				Double_t v0_energy;
+				// V0 neg pion
+				Double_t v0_pt_1;
+				Double_t v0_eta_1;
+				Double_t v0_phi_1;
+				Double_t v0_px_1;
+				Double_t v0_py_1;
+				Double_t v0_pz_1;
+				Double_t v0_energy_1;
+				// V0 pos pion
+				Double_t v0_pt_2;
+				Double_t v0_eta_2;
+				Double_t v0_phi_2;
+				Double_t v0_px_2;
+				Double_t v0_py_2;
+				Double_t v0_pz_2;
+				Double_t v0_energy_2;
+
+			// pions_tree
+				TLorentzVector v0_pion;
+				TLorentzVector v0_pion_trackRef;
+				TLorentzVector tau_pion;
+				TLorentzVector tau_pion_besttrack;
+				// Diff between HPS and HPS best track
+				Double_t hpsbestTrackDiff_fx;
+				Double_t hpsbestTrackDiff_fy;
+				Double_t hpsbestTrackDiff_fz;
+				Double_t hpsbestTrackDiff_fE;
+				Double_t hpsbestTrack_dR;
+				// Diff between V0 and HPS
+				Double_t hpsv0Diff_fx;
+				Double_t hpsv0Diff_fy;
+				Double_t hpsv0Diff_fz;
+				Double_t hpsv0Diff_fE;
+				Double_t hpsv0Diff_dPhi;
+				Double_t hpsv0Diff_dEta;
+				Double_t hpsv0_dR;
+				// Diff between V0 and HPS best track
+				Double_t v0bestTrackDiff_fx;
+				Double_t v0bestTrackDiff_fy;
+				Double_t v0bestTrackDiff_fz;
+				Double_t v0bestTrackDiff_fE;
+				Double_t v0bestTrack_dR;
+				// associated mass
+				Double_t bestTrac_fM;
+				Double_t hps_fM;
+				Double_t v0_fM;
+
+			// once_tree
+				UInt_t primvertex_count;
+				UInt_t goodprimvertex_count;
+				Int_t v0_Ks_count; // V0s - Ks or Lambdas
+				unsigned int numOfUnmatchedKaons;
+				std::vector<double> v_v0_Ks_inv_m_pi; //Int_t Ks_v0_inv_m_pi[MAXKS];
+				std::vector<double> v_v0_pions_DR;
+				std::vector<double> v_v0_Ks_pions_DR;
+				std::vector<Double_t> v_v0_pt_1;
+				std::vector<Double_t> v_v0_pt_2;
+				std::vector<Double_t> v_v0_eta_1;
+				std::vector<Double_t> v_v0_eta_2;
+				std::vector<Double_t> v_v0_matched_pt_1;
+				std::vector<Double_t> v_v0_matched_pt_2;
+				std::vector<Double_t> v_v0_matched_eta_1;
+				std::vector<Double_t> v_v0_matched_eta_2;
+				std::vector<Int_t> v_v0_count;
+				std::vector<Int_t> v_nPionsInJetsWithKs;
+				std::vector<double> v_KsCombinatoricMass;
+				std::vector<double> v_KsCombinatoricDR;
+				std::vector<double> v_hps_Ks_inv_m_pi;
+				std::vector<double> v_hps_Ks_DR;
+				std::vector<double> v_hps_Ks_pions_DR;
+				std::vector<Double_t> v_hps_pt_1;
+				std::vector<Double_t> v_hps_pt_2;
+				std::vector<Double_t> v_hps_eta_1;
+				std::vector<Double_t> v_hps_eta_2;
 
 		// Histograms
 			TH1D* pions_inv_m;
@@ -449,7 +548,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 
 			// primary vertex
 				math::XYZPoint pv_position;
-				reco::Vertex primvertex; 
+				reco::Vertex primvertex;
 				Float_t primvertex_x;
 				Float_t primvertex_y;
 				Float_t primvertex_z;
@@ -510,6 +609,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 				bool match_KsV0_to_HPS;
 				double cDZCut;
 				double cKtoTauDR;
+				bool matchByReference;
 			// other
 				bool debug;
 				bool mute;
@@ -567,6 +667,7 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 	match_KsV0_to_HPS(iConfig.getUntrackedParameter<bool>("Match_KsV0_to_HPS", true)),
 	cDZCut(iConfig.getUntrackedParameter<double>("DZCut", 999.)),
 	cKtoTauDR(iConfig.getUntrackedParameter<double>("KtoTauDR", 1.)),
+	matchByReference(iConfig.getUntrackedParameter<bool>("MatchByReference", true)),
 	//other
 	debug(iConfig.getUntrackedParameter<bool>("Debug", true)),
 	mute(iConfig.getUntrackedParameter<bool>("Mute", false)),
@@ -580,10 +681,11 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 	v0_ks_numb(0)
 {
 	// TFileService : add the trees
-		usesResource("TFileService");
-		// create trees
-			tree = fs->make<TTree>("tree", "tree");
-			once_tree = fs->make<TTree>("once_tree", "once_tree");
+	usesResource("TFileService");
+	// create trees
+	kaon_tree = fs->make<TTree>("kaon_tree", "kaon_tree");
+	once_tree = fs->make<TTree>("once_tree", "once_tree");
+	pions_tree = fs->make<TTree>("pions_tree", "pions_tree");
 
 	map_kaons[311] = "K0";
 	map_kaons[310] = "K0s";
@@ -640,110 +742,12 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 				OutFileName = "aod_pi0_WHY.root";
 		}
 
-		// Histograms
-		/*
-			pions_inv_m = fs->make<TH1D>("pions_inv_m","inv mass of pions in taus", 100, 0, 1); // pions_inv_m  = new TH1D("pions_inv_m","inv mass of pions in taus", 100, 0, 1);
-			num_pions = fs->make<TH1D>("num_of_pios","num of pions", 10, 0, 10);//new TH1D("num_of_pios","num of pions", 10, 0, 10);
-			h_Ks_v0_count = fs->make<TH1D>("h_Ks_v0_count","v0 count", 10, 0, 10);//= new TH1D("h_Ks_v0_count","v0 count", 10, 0, 10);
-			h_Ks_v0_daughter_pt = fs->make<TH1D>("h_Ks_v0_daughter_pt","ks daughters pt", 1800, 0, 180);//= new TH1D("h_Ks_v0_daughter_pt","ks daughters pt", 1800, 0, 180);
-			h_Ks_v0_inv_m_pi = fs->make<TH1D>("h_Ks_v0_inv_m_pi","ks daughters inv mass", 10000, 0, 5);//= new TH1D("h_Ks_v0_inv_m_pi","ks daughters inv mass", 1000, 0, 10);
-			h_Ks_v0_number_per_event = fs->make<TH1D>("h_Ks_v0_number_per_event","ks from V0 coll, NPE that passed PV", 10, 0, 10);//= new TH1D("h_Ks_v0_number_per_event","ks from V0 coll, NPE that passed PV", 10, 0, 10);
-			h_Ks_v0_vx = fs->make<TH1D>("h_Ks_v0_vx","ks from V0 coll, x position", 1000, -5, 5);//= new TH1D("h_Ks_v0_vx","ks from V0 coll, x position", 1000, -5, 5);
-			h_Ks_v0_vy = fs->make<TH1D>("h_Ks_v0_vy","ks from V0 coll, y position", 1000, -5, 5);//= new TH1D("h_Ks_v0_vy","ks from V0 coll, y position", 1000, -5, 5);
-			h_Ks_v0_vz = fs->make<TH1D>("h_Ks_v0_vz","ks from V0 coll, z position", 1000, -5, 5);//= new TH1D("h_Ks_v0_vz","ks from V0 coll, z position", 1000, 5, 5);
-			h_Ks_v0_dx = fs->make<TH1D>("h_Ks_v0_dx","ks from V0 coll, ks_x distance to PV", 1000, 0, 10);//= new TH1D("h_Ks_v0_dx","ks from V0 coll, ks_x distance to PV", 1000, 0, 10);
-			h_Ks_v0_dy = fs->make<TH1D>("h_Ks_v0_dy","ks from V0 coll, ks_y distance to PV", 1000, 0, 10);//= new TH1D("h_Ks_v0_dy","ks from V0 coll, ks_y distance to PV", 1000, 0, 10);
-			h_Ks_v0_dz = fs->make<TH1D>("h_Ks_v0_dz","ks from V0 coll, ks_z distance to PV", 1000, 0, 10);//= new TH1D("h_Ks_v0_dz","ks from V0 coll, ks_z distance to PV", 1000, 0, 10);
-			h_Ks_v0_PV_dXY = fs->make<TH1D>("h_Ks_v0_PV_dXY","ks from V0 coll, ks_dXY distance to PV", 1000, 0, 10);//= new TH1D("h_Ks_v0_PV_dXY","ks from V0 coll, ks_dXY distance to PV", 1000, 0, 10);
-			h_Ks_v0_dXY = fs->make<TH1D>("h_Ks_v0_dXY","ks from V0 coll, ks_dXY distance to PV", 1000, 0, 10);//= new TH1D("h_Ks_v0_dXY","ks from V0 coll, ks_dXY distance to PV", 1000, 0, 10);
-			h_Ks_v0_BS_dXY = fs->make<TH1D>("h_Ks_v0_BS_dXY","ks from V0 coll, ks_dXY distance to BS", 2000, 0, 200);//= new TH1D("h_Ks_v0_BS_dXY","ks from V0 coll, ks_dXY distance to BS", 2000, 0, 200);
-			h_tau_v0_dXY = fs->make<TH1D>("h_tau_v0_dXY","h_tau_v0_dXY, dXY distance to PV", 1000, 0, 10);//= new TH1D("h_tau_v0_dXY","h_tau_v0_dXY, dXY distance to PV", 1000, 0, 10);
-			h_tau_comb_pions_m_inv = fs->make<TH1D>("h_tau_comb_pions_m_inv","combinatoric pions of HPS", 1000, 0, 5);//= new TH1D("h_tau_comb_pions_m_inv","combinatoric pions of HPS", 1000, 0, 5);
-			h_ECAL_comb_photons = fs->make<TH1D>("h_ECAL_comb_photons","combinatoric invariant mass of two photons", 1000, 0, 5);//= new TH1D("h_ECAL_comb_photons","combinatoric invariant mass of two photons", 1000, 0, 5);
-			h_ECAL_comb_kaons =  new TH1D("h_ECAL_comb_kaons","combinatoric invariant mass of two photons to two pions to Ks", 1000, 0, 5);
-			h_Ks_v0_found_in_hps_tau = fs->make<TH1D>("h_Ks_v0_found_in_hps_tau","ks from V0 coll, NPE that passed PV and found in HPS tau jets", 1000, 0, 10);//= new TH1D("h_Ks_v0_found_in_hps_tau","ks from V0 coll, NPE that passed PV and found in HPS tau jets", 1000, 0, 10);
-			h_Ks_v0_found_in_hps_tau_dR = fs->make<TH1D>("h_Ks_v0_found_in_hps_tau_dR","ks from V0 coll, dR of ks and tau jet, that passed PV and found in HPS tau jets and pions are matched", 1000, 0, 1);//= new TH1D("h_Ks_v0_found_in_hps_tau_dR","ks from V0 coll, dR of ks and tau jet, that passed PV and found in HPS tau jets and pions are matched", 1000, 0, 1);
-			h_Ks_v0_found_in_hps_tau_dRcut = fs->make<TH1D>("h_Ks_v0_found_in_hps_tau_dRcut","ks from V0 coll, dR of ks and tau jet, that passed PV and found in HPS tau jets and cut on dR < 0.5", 1000, 0, 1);//= new TH1D("h_Ks_v0_found_in_hps_tau_dRcut","ks from V0 coll, dR of ks and tau jet, that passed PV and found in HPS tau jets and cut on dR < 0.5", 1000, 0, 1);
-			h_Ks_v0_found_in_hps_tau_dR_only_one_pion_left = fs->make<TH1D>("h_Ks_v0_found_in_hps_tau_dR_only_one_pion_left","ks from V0 coll, dR of ks and tau jet, that passed PV and found in HPS tau jets and only 1 pion is matched", 1000, 0, 10);//= new TH1D("h_Ks_v0_found_in_hps_tau_dR_only_one_pion_left","ks from V0 coll, dR of ks and tau jet, that passed PV and found in HPS tau jets and only 1 pion is matched", 1000, 0, 10);
-			h_Ks_v0_found_in_hps_tau_m_inv = fs->make<TH1D>("h_Ks_v0_found_in_hps_tau_m_inv","matched tau pions with ks from v0, daughters inv mass", 1000, 0, 5);//= new TH1D("h_Ks_v0_found_in_hps_tau_m_inv","matched tau pions with ks from v0, daughters inv mass", 1000, 0, 5);
-			h_Ks_v0_found_in_hps_tau_significance = fs->make<TH1D>("h_Ks_v0_found_in_hps_tau_significance","matched tau pions with ks from v0, significance with respect to BS", 1000, 0, 100);//= new TH1D("h_Ks_v0_found_in_hps_tau_significance","matched tau pions with ks from v0, significance with respect to BS", 1000, 0, 100);
-
-			h_Ks_v0_pions_dR = fs->make<TH1D>("h_Ks_v0_pions_dR","ks from V0 coll, dR for pions of Ks", 1000, 0, 10);//= new TH1D("h_Ks_v0_pions_dR","ks from V0 coll, dR for pions of Ks", 1000, 0, 10);
-			h_Ks_v0_hps_pions_combinatoric_dR = fs->make<TH1D>("h_Ks_v0_hps_pions_combinatoric_dR","combinatoric pions dR for pions of HPS taus jets", 1000, 0, 1);//= new TH1D("h_Ks_v0_hps_pions_combinatoric_dR","combinatoric pions dR for pions of HPS taus jets", 1000, 0, 1);
-			h_Ks_v0_pions_and_hps_pions_combined_dR = fs->make<TH1D>("h_Ks_v0_pions_and_hps_pions_combined_dR","dr of two pions of KSv V0 and all the pions of the hps tau jet with the kaon", 1000, 0, 10);//= new TH1D("h_Ks_v0_pions_and_hps_pions_combined_dR","dr of two pions of KSv V0 and all the pions of the hps tau jet with the kaon", 1000, 0, 10);
-
-			h_Ks_v0_n_ev_passing_dz_cut = fs->make<TH1D>("h_Ks_v0_n_ev_passing_dz_cut", "N ev with at least 1 Ks passing dz cut", 10, 0, 10);//= new TH1D("h_Ks_v0_n_ev_passing_dz_cut", "N ev with at least 1 Ks passing dz cut", 10, 0, 10);
-			h_Ks_v0_n_Ks_in_jets_per_event = fs->make<TH1D>("h_Ks_v0_n_Ks_in_jets_per_event","NPE of Ks matched with any tau jet", 10, 0, 10);//= new TH1D("h_Ks_v0_n_Ks_in_jets_per_event","NPE of Ks matched with any tau jet", 10, 0, 10);
-			h_Ks_v0_n_tau_jets_per_event = fs->make<TH1D>("h_Ks_v0_n_tau_jets_per_event","NPE tau jets", 100, 0, 100);//= new TH1D("h_Ks_v0_n_tau_jets_per_event","NPE tau jets", 100, 0, 100);
-			h_Ks_v0_n_pion_in_tau_jets = fs->make<TH1D>("h_Ks_v0_n_pion_in_tau_jets","num of pic per jet", 100, 0, 100);//= new TH1D("h_Ks_v0_n_pion_in_tau_jets","num of pic per jet", 100, 0, 100);
-			h_Ks_v0_n_pion_in_tau_jets_with_good_Ks = fs->make<TH1D>("h_Ks_v0_n_pion_in_tau_jets_with_good_Ks","num of pic per jet with a Ks", 100, 0, 100);//= new TH1D("h_Ks_v0_n_pion_in_tau_jets_with_good_Ks","num of pic per jet with a Ks", 100, 0, 100);
-
-			h_Ks_v0_pions_and_hps_pions_combined_dR_with_no_constrain = fs->make<TH1D>("h_Ks_v0_pions_and_hps_pions_combined_dR_with_no_constrain", "dr of two pions of KSv V0 and all the pions of all the hps tau jets, no constrains", 1000, 0, 10);//= new TH1D("h_Ks_v0_pions_and_hps_pions_combined_dR_with_no_constrain", "dr of two pions of KSv V0 and all the pions of all the hps tau jets, no constrains", 1000, 0, 10);
-		
-			//hist_directory[0]  = outfile->mkdir("Taus_pions_coll", "Taus_pions_collections"); hist_directory[0]->cd();  //= outfile->mkdir("Taus_pions_coll", "Taus_pions_collections");
-				taus_isol_pi0_inv_m_to_ks = fs->make<TH1D>("taus_isol_pi0_inv_m_to_ks","all Pairs of tau isolation pions inv mass", 1000, 0, 17);//= new TH1D("taus_isol_pi0_inv_m_to_ks","all Pairs of tau isolation pions inv mass", 1000, 0, 17);
-				taus_isol_pi0_inv_pt = fs->make<TH1D>("taus_isol_pi0_inv_pt","all Pairs of tau isolation pions int pt", 1000, 0, 10);//= new TH1D("taus_isol_pi0_inv_pt","all Pairs of tau isolation pions int pt", 1000, 0, 10);
-				taus_pi0_inv_m_to_ks = fs->make<TH1D>("taus_pi0_inv_m_to_ks","all Pairs of tau pions inv mass", 1000, 0, 17);//= new TH1D("taus_pi0_inv_m_to_ks","all Pairs of tau pions inv mass", 1000, 0, 17);
-				taus_pi0_inv_pt = fs->make<TH1D>("taus_pi0_inv_pt","all Pairs of tau pions inv pt", 1000, 0, 10);//= new TH1D("taus_pi0_inv_pt","all Pairs of tau pions inv pt", 1000, 0, 10);
-			
-			//hist_directory[2]  = outfile->mkdir("Taus_charged_had_coll", "Taus_charged_had_coll"); hist_directory[2]->cd();  //= outfile->mkdir("Taus_charged_had_coll", "Taus_charged_had_coll");
-				taus_pi_charged_inv_m_to_ks = fs->make<TH1D>("taus_pi_charged_inv_m_to_ks","all Pairs of tau pions from Charged had coll inv mass", 1000, 0, 17);//= new TH1D("taus_pi_charged_inv_m_to_ks","all Pairs of tau pions from Charged had coll inv mass", 1000, 0, 17);
-				taus_pi_charged_inv_pt = fs->make<TH1D>("taus_pi_charged_inv_pt","all Pairs of tau pions from Charged had coll inv pt", 1000, 0, 10);//= new TH1D("taus_pi_charged_inv_pt","all Pairs of tau pions from Charged had coll inv pt", 1000, 0, 10);
-			//hist_directory[3]  = outfile->mkdir("Taus_neutral_had_coll", "Taus_neutral_had_coll");  hist_directory[3]->cd();  //= outfile->mkdir("Taus_neutral_had_coll", "Taus_neutral_had_coll");
-				taus_pi0_had_inv_m_to_ks = fs->make<TH1D>("taus_pi0_had_inv_m_to_ks", "all Pairs of tau pions from Neutal had coll inv mass", 1000, 0, 17);//= new TH1D("taus_pi0_had_inv_m_to_ks", "all Pairs of tau pions from Neutal had coll inv mass", 1000, 0, 17);
-				taus_pi0_had_inv_pt = fs->make<TH1D>("taus_pi0_had_inv_pt", "all Pairs of tau pions from Neutal had coll inv pt", 1000, 0, 10);//= new TH1D("taus_pi0_had_inv_pt", "all Pairs of tau pions from Neutal had coll inv pt", 1000, 0, 10);
-		
-			h_gen_k0_all_to_pi0 = fs->make<TH1D>("h_gen_k0_all_to_pi0", "gen. all k0's decaying to pi0", 1000, 0, 10);//= new TH1D("h_gen_k0_all_to_pi0", "gen. all k0's decaying to pi0", 1000, 0, 10);
-			h_gen_k0_all_to_pic = fs->make<TH1D>("h_gen_k0_all_to_pic", "gen. all k0's decaying to pi+-", 1000, 0, 10);//= new TH1D("h_gen_k0_all_to_pic", "gen. all k0's decaying to pi+-", 1000, 0, 10);
-
-			h_K892 = fs->make<TH1D>("h_K892", "m_vis for K(892)", 1000, 0, 10);//= new TH1D("h_K892", "m_vis for K(892)", 1000, 0, 10);
-			h_K892_0_gen_number_per_event = fs->make<TH1D>("h_K892_0_gen_number_per_event", "number of generated K(892) neutral", 1000, 0, 1000);//= new TH1D("h_K892_0_gen_number_per_event", "number of generated K(892) neutral", 1000, 0, 1000);
-			h_K892_0_gen_vx = fs->make<TH1D>("h_K892_0_gen_vx", "vx of generated K(892) neutral", 1000, -5, 5);//= new TH1D("h_K892_0_gen_vx", "vx of generated K(892) neutral", 1000, -5, 5);
-			h_K892_0_gen_vy = fs->make<TH1D>("h_K892_0_gen_vy", "vy of generated K(892) neutral", 1000, -5, 5);//= new TH1D("h_K892_0_gen_vy", "vy of generated K(892) neutral", 1000, -5, 5);
-			h_K892_0_gen_vz = fs->make<TH1D>("h_K892_0_gen_vz", "vz of generated K(892) neutral", 1000, -5, 5);//= new TH1D("h_K892_0_gen_vz", "vz of generated K(892) neutral", 1000, -5, 5);
-
-			h_K892_c_gen_number_per_event = fs->make<TH1D>("h_K892_c_gen_number_per_event", "number of generated K(892) charged", 1000, 0, 1000);//= new TH1D("h_K892_c_gen_number_per_event", "number of generated K(892) charged", 1000, 0, 1000);
-			h_K892_c_gen_vx = fs->make<TH1D>("h_K892_c_gen_vx", "vx of generated K(892) charged", 1000, -5, 5);//= new TH1D("h_K892_c_gen_vx", "vx of generated K(892) charged", 1000, -5, 5);
-			h_K892_c_gen_vy = fs->make<TH1D>("h_K892_c_gen_vy", "vy of generated K(892) charged", 1000, -5, 5);//= new TH1D("h_K892_c_gen_vy", "vy of generated K(892) charged", 1000, -5, 5);
-			h_K892_c_gen_vz = fs->make<TH1D>("h_K892_c_gen_vz", "vz of generated K(892) charged", 1000, -5, 5);//= new TH1D("h_K892_c_gen_vz", "vz of generated K(892) charged", 1000, -5, 5);
-
-			h_primvertex_count = fs->make<TH1D>("h_primvertex_count", "h_primvertex_count", 100, 0, 100);//= new TH1D("h_primvertex_count", "h_primvertex_count", 100, 0, 100);
-			h_goodprimvertex_count = fs->make<TH1D>("h_goodprimvertex_count", "h_goodprimvertex_count", 100, 0, 100);//= new TH1D("h_goodprimvertex_count", "h_goodprimvertex_count", 100, 0, 100);
-			h_primvertex_x = fs->make<TH1D>("h_primvertex_x", "h_primvertex_x", 1000, -5, 5);//= new TH1D("h_primvertex_x", "h_primvertex_x", 1000, -5, 5);
-			h_primvertex_y = fs->make<TH1D>("h_primvertex_y", "h_primvertex_y", 1000, -5, 5);//= new TH1D("h_primvertex_y", "h_primvertex_y", 1000, -5, 5);
-			h_primvertex_z = fs->make<TH1D>("h_primvertex_z", "h_primvertex_z", 1000, -30, 30);//= new TH1D("h_primvertex_z", "h_primvertex_z", 1000, -30, 30);
-			h_primvertex_chi2 = fs->make<TH1D>("h_primvertex_chi2", "h_primvertex_chi2", 1000, 0, 100);//= new TH1D("h_primvertex_chi2", "h_primvertex_chi2", 1000, 0, 100);
-			h_primvertex_ndof = fs->make<TH1D>("h_primvertex_ndof", "h_primvertex_ndof", 1000, 0, 1000);//= new TH1D("h_primvertex_ndof", "h_primvertex_ndof", 1000, 0, 1000);
-			h_primvertex_ptq = fs->make<TH1D>("h_primvertex_ptq", "h_primvertex_ptq", 1000, 0, 1000);//= new TH1D("h_primvertex_ptq", "h_primvertex_ptq", 1000, 0, 1000);
-			h_primvertex_ntracks = fs->make<TH1D>("h_primvertex_ntracks", "h_primvertex_ntracks", 1000, 0, 200);//= new TH1D("h_primvertex_ntracks", "h_primvertex_ntracks", 1000, 0, 200);
-			h_primvertex_cov_x = fs->make<TH1D>("h_primvertex_cov_x", "h_primvertex_cov_x", 1000, -5, 5);//= new TH1D("h_primvertex_cov_x", "h_primvertex_cov_x", 1000, -5, 5);
-			h_primvertex_cov_y = fs->make<TH1D>("h_primvertex_cov_y", "h_primvertex_cov_y", 1000, -5, 5);//= new TH1D("h_primvertex_cov_y", "h_primvertex_cov_y", 1000, -5, 5);
-			h_primvertex_cov_z = fs->make<TH1D>("h_primvertex_cov_z", "h_primvertex_cov_z", 1000, -5, 5);//= new TH1D("h_primvertex_cov_z", "h_primvertex_cov_z", 1000, -5, 5);
-		*/
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MAP of histos - only after initialisation!! - doesn't work
-		// map_K892_gen_histos[313].push_back(h_K892_0_gen_number_per_event);
-		// map_K892_gen_histos[313].push_back(h_K892_0_gen_vx);
-		// map_K892_gen_histos[313].push_back(h_K892_0_gen_vy);
-		// map_K892_gen_histos[313].push_back(h_K892_0_gen_vz);
-
-		// map_K892_gen_histos[323].push_back(h_K892_c_gen_number_per_event);
-		// map_K892_gen_histos[323].push_back(h_K892_c_gen_vx);
-		// map_K892_gen_histos[323].push_back(h_K892_c_gen_vy);
-		// map_K892_gen_histos[323].push_back(h_K892_c_gen_vz);
-
-
-		// 		TH1D* temp[27] = {h_Ks_v0_number_per_event, h_Ks_v0_vx, h_Ks_v0_vy, h_Ks_v0_vz, h_Ks_v0_dx, h_Ks_v0_dy, h_Ks_v0_dz, h_Ks_v0_count, //0 - 5
-		// 							h_Ks_v0_daughter_pt, h_Ks_v0_inv_m_pi, h_Ks_v0_found_in_hps_tau, h_Ks_v0_found_in_hps_tau_dR, h_Ks_v0_found_in_hps_tau_dRcut, //6 -10
-		// 							h_Ks_v0_found_in_hps_tau_dR_only_one_pion_left, h_Ks_v0_found_in_hps_tau_m_inv, h_Ks_v0_found_in_hps_tau_significance, h_Ks_v0_pions_dR, h_Ks_v0_hps_pions_combinatoric_dR, h_Ks_v0_pions_and_hps_pions_combined_dR, //11 -15
-		// 							h_Ks_v0_n_ev_passing_dz_cut, h_Ks_v0_n_Ks_in_jets_per_event, h_Ks_v0_n_tau_jets_per_event, h_Ks_v0_n_pion_in_tau_jets, h_Ks_v0_n_pion_in_tau_jets_with_good_Ks,
-		// 							h_Ks_v0_pions_and_hps_pions_combined_dR_with_no_constrain, h_Ks_v0_PV_dXY, h_Ks_v0_BS_dXY};//15-20
-		// 		map_Ks_v0_histos.insert(map_Ks_v0_histos.end(), temp, temp + (sizeof(temp)/sizeof(temp[0])));
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tokens
+	// Tokens
 		//from generalV0Candidates
 		KshortCollectionTag_stand_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag_stand"));
 		KshortCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("KshortCollectionTag"));//cms.InputTag("generalV0Candidates","Kshort","RECO"),//vector<reco::VertexCompositeCandidate>    "generalV0Candidates"       "Kshort"          "RECO"
 		LambdaCollectionToken_ = consumes<reco::VertexCompositeCandidateCollection>(iConfig.getParameter<edm::InputTag>("LambdaCollectionTag"));//cms.InputTag("generalV0Candidates","Lambda","RECO")
-		
+
 		PFCandidateCollectionToken_ = consumes<reco::PFCandidateCollection>(iConfig.getParameter<edm::InputTag>("PFCandidateCollectionTag"));//cms.InputTag("particleFlow")
 		TauHPSCollectionToken_ = consumes<reco::PFTauCollection>(edm::InputTag("hpsPFTauProducer","","RECO"));
 		TauPiZeroCollectionToken_ = consumes<reco::RecoTauPiZeroCollection>(iConfig.getParameter<edm::InputTag>("TauPiZeroCollectionTag"));//cms.InputTag("hpsPFTauProducer","pizeros","RECO")
@@ -807,30 +811,99 @@ void AOD_pi0::RecO_Cand_type(const reco::Candidate* cand)
 // ------------ method called once each job just before starting event loop  ------------
 void AOD_pi0::beginJob()
 {
-	// Not presented
-		// tree->Branch("eta", &eta, "eta/D");
-		// tree->Branch("phi", &phi, "phi/D");
-		// tree->Branch("valHits", &valHits, "valHits/I");
-		// tree->Branch("pixHits", &pixHits, "pixHits/I");
-		// tree->Branch("nChi2", &nChi2, "nChi2/D");
-		// tree->Branch("ipSigXY", &ipSigXY, "ipSigXY/D");
-	
-	// %%%%%%%% Branches // initialize branches once per job, 
-		//for types see https://root.cern.ch/doc/master/classTTree.html
-		
-		tree->Branch("Ks_v0_count", &v0_count, "v0_count/I"); 
-		tree->Branch("Ks_v0_inv_m_pi", &Ks_v0_inv_m_pi, "Ks_v0_inv_m_pi/D");
-		tree->Branch("pt_1", &pt_1, "pt_1/D");
-		tree->Branch("pt_2", &pt_2, "pt_2/D");
-		tree->Branch("eta_1", &eta_1, "eta_1/D");
-		tree->Branch("eta_2", &eta_2, "eta_2/D");
-		tree->Branch("nPionsInJetsWithKs", &nPionsInJetsWithKs, "nPionsInJetsWithKs/i");
+	// initialize branches once per job, for types see https://root.cern.ch/doc/master/classTTree.html
+		kaon_tree->Branch("nPionsInJetsWithKs", &nPionsInJetsWithKs, "nPionsInJetsWithKs/i");
+		// V0 comparison to HPS
+		kaon_tree->Branch("v0hps_pions_dPhi_1", &v0hps_pions_dPhi_1, "v0hps_pions_dPhi_1/D");
+		kaon_tree->Branch("v0hps_pions_dEta_1", &v0hps_pions_dEta_1, "v0hps_pions_dEta_1/D");
+		kaon_tree->Branch("v0hps_pions_dPhi_2", &v0hps_pions_dPhi_2, "v0hps_pions_dPhi_2/D");
+		kaon_tree->Branch("v0hps_pions_dEta_2", &v0hps_pions_dEta_2, "v0hps_pions_dEta_2/D");
+		kaon_tree->Branch("v0hps_KsTau_DR", &v0hps_KsTau_DR, "v0hps_KsTau_DR/D");
+		kaon_tree->Branch("v0hps_KsDiPion_DR", &v0hps_KsDiPion_DR, "v0hps_KsDiPion_DR/D");
+		// HPS Kaon
+		kaon_tree->Branch("hps_Ks_inv_m_pi", &hps_Ks_inv_m_pi, "hps_Ks_inv_m_pi/D");
+		kaon_tree->Branch("hps_pions_DR", &hps_pions_DR, "hps_pions_DR/D");
+		kaon_tree->Branch("hps_deta", &hps_deta, "hps_deta/D");
+		kaon_tree->Branch("hps_dphi", &hps_dphi, "hps_dphi/D");
+		kaon_tree->Branch("hps_px", &hps_px, "hps_px/D");
+		kaon_tree->Branch("hps_py", &hps_py, "hps_py/D");
+		kaon_tree->Branch("hps_pz", &hps_pz, "hps_pz/D");
+		kaon_tree->Branch("hps_energy", &hps_energy, "hps_energy/D");
+		// HPS neg pion
+		kaon_tree->Branch("hps_pt_1", &hps_pt_1, "hps_pt_1/D");
+		kaon_tree->Branch("hps_eta_1", &hps_eta_1, "hps_eta_1/D");
+		kaon_tree->Branch("hps_phi_1", &hps_phi_1, "hps_phi_1/D");
+		kaon_tree->Branch("hps_px_1", &hps_px_1, "hps_px_1/D");
+		kaon_tree->Branch("hps_py_1", &hps_py_1, "hps_py_1/D");
+		kaon_tree->Branch("hps_pz_1", &hps_pz_1, "hps_pz_1/D");
+		kaon_tree->Branch("hps_energy_1", &hps_energy_1, "hps_energy_1/D");
+		// HPS pos pion
+		kaon_tree->Branch("hps_pt_2", &hps_pt_2, "hps_pt_2/D");
+		kaon_tree->Branch("hps_eta_2", &hps_eta_2, "hps_eta_2/D");
+		kaon_tree->Branch("hps_phi_2", &hps_phi_2, "hps_phi_2/D");
+		kaon_tree->Branch("hps_px_2", &hps_px_2, "hps_px_2/D");
+		kaon_tree->Branch("hps_py_2", &hps_py_2, "hps_py_2/D");
+		kaon_tree->Branch("hps_pz_2", &hps_pz_2, "hps_pz_2/D");
+		kaon_tree->Branch("hps_energy_2", &hps_energy_2, "hps_energy_2/D");
+		// V0 kaon
+		kaon_tree->Branch("v0_Ks_inv_m_pi", &v0_Ks_inv_m_pi, "v0_Ks_inv_m_pi/D");
+		kaon_tree->Branch("v0_Ks_pions_DR", &v0_Ks_pions_DR, "v0_Ks_pions_DR/D");
+		kaon_tree->Branch("v0_deta", &v0_deta, "v0_deta/D");
+		kaon_tree->Branch("v0_dphi", &v0_dphi, "v0_dphi/D");
+		kaon_tree->Branch("v0_pt", &v0_pt, "v0_pt/D");
+		kaon_tree->Branch("v0_eta", &v0_eta, "v0_eta/D");
+		kaon_tree->Branch("v0_phi", &v0_phi, "v0_phi/D");
+		kaon_tree->Branch("v0_px", &v0_px, "v0_px/D");
+		kaon_tree->Branch("v0_py", &v0_py, "v0_py/D");
+		kaon_tree->Branch("v0_pz", &v0_pz, "v0_pz/D");
+		kaon_tree->Branch("v0_energy", &v0_energy, "v0_energy/D");
+		// V0 neg pion
+		kaon_tree->Branch("v0_pt_1", &v0_pt_1, "v0_pt_1/D");
+		kaon_tree->Branch("v0_eta_1", &v0_eta_1, "v0_eta_1/D");
+		kaon_tree->Branch("v0_phi_1", &v0_phi_1, "v0_phi_1/D");
+		kaon_tree->Branch("v0_px_1", &v0_px_1, "v0_px_1/D");
+		kaon_tree->Branch("v0_py_1", &v0_py_1, "v0_py_1/D");
+		kaon_tree->Branch("v0_pz_1", &v0_pz_1, "v0_pz_1/D");
+		kaon_tree->Branch("v0_energy_1", &v0_energy_1, "v0_energy_1/D");
+		// V0 pos pion
+		kaon_tree->Branch("v0_pt_2", &v0_pt_2, "v0_pt_2/D");
+		kaon_tree->Branch("v0_eta_2", &v0_eta_2, "v0_eta_2/D");
+		kaon_tree->Branch("v0_phi_2", &v0_phi_2, "v0_phi_2/D");
+		kaon_tree->Branch("v0_px_2", &v0_px_2, "v0_px_2/D");
+		kaon_tree->Branch("v0_py_2", &v0_py_2, "v0_py_2/D");
+		kaon_tree->Branch("v0_pz_2", &v0_pz_2, "v0_pz_2/D");
+		kaon_tree->Branch("v0_energy_2", &v0_energy_2, "v0_energy_2/D");
 
-		once_tree->Branch("primvertex_count", &primvertex_count, "primvertex_count/i"); 
-		once_tree->Branch("goodprimvertex_count", &goodprimvertex_count, "goodprimvertex_count/i"); 
+		pions_tree->Branch("v0_pion", &v0_pion, "TLorentzVector");
+		pions_tree->Branch("tau_pion", &tau_pion, "TLorentzVector");
+		pions_tree->Branch("tau_pion_besttrack", &tau_pion_besttrack, "TLorentzVector");
+		pions_tree->Branch("hpsbestTrackDiff_fx", &hpsbestTrackDiff_fx, "hpsbestTrackDiff_fx/D");
+		pions_tree->Branch("hpsbestTrackDiff_fy", &hpsbestTrackDiff_fy, "hpsbestTrackDiff_fy/D");
+		pions_tree->Branch("hpsbestTrackDiff_fz", &hpsbestTrackDiff_fz, "hpsbestTrackDiff_fz/D");
+		pions_tree->Branch("hpsbestTrackDiff_fE", &hpsbestTrackDiff_fE, "hpsbestTrackDiff_fE/D");
+		pions_tree->Branch("bestTrac_fM", &bestTrac_fM, "bestTrac_fM/D");
+		pions_tree->Branch("hps_fM", &hps_fM, "hps_fM/D");
+		pions_tree->Branch("v0_fM", &hps_fM, "hps_fM/D");
+		pions_tree->Branch("hpsv0Diff_fx", &hpsv0Diff_fx, "hpsv0Diff_fx/D");
+		pions_tree->Branch("hpsv0Diff_fy", &hpsv0Diff_fy, "hpsv0Diff_fy/D");
+		pions_tree->Branch("hpsv0Diff_fz", &hpsv0Diff_fz, "hpsv0Diff_fz/D");
+		pions_tree->Branch("hpsv0Diff_fE", &hpsv0Diff_fE, "hpsv0Diff_fE/D");
+		pions_tree->Branch("v0bestTrackDiff_fx", &v0bestTrackDiff_fx, "v0bestTrackDiff_fx/D");
+		pions_tree->Branch("v0bestTrackDiff_fy", &v0bestTrackDiff_fy, "v0bestTrackDiff_fy/D");
+		pions_tree->Branch("v0bestTrackDiff_fz", &v0bestTrackDiff_fz, "v0bestTrackDiff_fz/D");
+		pions_tree->Branch("v0bestTrackDiff_fE", &v0bestTrackDiff_fE, "v0bestTrackDiff_fE/D");
+		pions_tree->Branch("hpsv0Diff_dPhi", &hpsv0Diff_dPhi, "hpsv0Diff_dPhi/D");
+		pions_tree->Branch("hpsv0Diff_dEta", &hpsv0Diff_dEta, "hpsv0Diff_dEta/D");
+		pions_tree->Branch("v0bestTrack_dR", &v0bestTrack_dR, "v0bestTrack_dR/D");
+		pions_tree->Branch("hpsbestTrack_dR", &hpsbestTrack_dR, "hpsbestTrack_dR/D");
+		pions_tree->Branch("hpsv0_dR", &hpsv0_dR, "hpsv0_dR/D");
+
+		once_tree->Branch("v0_Ks_count", &v0_Ks_count, "v0_Ks_count/I");
+		once_tree->Branch("primvertex_count", &primvertex_count, "primvertex_count/i");
+		once_tree->Branch("goodprimvertex_count", &goodprimvertex_count, "goodprimvertex_count/i");
+		once_tree->Branch("numOfUnmatchedKaons", &numOfUnmatchedKaons, "numOfUnmatchedKaons/i");
 		once_tree->Branch("v_v0_Ks_inv_m_pi", &v_v0_Ks_inv_m_pi);
-		once_tree->Branch("v_v0_Ks_DR", &v_v0_Ks_DR);
-		once_tree->Branch("v_v0_Ks_pions_DR", &v_v0_Ks_pions_DR);
+		once_tree->Branch("v_v0_pions_DR", &v_v0_pions_DR);
 		once_tree->Branch("v_v0_pt_1", &v_v0_pt_1);
 		once_tree->Branch("v_v0_pt_2", &v_v0_pt_2);
 		once_tree->Branch("v_v0_eta_1", &v_v0_eta_1);
@@ -841,143 +914,18 @@ void AOD_pi0::beginJob()
 		once_tree->Branch("v_v0_matched_eta_2", &v_v0_matched_eta_2);
 		once_tree->Branch("v_KsCombinatoricMass", &v_KsCombinatoricMass);
 		once_tree->Branch("v_KsCombinatoricDR", &v_KsCombinatoricDR);
-		once_tree->Branch("v_HPS_Ks_inv_m_pi", &v_HPS_Ks_inv_m_pi);
-		once_tree->Branch("v_HPS_Ks_DR", &v_HPS_Ks_DR);
-		once_tree->Branch("v_HPS_Ks_pions_DR", &v_HPS_Ks_pions_DR);
-		once_tree->Branch("v_HPS_pt_1", &v_HPS_pt_1);
-		once_tree->Branch("v_HPS_pt_2", &v_HPS_pt_2);
-		once_tree->Branch("v_HPS_eta_1", &v_HPS_eta_1);
-		once_tree->Branch("v_HPS_eta_2", &v_HPS_eta_2);
-		once_tree->Branch("v_nPionsInJetsWithKs", &v_nPionsInJetsWithKs, "nPionsInJetsWithKs/i");
-
-	// Former stored as histograms
-	/*
-		// tree->Branch("Ks_v0_daughter_pt",, ""); 
-		// tree->Branch("Ks_v0_number_per_event",, ""); 
-		// tree->Branch("Ks_v0_vx",, ""); 
-		// tree->Branch("Ks_v0_vy",, ""); 
-		// tree->Branch("Ks_v0_vz",, ""); 
-		// tree->Branch("Ks_v0_dx",, ""); 
-		// tree->Branch("Ks_v0_dy",, ""); 
-		// tree->Branch("Ks_v0_dz",, ""); 
-		// tree->Branch("Ks_v0_PV_dXY",, ""); 
-		// tree->Branch("Ks_v0_dXY",, ""); 
-		// tree->Branch("Ks_v0_BS_dXY",, ""); 
-		// tree->Branch("tau_v0_dXY",, ""); 
-		// tree->Branch("tau_comb_pions_m_inv",, ""); 
-		// tree->Branch("ECAL_comb_photons",, ""); 
-		// tree->Branch("h_ECAL_comb_kaons",, ""); 
-		// tree->Branch("Ks_v0_found_in_hps_tau",, ""); 
-		// tree->Branch("Ks_v0_found_in_hps_tau_dR",, ""); 
-		// tree->Branch("Ks_v0_found_in_hps_tau_dRcut",, ""); 
-		// tree->Branch("Ks_v0_found_in_hps_tau_dR_only_one_pion_left",, ""); 
-		// tree->Branch("Ks_v0_found_in_hps_tau_m_inv",, ""); 
-		// tree->Branch("Ks_v0_found_in_hps_tau_significance",, ""); 
-
-		// tree->Branch("Ks_v0_pions_dR",, ""); 
-		// tree->Branch("Ks_v0_hps_pions_combinatoric_dR",, ""); 
-		// tree->Branch("Ks_v0_pions_and_hps_pions_combined_dR",, ""); 
-
-		// tree->Branch("Ks_v0_n_ev_passing_dz_cut",, ""); 
-		// tree->Branch("Ks_v0_n_Ks_in_jets_per_event",, "");
-		// tree->Branch("Ks_v0_n_tau_jets_per_event",, "");
-		// tree->Branch("Ks_v0_n_pion_in_tau_jets",, "");
-		// tree->Branch("Ks_v0_n_pion_in_tau_jets_with_good_Ks",, "");
-
-		// tree->Branch("Ks_v0_pions_and_hps_pions_combined_dR_with_no_constrain",, "");
-
-		
-		//   tree->Branch("us_isol_pi0_inv_m_to_ks",, "");
-		//   tree->Branch("us_isol_pi0_inv_pt",, "");
-		//   tree->Branch("us_pi0_inv_m_to_ks",, "");
-		//   tree->Branch("us_pi0_inv_pt",, "");
-		
-		
-		//   tree->Branch("us_pi_charged_inv_m_to_ks",, "");
-		//   tree->Branch("us_pi_charged_inv_pt",, "");
-		
-		//   tree->Branch("us_pi0_had_inv_m_to_ks",, "");
-		//   tree->Branch("us_pi0_had_inv_pt",, "");
-
-		// tree->Branch("gen_k0_all_to_pi0",, "");
-		// tree->Branch("gen_k0_all_to_pic",, "");
-
-		// tree->Branch("K892",, "");
-		// tree->Branch("K892_0_gen_number_per_event",, "");
-		// tree->Branch("K892_0_gen_vx",, "");
-		// tree->Branch("K892_0_gen_vy",, "");
-		// tree->Branch("K892_0_gen_vz",, "");
-
-		// tree->Branch("K892_c_gen_number_per_event",, "");
-		// tree->Branch("K892_c_gen_vx",, "");
-		// tree->Branch("K892_c_gen_vy",, "");
-		// tree->Branch("K892_c_gen_vz",, "");
-
-		// tree->Branch("primvertex_count",, "");
-		// tree->Branch("goodprimvertex_count",, "");
-		// tree->Branch("primvertex_x",, "");
-		// tree->Branch("primvertex_y",, "");
-		// tree->Branch("primvertex_z",, "");
-		// tree->Branch("primvertex_chi2",, "");
-		// tree->Branch("primvertex_ndof",, "");
-		// tree->Branch("primvertex_ptq",, "");
-		// tree->Branch("primvertex_ntracks",, "");
-		// tree->Branch("primvertex_cov_x",, "");
-		// tree->Branch("primvertex_cov_y",, "");
-		// tree->Branch("primvertex_cov_z",, "");
-	*/
+		once_tree->Branch("v_hps_Ks_inv_m_pi", &v_hps_Ks_inv_m_pi);
+		once_tree->Branch("v_hps_Ks_DR", &v_hps_Ks_DR);
+		once_tree->Branch("v_hps_Ks_pions_DR", &v_hps_Ks_pions_DR);
+		once_tree->Branch("v_hps_pt_1", &v_hps_pt_1);
+		once_tree->Branch("v_hps_pt_2", &v_hps_pt_2);
+		once_tree->Branch("v_hps_eta_1", &v_hps_eta_1);
+		once_tree->Branch("v_hps_eta_2", &v_hps_eta_2);
+		once_tree->Branch("v_nPionsInJetsWithKs", &v_nPionsInJetsWithKs);
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void AOD_pi0::endJob()
-{
-	// outfile->cd();
-	// for(std::vector<TH1D*>::iterator itv = map_Ks_v0_histos.begin(); itv != map_Ks_v0_histos.end(); ++itv)
-	//     (*itv)->Write();
-	// h_tau_v0_dXY->Write();
-	// h_tau_comb_pions_m_inv->Write();
-	// h_ECAL_comb_photons->Write();
-	// h_ECAL_comb_kaons->Write();
-	// //h_Ks_v0_count->Write();
-	//   h_Ks_v0_count->Print();
-	// pions_inv_m->Write();
-	// num_pions->Write();
-	// taus_isol_pi0_inv_m_to_ks->Write();
-	// //h_Ks_v0_daughter_pt->Write();
-	// //h_Ks_v0_inv_m_pi->Write();
-	// taus_isol_pi0_inv_pt->Write();
-	// taus_pi0_inv_m_to_ks->Write();
-	// taus_pi0_inv_pt->Write();
-	// taus_pi_charged_inv_m_to_ks->Write();
-	// taus_pi_charged_inv_pt->Write();
-	// h_gen_k0_all_to_pi0->Write();
-	// h_gen_k0_all_to_pic->Write();
-	// h_K892->Write();
-	// // h_K892_0_gen_number_per_event->Write();
-	// // h_K892_c_gen_number_per_event->Write();
-
-	// for ( std::map<long, std::vector<TH1D *>>::iterator it = map_K892_gen_histos.begin(); it != map_K892_gen_histos.end(); it++ )
-	// {
-	//     std::vector<TH1D*> v = it->second;
-	//     for(std::vector<TH1D*>::iterator itv = v.begin(); itv != v.end(); ++itv)
-	//     (*itv)->Write();
-	// }
-
-	// h_primvertex_count->Write();
-	// h_goodprimvertex_count->Write();
-	// h_primvertex_x->Write();
-	// h_primvertex_y->Write();
-	// h_primvertex_z->Write();
-	// h_primvertex_chi2->Write();
-	// h_primvertex_ndof->Write();
-	// h_primvertex_ptq->Write();
-	// h_primvertex_ntracks->Write();
-	// h_primvertex_cov_x->Write();
-	// h_primvertex_cov_y->Write();
-	// h_primvertex_cov_z->Write();
-
-	// outfile->Close();
-}
+void AOD_pi0::endJob(){}
 
 AOD_pi0::~AOD_pi0()
 {

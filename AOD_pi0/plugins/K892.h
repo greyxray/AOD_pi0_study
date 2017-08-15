@@ -6,7 +6,7 @@ void AOD_pi0::K892(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	if (false && PF_hps_taus.isValid() )
 		{
 			vector<reco::CandidateCollection> v0_daughters;
-			v0_count = V0Ks->size();
+			v0_Ks_count = V0Ks->size();
 			// Loop over PF::Taus
 			for( unsigned tau_index = 0; tau_index < PF_hps_taus->size(); tau_index++)
 			{

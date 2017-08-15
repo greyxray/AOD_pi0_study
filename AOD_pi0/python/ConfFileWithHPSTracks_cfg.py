@@ -137,7 +137,7 @@ print("PS: SecondaryVerticesFromNewV0: runs the official V0 producer")
 process.load("RecoVertex.V0Producer.generalV0Candidates_cfi")
 process.SecondaryVerticesFromNewV0 = process.generalV0Candidates.clone(
 	# which beamSpot to reference
-	beamSpot = cms.InputTag('offlineBeamSpot'),
+	# beamSpot = cms.InputTag('offlineBeamSpot'),
 	# reference primary vertex instead of beamSpot
 	useVertex = cms.bool(True), # By def False
 	# which vertex collection to use
@@ -278,6 +278,7 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	Match_KsV0_to_HPS = cms.untracked.bool(True),
 	DZCut = cms.untracked.double(999.),
 	KtoTauDR = cms.untracked.double(0.5),
+	MatchByReference = cms.untracked.bool(True),
 	# Access to the tracks collection from HPS used to reco V0
 	HPSTrackTag = cms.InputTag("hpsTracks", "HPSTracks", pName),
 	# other
