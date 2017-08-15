@@ -113,17 +113,6 @@ void AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 					pv_position = (*Vertex)[i].position();
 					primvertex = (*Vertex)[i];
-
-					//TEMP_COMMENTED h_primvertex_x->Fill(primvertex_x);
-					//TEMP_COMMENTED h_primvertex_y->Fill(primvertex_y);
-					//TEMP_COMMENTED h_primvertex_z->Fill(primvertex_z);
-					//TEMP_COMMENTED h_primvertex_chi2->Fill(primvertex_chi2);
-					//TEMP_COMMENTED h_primvertex_ndof->Fill(primvertex_ndof);
-					//TEMP_COMMENTED h_primvertex_ptq->Fill(primvertex_ptq);
-					//TEMP_COMMENTED h_primvertex_ntracks->Fill(primvertex_ntracks);
-					//TEMP_COMMENTED h_primvertex_cov_x->Fill(primvertex_cov[0]);
-					//TEMP_COMMENTED h_primvertex_cov_y->Fill(primvertex_cov[3]);
-					//TEMP_COMMENTED h_primvertex_cov_z->Fill(primvertex_cov[5]);
 				}
 
 				if ((*Vertex)[i].isValid() &&
@@ -134,8 +123,6 @@ void AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 						(*Vertex)[i].position().Rho() < 2.) goodprimvertex_count++;
 			}
 		}
-		//TEMP_COMMENTED h_primvertex_count->Fill(primvertex_count);
-		//TEMP_COMMENTED h_goodprimvertex_count->Fill(goodprimvertex_count);
 		dout("PrimVertex:", pv_position.X(), pv_position.Y(), pv_position.Z());
 	}
 

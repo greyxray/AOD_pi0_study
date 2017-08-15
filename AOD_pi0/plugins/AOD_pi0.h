@@ -417,87 +417,17 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 				std::vector<Double_t> v_hps_eta_2;
 
 		// Histograms
-			TH1D* pions_inv_m;
-			TH1D* num_pions;
 			TH1D* taus_isol_pi0_inv_m_to_ks;
 			TH1D* taus_isol_pi0_inv_pt;
 			TH1D* taus_pi0_inv_m_to_ks;
 			TH1D* taus_pi0_inv_pt;
-			TH1D* taus_pi_charged_inv_m_to_ks ;
+			TH1D* taus_pi_charged_inv_m_to_ks;
 			TH1D* taus_pi_charged_inv_pt;
-			TH1D* taus_pi0_had_inv_m_to_ks ;
+			TH1D* taus_pi0_had_inv_m_to_ks;
 			TH1D* taus_pi0_had_inv_pt;
-
-			TH1D* h_gen_k0_all_to_pi0;
-			TH1D* h_gen_k0_all_to_pic;
-
-
-			TH1D* h_tau_v0_dXY;
-			TH1D* h_tau_comb_pions_m_inv;
 			TH1D* h_ECAL_comb_photons;
 			TH1D* h_ECAL_comb_kaons;
-			// V0 collection
-			TH1D* h_Ks_v0_count;
-			TH1D* h_Ks_v0_daughter_pt;
-			TH1D* h_Ks_v0_inv_m_pi;
-			TH1D* h_Ks_v0_number_per_event;
-			TH1D* h_Ks_v0_vx;
-			TH1D* h_Ks_v0_vy;
-			TH1D* h_Ks_v0_vz;
-			TH1D* h_Ks_v0_dx;
-			TH1D* h_Ks_v0_dy;
-			TH1D* h_Ks_v0_dz;
-			TH1D* h_Ks_v0_PV_dXY; TH1D* h_Ks_v0_dXY;
-			TH1D* h_Ks_v0_BS_dXY;
 
-			TH1D* h_Ks_v0_found_in_hps_tau;
-			TH1D* h_Ks_v0_found_in_hps_tau_dR;
-			TH1D* h_Ks_v0_found_in_hps_tau_dRcut;
-			TH1D* h_Ks_v0_found_in_hps_tau_dR_only_one_pion_left;
-			TH1D* h_Ks_v0_found_in_hps_tau_m_inv;
-			TH1D* h_Ks_v0_found_in_hps_tau_significance;
-
-			TH1D* h_Ks_v0_pions_dR;
-			TH1D* h_Ks_v0_hps_pions_combinatoric_dR;
-			TH1D* h_Ks_v0_pions_and_hps_pions_combined_dR;
-
-			TH1D* h_Ks_v0_n_ev_passing_dz_cut;
-			TH1D* h_Ks_v0_n_Ks_in_jets_per_event;
-			TH1D* h_Ks_v0_n_tau_jets_per_event;
-			TH1D* h_Ks_v0_n_pion_in_tau_jets;
-			TH1D* h_Ks_v0_n_pion_in_tau_jets_with_good_Ks;
-
-
-
-			TH1D* h_Ks_v0_pions_and_hps_pions_combined_dR_with_no_constrain;
-			std::vector<TH1D*> map_Ks_v0_histos;
-
-			TH1D* h_K892;
-
-			TH1D* h_K892_0_gen_number_per_event;
-			TH1D* h_K892_0_gen_vx;
-			TH1D* h_K892_0_gen_vy;
-			TH1D* h_K892_0_gen_vz;
-
-			TH1D* h_K892_c_gen_number_per_event;
-			TH1D* h_K892_c_gen_vx;
-			TH1D* h_K892_c_gen_vy;
-			TH1D* h_K892_c_gen_vz;
-
-			// primary vertex
-			TH1D* h_primvertex_count;
-			TH1D* h_goodprimvertex_count;
-			TH1D* h_primvertex_x;
-			TH1D* h_primvertex_y;
-			TH1D* h_primvertex_z;
-			TH1D* h_primvertex_chi2;
-			TH1D* h_primvertex_ndof;
-			TH1D* h_primvertex_ptq;
-			TH1D* h_primvertex_ntracks;
-			TH1D* h_primvertex_cov_x;
-			TH1D* h_primvertex_cov_y;
-			TH1D* h_primvertex_cov_z;
-		
 		// Tokens for the Collections
 			edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionToken_;
 			edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> KshortCollectionTag_stand_;
@@ -733,7 +663,7 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 		//    }
 	*/
 
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Saved histograms - turned off
+	// Saved histograms - turned off
 		if (OutFileName.empty())
 		{
 			if (!IsData)
@@ -757,7 +687,8 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 		//SVToken_ = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("SecVertexCollectionTag"));
 		//JetCollectionToken_ = consumes<reco::PFJetCollection>(iConfig.getParameter<edm::InputTag>("JetCollectionTag"));
 		HPSTrackTagToken_ = consumes<reco::TrackCollection>(iConfig.getParameter<edm::InputTag>("HPSTrackTag"));
-	//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% For quick output level control
+
+	// For quick output level control
 		if (mute)
 		{
 			cout.setstate(ios_base::failbit);
