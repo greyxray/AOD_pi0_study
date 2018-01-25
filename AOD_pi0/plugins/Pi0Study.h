@@ -4,7 +4,7 @@ void AOD_pi0::Pi0Study(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 	iEvent.getByToken( TauPiZeroCollectionToken_, Strips); //actually HPS pi0s
 	/// HPS Pi0's and taus - with loop among reco::tau
-	if (false && Strips.isValid())
+	if (Strips.isValid())
 		{
 			unsigned int matched_pi = 0;
 			if (Strips->size() > 0)  dout("Number of HPS piz0's =", Strips->size());
