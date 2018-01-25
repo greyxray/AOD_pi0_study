@@ -7,6 +7,7 @@
 *.tar.gz
 *.gz
 *.pyc
+*.nfs00*
 */plots/*
 .nfs00*
 geninfo.txt
