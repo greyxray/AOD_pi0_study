@@ -16,6 +16,13 @@ process.load("Configuration.Geometry.GeometryIdeal_cff")
 process.load("Configuration.StandardSequences.MagneticField_cff")
 
 studyroot = {
+	'ZTT':
+		{
+			'isData':False,
+			'fileName': ['/store/mc/RunIISpring16DR80/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/AODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/00000/00773447-C000-E611-B4E6-0CC47A4D761A.root'],
+			'datasetname': '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/AODSIM',
+			'output_rootfile_name': "out_simAOD_DYJetsToLL_M-50_single.root"
+		},
 	'SUSYGluGluToHToTauTau_Full':
 		{
 			'isData': False,
@@ -124,7 +131,7 @@ studyroot = {
 	        'output_rootfile_name': "out_AOD_JetHTdata_FULL_With_HPS.root"
 		}
 }
-filekey  = 'QCD_Pt_20toInf_MuEnrichedPt15'
+filekey  = 'ZTT'
 isData = studyroot[filekey]['isData']
 process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(studyroot[filekey]['fileName'])) # crab3 will set fileNames = cms.untracked.vstring()
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1)) # removed by crab
@@ -243,7 +250,7 @@ process.demo = cms.EDAnalyzer('AOD_pi0',
 	GenParticleCollectionTag = cms.InputTag("genParticles"),
 	BeamSpotCollectionTag =  cms.InputTag("offlineBeamSpot"),
 	PVCollectionTag = cms.InputTag("offlinePrimaryVertices"),
-	KshortCollectionTag_stand = cms.InputTag("generalV0Candidates","Kshort","RECO"),# the lable RECO is only for the original collection
+	KshortCollectionTag_stand = cms.InputTag("generalV0Candidates", "Kshort", "RECO"),# the lable RECO is only for the original collection
 	KshortCollectionTag = cms.InputTag(which_v0['collectionName'], which_v0['lable'], which_v0['Process']),# the lable RECO is only for the original collection
 	LambdaCollectionTag = cms.InputTag("generalV0Candidates", "Lambda", "RECO"),
 	TauPiZeroCollectionTag = cms.InputTag("hpsPFTauProducer", "pizeros", "RECO"),
