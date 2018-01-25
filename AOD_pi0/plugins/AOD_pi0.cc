@@ -77,7 +77,7 @@ void AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		// if (HPSTraHandle.isValid())  dout("HPStrackCollection is fine");
 		// else dout("HPStrackCollection is NOT VALID", HPSTraHandle->size());
 		// // const reco::TrackCollection* theTrackCollection = HPSTraHandle.product();
-
+	if (!IsData) iEvent.getByToken(GenParticleCollectionToken_, GenPart);
 	/// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 	/// PV -> pv_position
@@ -126,11 +126,11 @@ void AOD_pi0::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 		dout("PrimVertex:", pv_position.X(), pv_position.Y(), pv_position.Z());
 	}
 
-	if (true) KFromV0Producer(iEvent, iSetup);
+	if (false) KFromV0Producer(iEvent, iSetup);
 	if (false) AddGammas(iEvent, iSetup);
 	if (false) GenLevStudy(iEvent, iSetup);
-	if (false) Pi0Study(iEvent, iSetup);
-	if (false) K892(iEvent, iSetup);
+	if (true) Pi0Study(iEvent, iSetup);
+	if (true) K892(iEvent, iSetup);
 	if (false) GeneralStudy(iEvent, iSetup);
 
 	once_tree->Fill();
