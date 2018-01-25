@@ -71,6 +71,8 @@ using namespace std;
 	#include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 	#include "MagneticField/VolumeBasedEngine/interface/VolumeBasedMagneticField.h"
 
+#include "TrackingTools/IPTools/interface/IPTools.h"
+
 //#include "PhysicsTools/HepMCCandAlgos/interface/MCTruthCompositeMatcher.h" // includes missed files
 //#include "RecoTauPiZero.h"
 /*
@@ -200,6 +202,10 @@ namespace PDGMassConstants
 
 typedef ROOT::Math::SMatrix<double, 3, 3, ROOT::Math::MatRepSym<double, 3> > SMatrixSym3D;
 typedef ROOT::Math::SVector<double, 3> SVector3;
+typedef ROOT::Math::PtEtaPhiM4D<float> RMFLV_Store;
+typedef ROOT::Math::LorentzVector<RMFLV_Store> RMFLV;
+typedef ROOT::Math::PositionVector3D<ROOT::Math::Cartesian3D<float> > RMPoint;
+typedef ROOT::Math::PositionVector3D<ROOT::Math::Cartesian3D<double>, ROOT::Math::DefaultCoordinateSystemTag> Point;
 
 // comment on this: https://twiki.cern.ch/twiki/bin/view/CMSPublic/FWMultithreadedAnalysisEDAnalyzer#Using_TFileService
 class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
@@ -222,6 +228,11 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 		void ResetBranchesKaonTree();
 		static void RecO_Cand_type(const reco::Candidate* cand);
 		bool BetterPionMatch(TLorentzVector tau_pion, int chargeTauPion, TLorentzVector v0_ks_pion, int chargeKPion, int firstfound, double & dR);
+
+		template<class T, class P, class R>
+		float getDxy(const T pv, const P p4, const R ref) const;
+		template<class T, class P, class R>
+		float getDz(const T pv, const P p4, const R ref) const;
 
 		template  <typename HPSPion, typename Daughter>
 		bool PionMatchByRefference(HPSPion pion, Daughter daughter);
@@ -291,6 +302,7 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 		TTree * kaon_tree; // example: http://www-hep.colorado.edu/~fjensen/temp/trackAnalyzer.cc
 		TTree * once_tree;
 		TTree * pions_tree;
+		TTree * kaon892_tree;
 
 		// Branches variables
 
@@ -415,6 +427,32 @@ class AOD_pi0 : public edm::one::EDAnalyzer<edm::one::SharedResources>
 				std::vector<Double_t> v_hps_pt_2;
 				std::vector<Double_t> v_hps_eta_1;
 				std::vector<Double_t> v_hps_eta_2;
+
+			//kaon892_tree
+				TLorentzVector lv_K892;
+				double K892_fx;
+				double K892_fy;
+				double K892_fz;
+				double K892_fE;
+				double K892_fM;
+
+				TLorentzVector lv_K892_K0;
+				double K892_K0_fx;
+				double K892_K0_fy;
+				double K892_K0_fz;
+				double K892_K0_fE;
+				double K892_K0_dxy;
+				double K892_K0_dz;
+				double K892_K0_fM;
+
+				TLorentzVector lv_K892_pi0;
+				double K892_pi0_fx;
+				double K892_pi0_fy;
+				double K892_pi0_fz;
+				double K892_pi0_fE;
+				double K892_pi0_fM;
+
+				long n_K892;
 
 		// Histograms
 			TH1D* taus_isol_pi0_inv_m_to_ks;
@@ -616,6 +654,7 @@ AOD_pi0::AOD_pi0(const edm::ParameterSet& iConfig):
 	kaon_tree = fs->make<TTree>("kaon_tree", "kaon_tree");
 	once_tree = fs->make<TTree>("once_tree", "once_tree");
 	pions_tree = fs->make<TTree>("pions_tree", "pions_tree");
+	kaon892_tree = fs->make<TTree>("kaon892_tree", "kaon892_tree");
 
 	map_kaons[311] = "K0";
 	map_kaons[310] = "K0s";
@@ -853,6 +892,34 @@ void AOD_pi0::beginJob()
 		once_tree->Branch("v_hps_eta_1", &v_hps_eta_1);
 		once_tree->Branch("v_hps_eta_2", &v_hps_eta_2);
 		once_tree->Branch("v_nPionsInJetsWithKs", &v_nPionsInJetsWithKs);
+
+		//K892
+		kaon892_tree->Branch("lv_K892", &lv_K892, "TLorentzVector");
+		kaon892_tree->Branch("K892_fx", &K892_fx, "K892_fx/D");
+		kaon892_tree->Branch("K892_fy", &K892_fy, "K892_fy/D");
+		kaon892_tree->Branch("K892_fz", &K892_fz, "K892_fz/D");
+		kaon892_tree->Branch("K892_fE", &K892_fE, "K892_fE/D");
+		kaon892_tree->Branch("K892_fM", &K892_fM, "K892_fM/D");
+
+		kaon892_tree->Branch("lv_K892_K0", &lv_K892_K0, "TLorentzVector");
+		kaon892_tree->Branch("K892_K0_fx", &K892_K0_fx, "K892_K0_fx/D");
+		kaon892_tree->Branch("K892_K0_fy", &K892_K0_fy, "K892_K0_fy/D");
+		kaon892_tree->Branch("K892_K0_fz", &K892_K0_fz, "K892_K0_fz/D");
+		kaon892_tree->Branch("K892_K0_fE", &K892_K0_fE, "K892_K0_fE/D");
+		kaon892_tree->Branch("K892_K0_dxy", &K892_K0_dxy, "K892_K0_dxy/D");
+		kaon892_tree->Branch("K892_K0_dz", &K892_K0_dz, "K892_K0_dz/D");
+		kaon892_tree->Branch("K892_K0_fM", &K892_K0_fM, "K892_K0_fM/D");
+
+		kaon892_tree->Branch("lv_K892_pi0", &lv_K892_pi0, "TLorentzVector");
+		kaon892_tree->Branch("K892_pi0_fx", &K892_pi0_fx, "K892_pi0_fx/D");
+		kaon892_tree->Branch("K892_pi0_fy", &K892_pi0_fy, "K892_pi0_fy/D");
+		kaon892_tree->Branch("K892_pi0_fz", &K892_pi0_fz, "K892_pi0_fz/D");
+		kaon892_tree->Branch("K892_pi0_fE", &K892_pi0_fE, "K892_pi0_fE/D");
+		kaon892_tree->Branch("K892_pi0_fM", &K892_pi0_fM, "K892_pi0_fM/D");
+
+
+		kaon892_tree->Branch("n_K892", &n_K892, "n_K892/I");
+
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
